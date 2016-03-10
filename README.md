@@ -26,3 +26,5 @@ Many changes can be made to fit individual needs.
 
 As always if you have any suggestion, bug report or complain feel free to contact me.
 
+*The idead for XORing as well as the skeleton for the client came from (http://www.primalsecurity.net) so if you like this pack of scripts you'll probably love what they do
+**Again check primalsecurity.net's perfect blogpost about producing an .exe
