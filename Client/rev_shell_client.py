@@ -154,6 +154,7 @@ def main():
             if STDOUT == 'fna':
                 continue
             binCont = binToSend.read()
+            binToSend.close()
             STDOUT = str(len(binCont) + 1024)
             en_STDOUT = make_en_STDOUT(STDOUT)
             try:
