@@ -3,6 +3,18 @@ A reverse shell
 
 DISCLAIMER: I really shouldn't have to say this but DON'T USE THIS WITHOUT THE COMPUTER OWNER'S CONSENT
 
+**NEW IN V0.0.2
+
+**Features:
+
+  -Text and Binary file transfer (both ways) over the masked trafic (no OS-specific commands, no extra Ports/limitations)
+
+  -Code cleanup; Chunks of code were moved into functions
+
+**Todo/Known Bugs:
+
+  -The current model dictates the server should wait for the completion of an excecuted command (when excecuting command directly to the client's OS) so that any output can be sent to the server and be desplayed. This creates deadlocks when the executed command a) has no output or b) is a script/process ment to run endlessly. 
+
 Features:
 
 -Reverse TCP/IP connection, circumventing victim-side firewall roules (in most cases) and NAT limitations.
