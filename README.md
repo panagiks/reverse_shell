@@ -3,15 +3,31 @@ A reverse shell
 
 DISCLAIMER: I really shouldn't have to say this but DON'T USE THIS WITHOUT THE COMPUTER OWNER'S CONSENT
 
-**NEW IN V0.0.2
+NOTE : As of v0.0.3 a folder "min" has been added. Since the new version has many more features not essential to the main functionality (a reverse shell that is), min will not recieve any more features beyond v0.0.2 and will only get bug and performance related fixes.
+
+**NEW IN V0.0.3
 
 **Features:
+
+  -Built-in UDP Flood capabilities
+  
+  -Multiple/All host managment; can now transfer Files/Binaries to Multiple/All connected host and order a UDP Flood
+  
+  -Code cleanup; even more Chunks of code were moved into functions
+
+Todo/Known Bugs:
+
+  -The current model dictates the server should wait for the completion of an excecuted command (when excecuting command directly to the client's OS) so that any output can be sent to the server and be desplayed. This creates deadlocks when the executed command a) has no output or b) is a script/process ment to run endlessly.   
+  
+NEW IN V0.0.2
+
+Features:
 
   -Text and Binary file transfer (both ways) over the masked trafic (no OS-specific commands, no extra Ports/limitations)
 
   -Code cleanup; Chunks of code were moved into functions
 
-**Todo/Known Bugs:
+Todo/Known Bugs:
 
   -The current model dictates the server should wait for the completion of an excecuted command (when excecuting command directly to the client's OS) so that any output can be sent to the server and be desplayed. This creates deadlocks when the executed command a) has no output or b) is a script/process ment to run endlessly. 
 
