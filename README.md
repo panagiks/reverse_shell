@@ -20,8 +20,8 @@ NOTE : As of v0.0.3 a folder "min" has been added. Since the new version has man
 
 ## Deployment:
 
-* The server is situated at the attacker's machine and running to accept connections
-* The client is situated in the infected machine(s) and will initiate the connection and wait for input. 
+* `rev_shell_server.py` or `rev_shell_server_min.py` is situated at the attacker's machine and running to accept connections
+* `rev_shell_client.py` or `rev_shell_client_min.py` is situated in the infected machine(s) and will initiate the connection and wait for input. 
 
 ## Execution:
 
