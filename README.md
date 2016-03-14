@@ -27,7 +27,7 @@ NOTE : As of v0.0.3 folder `min` has been added. Since the new version has many 
 
 * Server:
 ```sh
-  python rev_shell_server.py (max_connections) 
+python rev_shell_server.py (max_connections) 
 ```
 max_connections defaults to 5 if left blank
 
