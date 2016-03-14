@@ -14,6 +14,10 @@ NOTE : As of v0.0.3 a folder "min" has been added. Since the new version has man
 * Multiple/All Hosts management; order File/Binary transfer and UDP Flood from Multiple/All connected Hosts
 * Client script is tested and is compatible with PyInstaller (can be made into .exe)[2]
 
+*[1]The idea for XORing as well as the skeleton for the client came from (http://www.primalsecurity.net) so if you like this pack of scripts you'll probably love what they do
+
+*[2]Again check primalsecurity.net's perfect blogpost about producing an .exe
+
 ## Deployment:
 
 * The server is situated at the attacker's machine and running to accept connections
@@ -39,7 +43,3 @@ As always if you have any suggestion, bug report or complain feel free to contac
 ## License
 
 MIT
-
-*[1]The idea for XORing as well as the skeleton for the client came from (http://www.primalsecurity.net) so if you like this pack of scripts you'll probably love what they do
-
-*[2]Again check primalsecurity.net's perfect blogpost about producing an .exe
