@@ -14,9 +14,9 @@ NOTE : As of v0.0.3 folder `min` has been added. Since the new version has many 
 * Multiple/All Hosts management; order File/Binary transfer and UDP Flood from Multiple/All connected Hosts
 * Client script is tested and is compatible with PyInstaller (can be made into .exe)[2]
 
-*[1]The idea for XORing as well as the skeleton for the client came from (http://www.primalsecurity.net) so if you like this pack of scripts you'll probably love what they do
+*[1]The idea for XORing as well as the skeleton for the client came from [primalsecurity.net](http://www.primalsecurity.net) so if you like this pack of scripts you'll probably love what they do
 
-*[2]Again check primalsecurity.net's perfect blogpost about producing an .exe
+*[2]Again check [primalsecurity.net's](http://www.primalsecurity.net) perfect blogpost about producing an .exe
 
 ## Deployment:
 
