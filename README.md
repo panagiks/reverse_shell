@@ -40,6 +40,10 @@ Many changes can be made to fit individual needs.
 
 As always if you have any suggestion, bug report or complain feel free to contact me.
 
+## Todo
+
+* Fix logic bug where if a dirrect command to Host OS has no output or its execution is perpetual the Server deadlocks
+
 ## License
 
 MIT
