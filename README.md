@@ -3,7 +3,9 @@
 
 DISCLAIMER: This software is provided for educational purposes and as a proof of concept. The developer(s) do not endorse, incite or in any other way support unauthorised computer access and networks disruption.
 
-NOTE : As of v0.0.3 folder `min` has been added. Since the new version has many more features not essential to the main functionality (a reverse shell that is), min will not recieve any more features beyond v0.0.3 and will only get bug and performance related fixes.
+NOTE: As of v0.0.3 folder `min` has been added. Since the new version has many more features not essential to the main functionality (a reverse shell that is), min will not recieve any more features beyond v0.0.3 and will only get bug and performance related fixes.
+
+Follow: [@TheRSPET](https://twitter.com/TheRSPET) on Twitter for updates.
 
 ## Features
 
