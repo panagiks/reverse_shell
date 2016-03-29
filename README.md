@@ -51,6 +51,7 @@ As always if you have any suggestion, bug report or complain feel free to contac
 
 * Fix logic bug where if a dirrect command to Host OS has no output Server displays command not recognised
 * Fix logic bug where if a dirrect command's to Host OS execution is perpetual the Server deadlocks
+* Add UDP Reflect functionality (already in the workings)
 
 ## License
 
