@@ -1,6 +1,21 @@
-**NEW IN V0.0.3
+**NEW IN V0.0.4
 
 **Features:
+  
+  -`RSPET_client.py` and `RSPET_client_min.py` code cleanup
+  
+  -`RSPET_server.py` and `RSPET_server_min.py` partially rewritten; Partial modularity achieved.
+  
+  -`RSPET_server.py` and `RSPET_server_min.py` bug-fix when calling `Make_File`/`Make_Binary` with bad input
+  
+**Todo/Known Bugs:
+
+  -Merge `ALL` and `Select` interfaces
+  -Add UDP Reflection functionality
+
+NEW IN V0.0.3
+
+Features:
 
   -Built-in UDP Flood capabilities
   
