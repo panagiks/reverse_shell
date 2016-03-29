@@ -5,6 +5,8 @@ DISCLAIMER: This software is provided for educational purposes and as a proof of
 
 NOTE: As of v0.0.3 folder `min` has been added. Since the new version has many more features not essential to the main functionality (a reverse shell that is), min will not recieve any more features beyond v0.0.3 and will only get bug and performance related fixes.
 
+Current Version: `v0.0.4`
+
 Follow: [@TheRSPET](https://twitter.com/TheRSPET) on Twitter for updates.
 
 ## Features
@@ -14,11 +16,14 @@ Follow: [@TheRSPET](https://twitter.com/TheRSPET) on Twitter for updates.
 * Built-in File/Binary transfer (both ways) over the masked trafic
 * Built-in UDP Flooding tool
 * Multiple/All Hosts management; order File/Binary transfer and UDP Flood from Multiple/All connected Hosts
+* Modular Code Design to allow easy customization[3]
 * Client script is tested and is compatible with PyInstaller (can be made into .exe)[2]
 
 *[1]The idea for XORing as well as the skeleton for the client came from [primalsecurity.net](http://www.primalsecurity.net) so if you like this pack of scripts you'll probably love what they do
 
 *[2]Again check [primalsecurity.net's](http://www.primalsecurity.net) perfect blogpost about producing an .exe
+
+*[3]See EXPANDING for how you can easily add new functionality and customize RSPET to your needs
 
 ## Deployment:
 
