@@ -430,6 +430,8 @@ while True:
         list_connected_commands()
         while True:
             command = raw_input("["+cur_host_ip+"]~$ ")
+            if not command:
+                continue
             command = command.split(" ")
             comm_body = command[0]
             try:
