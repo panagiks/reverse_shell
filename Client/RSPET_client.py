@@ -7,6 +7,8 @@ from sys import exit as sysexit, argv
 from time import sleep
 from multiprocessing import Process
 from pinject import UDP, IP
+from multiprocessing import Process, freeze_support
+#https://docs.python.org/2/library/multiprocessing.html#multiprocessing.freeze_support
 
 def make_en_STDOUT(STDOUT,sock):
 	en_STDOUT = bytearray(STDOUT,'UTF-8')
@@ -222,5 +224,6 @@ def main():
 	s.close()
 
 #Start Here!
-if __name__ == "__main__":
-	main()
+if __name__ == '__main__':
+    freeze_support()
+    Process(target=start).start()
