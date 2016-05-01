@@ -226,4 +226,4 @@ def main():
 #Start Here!
 if __name__ == '__main__':
     freeze_support()
-    Process(target=start).start()
+    Process(target=main).start()
