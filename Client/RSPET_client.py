@@ -5,10 +5,8 @@ from socket import socket, IPPROTO_UDP, IPPROTO_RAW , SOCK_DGRAM, SOCK_STREAM, S
 from subprocess import Popen, PIPE
 from sys import exit as sysexit, argv
 from time import sleep
-from multiprocessing import Process
-from pinject import UDP, IP
 from multiprocessing import Process, freeze_support
-#https://docs.python.org/2/library/multiprocessing.html#multiprocessing.freeze_support
+from pinject import UDP, IP
 
 def make_en_STDOUT(STDOUT,sock):
 	en_STDOUT = bytearray(STDOUT,'UTF-8')
