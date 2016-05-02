@@ -5,7 +5,7 @@ DISCLAIMER: This software is provided for educational purposes and as a proof of
 
 NOTE: As of v0.0.3 folder `min` has been added. Since the new version has many more features not essential to the main functionality (a reverse shell that is), min will not recieve any more features beyond v0.0.3 and will only get bug and performance related fixes.
 
-Current Version: `v0.0.5a`
+Current Version: `v0.0.6`
 
 Follow: [@TheRSPET](https://twitter.com/TheRSPET) on Twitter for updates.
 
@@ -54,7 +54,7 @@ As always if you have any suggestion, bug report or complain feel free to contac
 
 * ~~Fix logic bug where if a dirrect command to Host OS has no output Server displays command not recognised~~
 * Fix logic bug where if a dirrect command's to Host OS execution is perpetual the Server deadlocks
-* Add client version and type (min or full) as a property when client connects and at `List_Hosts` (being worked on)
+* ~~Add client version and type (min or full) as a property when client connects and at `List_Hosts`~~
 * Add client update mechanism (being worked on)
 * Add UDP Reflection functionality (already in the workings)
 
