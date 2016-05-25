@@ -58,6 +58,15 @@ As always if you have any suggestion, bug report or complain feel free to contac
 * Add client update mechanism (being worked on)
 * Add UDP Reflection functionality (already in the workings)
 
+## As Featured in
+
+* [seclist.us](http://seclist.us/rspet-reverse-shell-and-post-exploitation-tool.html)
+* [sillycon.org](http://www.sillycon.org/stories/article/github-panagiksrspet-rspet-reverse-shell-and-post-exploitation-tool-is-a-python-based-reverse-shell-equipped-with-functionalities-that-assist-in-a-post-exploitation-scenario)
+* [digitalmunition.me](https://www.digitalmunition.me/2016/04/rspet-reverse-shell-post-exploitation-tool/)
+* [n0where.net](https://n0where.net/reverse-shell-post-exploitation-tool/)
+* [kitploit.com](http://www.kitploit.com/2016/05/rspet-python-reverse-shell-and-post.html)
+* [Hakin9 IT Security Magazine](https://www.facebook.com/hakin9mag/posts/1376368245710855)
+
 ## Author
 
 [panagiks](https://twitter.com/panagiks)
