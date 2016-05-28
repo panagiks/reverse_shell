@@ -50,13 +50,10 @@ Many changes can be made to fit individual needs.
 
 As always if you have any suggestion, bug report or complain feel free to contact me.
 
-## Todo
+## Distros
+> A list of Distros that contain RSPET
 
-* ~~Fix logic bug where if a dirrect command to Host OS has no output Server displays command not recognised~~
-* Fix logic bug where if a dirrect command's to Host OS execution is perpetual the Server deadlocks
-* ~~Add client version and type (min or full) as a property when client connects and at `List_Hosts`~~
-* Add client update mechanism (being worked on)
-* Add UDP Reflection functionality (already in the workings)
+* [BlackArch Linux](http://blackarch.org/tools.html) (as of version 2016.04.28)
 
 ## As Featured in
 
@@ -66,6 +63,14 @@ As always if you have any suggestion, bug report or complain feel free to contac
 * [n0where.net](https://n0where.net/reverse-shell-post-exploitation-tool/)
 * [kitploit.com](http://www.kitploit.com/2016/05/rspet-python-reverse-shell-and-post.html)
 * [Hakin9 IT Security Magazine](https://www.facebook.com/hakin9mag/posts/1376368245710855)
+
+## Todo
+
+* ~~Fix logic bug where if a dirrect command to Host OS has no output Server displays command not recognised~~
+* Fix logic bug where if a dirrect command's to Host OS execution is perpetual the Server deadlocks
+* ~~Add client version and type (min or full) as a property when client connects and at `List_Hosts`~~
+* Add client update mechanism (being worked on)
+* Add UDP Reflection functionality (already in the workings)
 
 ## Author
 
