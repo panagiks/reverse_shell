@@ -1,4 +1,11 @@
 # RSPET
+
+![MIT Licence](https://img.shields.io/badge/Licence-MIT_Licence-red.svg)
+[![Python 2.7](https://img.shields.io/badge/Python-2.7-yellow.svg)](https://www.python.org/)
+![v0.0.6](https://img.shields.io/badge/Release-v0.0.6-orange.svg)
+![Maintained](https://img.shields.io/badge/Maintained-Yes-green.svg)
+[![Twitter](https://img.shields.io/badge/Twitter-@theRSPET-blue.svg)](https://twitter.com/theRSPET)
+
 > RSPET (Reverse Shell and Post Exploitation Tool) is a Python based reverse shell equipped with functionalities that assist in a post exploitation scenario.
 
 DISCLAIMER: This software is provided for educational purposes and as a proof of concept. The developer(s) do not endorse, incite or in any other way support unauthorised computer access and networks disruption.
@@ -66,11 +73,11 @@ As always if you have any suggestion, bug report or complain feel free to contac
 
 ## Todo
 
-* ~~Fix logic bug where if a dirrect command to Host OS has no output Server displays command not recognised~~
-* Fix logic bug where if a dirrect command's to Host OS execution is perpetual the Server deadlocks
-* ~~Add client version and type (min or full) as a property when client connects and at `List_Hosts`~~
-* Add client update mechanism (being worked on)
-* Add UDP Reflection functionality (already in the workings)
+- [x] ~~Fix logic bug where if a dirrect command to Host OS has no output Server displays command not recognised~~
+- [ ] Fix logic bug where if a dirrect command's to Host OS execution is perpetual the Server deadlocks
+- [x] ~~Add client version and type (min or full) as a property when client connects and at `List_Hosts`~~
+- [ ] Add client update mechanism (being worked on)
+- [ ] Add UDP Reflection functionality (already in the workings)
 
 ## Author
 
