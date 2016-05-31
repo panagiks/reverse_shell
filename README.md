@@ -4,7 +4,7 @@
 [![Python 2.7](https://img.shields.io/badge/Python-2.7-yellow.svg?style=plastic)](https://www.python.org/)
 ![v0.0.6](https://img.shields.io/badge/Release-v0.0.6-orange.svg?style=plastic)
 ![Maintained](https://img.shields.io/badge/Maintained-Yes-green.svg?style=plastic)
-[![Twitter](https://img.shields.io/badge/Twitter-@theRSPET-blue.svg?style=plastic)](https://twitter.com/theRSPET)
+[![Twitter](https://img.shields.io/badge/Twitter-@TheRSPET-blue.svg?style=plastic)](https://twitter.com/theRSPET)
 
 > RSPET (Reverse Shell and Post Exploitation Tool) is a Python based reverse shell equipped with functionalities that assist in a post exploitation scenario.
 
