@@ -2,7 +2,7 @@
 
 ![MIT Licence](https://img.shields.io/badge/Licence-MIT_Licence-red.svg?style=plastic)
 [![Python 2.7](https://img.shields.io/badge/Python-2.7-yellow.svg?style=plastic)](https://www.python.org/)
-![v0.0.6](https://img.shields.io/badge/Release-v0.0.6-orange.svg?style=plastic)
+![v0.0.6](https://img.shields.io/badge/Release-v0.1.0-orange.svg?style=plastic)
 ![Maintained](https://img.shields.io/badge/Maintained-Yes-green.svg?style=plastic)
 [![Twitter](https://img.shields.io/badge/Twitter-@TheRSPET-blue.svg?style=plastic)](https://twitter.com/theRSPET)
 
@@ -12,7 +12,7 @@ DISCLAIMER: This software is provided for educational purposes and as a proof of
 
 NOTE: As of v0.0.3 folder `min` has been added. Since the new version has many more features not essential to the main functionality (a reverse shell that is), min will not recieve any more features beyond v0.0.3 and will only get bug and performance related fixes.
 
-Current Version: `v0.0.6`
+Current Version: `v0.1.0`
 
 Follow: [@TheRSPET](https://twitter.com/TheRSPET) on Twitter for updates.
 
@@ -61,6 +61,7 @@ As always if you have any suggestion, bug report or complain feel free to contac
 > A list of Distros that contain RSPET
 
 * [BlackArch Linux](http://blackarch.org/tools.html) (as of version 2016.04.28)
+* [ArchStrike](https://archstrike.org/packages/search/rspet)
 
 ## As Featured in
 
@@ -79,13 +80,22 @@ As always if you have any suggestion, bug report or complain feel free to contac
 - [ ] Add client update mechanism (being worked on)
 - [ ] Add UDP Reflection functionality (already in the workings)
 
+## Styleguide
+
+This project is following [Google's Python Styleguide](https://google.github.io/styleguide/pyguide.html) with a minor varitation on the use of whitespaces to align ":" tokens.
+
+## Contribution Opportunities
+
+This project is open for contributors. If you have implemented a new feature, or maybe an improvment to the current code feel free to open a pull request. If you want to sugest a new feature open an issue. Additionally Testers are needed to run a few standard scenarios (and a few of their own maybe) to decrease the chance a bug slips into a new version. Should there be any interest about testing a `beta` folder will be created (where code to be tested will be uploaded) along with a list of scenarios.
+
 ## Author
 
 [panagiks](https://twitter.com/panagiks)
 
 ## Contributors
 
-* [b3mb4m](https://github.com/b3mb4m)
+* [b3mb4m](https://github.com/b3mb4m) -- Code
+* [junzy](https://github.com/junzy) -- Docstings
 
 ## License
 
