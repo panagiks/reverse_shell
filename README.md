@@ -37,20 +37,20 @@ Follow: [@TheRSPET](https://twitter.com/TheRSPET) on Twitter for updates.
 
 ## Deployment:
 
-* `RSPET_server.py` or `RSPET_server_min.py` is situated at the attacker's machine and running to accept connections
-* `RSPET_client.py` or `RSPET_client_min.py` is situated in the infected machine(s) and will initiate the connection and wait for input. 
+* `rspet_server.py` or `RSPET_server_min.py` is situated at the attacker's machine and running to accept connections
+* `rspet_client.py` or `RSPET_client_min.py` is situated in the infected machine(s) and will initiate the connection and wait for input. 
 
 ## Execution:
 
 * Server:
 ```sh
-python RSPET_server.py (max_connections) 
+python rspet_server.py (max_connections) 
 ```
 max_connections defaults to 5 if left blank
 
 * Client: 
 ```sh
-python RSPET_client.py server_ip
+python rspet_client.py server_ip
 ```
 
 Many changes can be made to fit individual needs.
@@ -94,8 +94,8 @@ This project is open for contributors. If you have implemented a new feature, or
 
 ## Contributors
 
-* [b3mb4m](https://github.com/b3mb4m) -- Code
-* [junzy](https://github.com/junzy) -- Docstings
+* [b3mb4m](https://github.com/b3mb4m) -- Code (tab.py and bug fixes)
+* [junzy](https://github.com/junzy) -- Docstings (udp_spoof & udp_spoof_send)
 
 ## License
 
