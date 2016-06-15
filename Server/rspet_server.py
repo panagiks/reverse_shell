@@ -555,7 +555,7 @@ while True:
     elif translated == 2: #Choose_Host
         try:
             cur_host_id = int(comm_args[0])
-        except (KeyError, ValueError):
+        except (IndexError, ValueError):
             print ("Argument missing or not int")
             continue
         active_hosts = handler.return_list_of_hosts()
