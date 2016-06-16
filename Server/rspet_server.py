@@ -771,22 +771,32 @@ def main():
     start_new_thread(conn_accept, (sock, handler))
     list_root_commands()
     while True:
-        handler.rebuild()
-        comm_body = ""
-        comm_args = []
-        command = raw_input("~$ ")
-        command = command.split(" ")
-        comm_body = command[0]
-        for i in range(1, len(command)):
-            comm_args.append(command[i])
         try:
-            ROOT_COMMAND_DICT[comm_body](handler, command)
-        except KeyError:
-            if comm_body == "Exit":
-                sock.close()
-                sysexit()
-            print ("Command not recognised! Try List_Commands for help")
-            continue
+            handler.rebuild()
+            comm_body = ""
+            comm_args = []
+            command = raw_input("~$ ")
+            command = command.split(" ")
+            comm_body = command[0]
+
+            for i in range(1, len(command)):
+                comm_args.append(command[i])
+
+            try:
+                ROOT_COMMAND_DICT[comm_body](handler, command)
+            except KeyError:
+                if comm_body == "":
+                    continue
+
+                if comm_body == "Exit":
+                    sock.close()
+                    sysexit()
+
+                print ("Command not recognised! Try List_Commands for help")
+                continue
+        except (KeyboardInterrupt, SystemExit):
+            sock.close()
+            sysexit()
 
 if __name__ == '__main__':
     main()
