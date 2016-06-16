@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # -*- coding: <UTF-8> -*-
 from __future__ import print_function
 
@@ -83,6 +83,7 @@ def make_en_data(data):
 def get_en_data(sock, size):
     """Get data, return string."""
     data = sock.recv(size)
+
     return make_en_data(data).decode('UTF-8')
 
 
@@ -347,8 +348,10 @@ def main():
     except IndexError:
         print ("Must provide hotst")
         sysexit()
+
     sock = socket(AF_INET, SOCK_STREAM)
     sock.connect((rhost, rport))
+
     en_stdout = make_en_stdout(VERSION, sock)
     if en_stdout == 1:
         sysexit()

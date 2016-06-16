@@ -59,11 +59,10 @@ def get_len(in_string, max_len):
     in_string -- input string
     max_len   -- length of returned string
     """
-    tmp_str = str(len(in_string))
-    len_to_return = tmp_str
-    for _ in range(max_len - len(tmp_str)):
-        len_to_return = '0' + len_to_return
-    return len_to_return
+
+# Using printf like formating (%03d for example)
+    tmp_str = "%0" + str(max_len) + "d"
+    return (tmp_str % (len(in_string)))
 
 
 def recv_comm(recv_size, f_cur_host_con):
@@ -176,10 +175,18 @@ def make_file(name_set, f_cur_host_con, f_cur_host_id, f_handler):
     """
     return_code = 0
     file_to_read = name_set[0]
+
     try:
         remote_file_name = name_set[1]
     except IndexError:
         remote_file_name = file_to_read
+
+    try:
+        file_to_read = open(file_to_read, 'r')
+    except IOError:
+        print("File does not exist!")
+        return 3
+
     f_res = send_comm(CC['getFile'], f_cur_host_con)
     if f_res == 1:
         f_handler.remove_host(f_cur_host_id)
@@ -197,11 +204,6 @@ def make_file(name_set, f_cur_host_con, f_cur_host_id, f_handler):
     if f_decode == "fna":
         return_code = 2
     else:
-        try:
-            file_to_read = open(file_to_read, 'r')
-        except IOError:
-            return_code = 3
-        else:
             f_command = file_to_read.read()
             file_to_read.close()
             f_size = get_len(f_command, 13)
@@ -767,9 +769,12 @@ def main():
     sock = socket(AF_INET, SOCK_STREAM)
     sock.bind(("0.0.0.0", 9000))
     sock.listen(max_conns)
+
     handler = ClientHandler()
     start_new_thread(conn_accept, (sock, handler))
+
     list_root_commands()
+
     while True:
         try:
             handler.rebuild()
