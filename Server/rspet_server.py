@@ -643,7 +643,7 @@ def all_hosts(handler, command):
         try:
             comm_trans = CONN_MUL_COMMAND_DICT[comm_body]
             if comm_trans == 0: #List_Commands
-                list_connected_commands()
+                list_connected_mult_commands()
             elif comm_trans == 1: #List_Sel_Hosts
                 active_hosts = handler.return_list_of_hosts()
                 print_hosts(active_hosts, list_of_selected_hosts)
