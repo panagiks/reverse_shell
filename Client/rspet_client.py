@@ -67,6 +67,7 @@ def make_en_bin_stdout(stdout, sock):
     try:
         sock.send(en_stdout)
     except sock_error:
+        # NOTE: Lost connection with server. Should try to reconnect
         sock.close()
         return 1
     return 0
@@ -83,12 +84,17 @@ def make_en_data(data):
 def get_en_data(sock, size):
     """Get data, return string."""
     data = sock.recv(size)
+    if data == b'':
+        # NOTE: Lost connection with server. Should try to reconnect
+        sock.close()
+        sysexit()
 
     return make_en_data(data).decode('UTF-8')
 
 
 def get_en_bin_data(sock, size):
     """Get data, return binary."""
+    print("bin recv called!")
     data = sock.recv(size)
     return make_en_data(data)
 
