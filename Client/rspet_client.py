@@ -1,5 +1,7 @@
 #!/usr/bin/python
 # -*- coding: <UTF-8> -*-
+from __future__ import print_function
+
 """rspet_client.py: RSPET's Client-side script."""
 __author__ = "Kolokotronis Panagiotis"
 __copyright__ = "Copyright 2016, Kolokotronis Panagiotis"
@@ -7,7 +9,7 @@ __credits__ = ["Kolokotronis Panagiotis", "Lain Iwakura"]
 __license__ = "MIT"
 __version__ = "0.1.0"
 __maintainer__ = "Kolokotronis Panagiotis"
-from __future__ import print_function
+
 from sys import exit as sysexit, argv
 from time import sleep
 from subprocess import Popen, PIPE

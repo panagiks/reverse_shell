@@ -1,5 +1,7 @@
-#!/usr/bin/python
+#!/usr/bin/env python2
 # -*- coding: <UTF-8> -*-
+from __future__ import print_function
+
 """rspet_server.py: RSPET's Server-side script."""
 __author__ = "Kolokotronis Panagiotis"
 __copyright__ = "Copyright 2016, Kolokotronis Panagiotis"
@@ -7,7 +9,7 @@ __credits__ = ["Kolokotronis Panagiotis", "Lain Iwakura"]
 __license__ = "MIT"
 __version__ = "0.1.0"
 __maintainer__ = "Kolokotronis Panagiotis"
-from __future__ import print_function
+
 from sys import exit as sysexit
 from sys import argv
 from thread import start_new_thread
@@ -401,7 +403,7 @@ def multihost_calls(func_ref, args_list, f_handler, f_list_of_selected_hosts):
     return 0
 
 
-def list_root_commands():
+def list_root_commands(handler=None, command=None):
     """Print List of Server Commands."""
     print ("List of Server Commands")
     print ("$List_Commands -> Display this list")
