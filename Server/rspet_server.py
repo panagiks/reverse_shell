@@ -30,8 +30,12 @@ def conn_accept(sock, f_handler):
         (client, (cl_ip, port)) = sock.accept()
         f_decode = recv_comm(1024, client)
         f_decode = f_decode.split("-")
-        client_version = f_decode[0]
-        client_type = f_decode[1]
+        try:
+            client_version = f_decode[0]
+            client_type = f_decode[1]
+        except IndexError:
+# Client did not send the correct headers...
+            break
         f_handler.add_host(client, (cl_ip, port), (client_version, client_type))
 
 
@@ -698,12 +702,20 @@ class ClientHandler(object):
         self.list_of_hosts[f_host_id] = None
 
     def rebuild(self):
-        """Rebuild list_of_hosts, remove 'None' entries."""
-        tmp_list = [a for a in self.list_of_hosts if a is not None]
+        """Rebuild list_of_hosts, remove 'None's and ping the clients."""
+        tmp_list = []
+        for entry in self.list_of_hosts:
+            if entry is not None:
+                send_comm("ping", entry[0])
+                if recv_comm(4, entry[0]) == "pong":
+                    tmp_list.append(entry)
+
         self.list_of_hosts = tmp_list
 
     def return_list_of_hosts(self):
         """Return list_of_hosts"""
+# Maybe rebuild should be called every x seconds, not here...
+        self.rebuild()
         return self.list_of_hosts
 
 
