@@ -16,6 +16,7 @@ from thread import start_new_thread
 from threading import Thread
 from socket import socket, AF_INET, SOCK_STREAM
 from socket import error as sock_error
+import logging as log
 import tab
 
 
@@ -399,6 +400,7 @@ def multihost_calls(func_ref, args_list, f_handler, f_list_of_selected_hosts):
         thr = Thread(target=func_ref, args=f_args_to_pass)
         f_jobs.append(thr)
     if not f_jobs:
+        # TODO: This does not work
         print("All the selected hosts have closed their connections")
         print("Exiting to main interface ...")
         return 1
@@ -691,6 +693,8 @@ class ClientHandler(object):
         ip_port_tup  -- tuple of host's IP and Port
         ver_type_tup -- tuple of client version and type
         """
+
+        log.info("Client connected %s:%s with version %s-%s", ip_port_tup[0], ip_port_tup[1], ver_type_tup[0], ver_type_tup[1])
         self.list_of_hosts.append([host, ip_port_tup, ver_type_tup])
 
     def remove_host(self, f_host_id):
@@ -699,22 +703,25 @@ class ClientHandler(object):
         Keyword argument(s):
         f_host_id -- ID of host to remove
         """
-        self.list_of_hosts[f_host_id] = None
+        log.info("Client %s:%s removed", self.list_of_hosts[f_host_id][1][0], self.list_of_hosts[f_host_id][1][1])
+        del self.list_of_hosts[f_host_id]
 
     def rebuild(self):
         """Rebuild list_of_hosts, remove 'None's and ping the clients."""
+        log.debug("Pinging all clients...")
         tmp_list = []
         for entry in self.list_of_hosts:
             if entry is not None:
-                send_comm("ping", entry[0])
-                if recv_comm(4, entry[0]) == "pong":
+                if not send_comm("ping", entry[0]) and recv_comm(4, entry[0]) == "pong":
+                    log.debug("Client %s:%s is alive!", entry[1][0], entry[1][1])
                     tmp_list.append(entry)
+                else:
+                    log.info("Client %s:%s disconnected", entry[1][0], entry[1][1])
 
         self.list_of_hosts = tmp_list
 
     def return_list_of_hosts(self):
         """Return list_of_hosts"""
-# Maybe rebuild should be called every x seconds, not here...
         self.rebuild()
         return self.list_of_hosts
 
@@ -773,14 +780,19 @@ CONN_MUL_COMMAND_DICT = {
 
 def main():
     """Script's main block"""
+    log.basicConfig(level=log.DEBUG)
+
     make_logo()
     try:
         max_conns = int(argv[1])
     except IndexError:
         max_conns = 5
+    log.debug("max_conns %d", max_conns)
+
     sock = socket(AF_INET, SOCK_STREAM)
     sock.bind(("0.0.0.0", 9000))
     sock.listen(max_conns)
+    log.debug("socket is binded & listening")
 
     handler = ClientHandler()
     start_new_thread(conn_accept, (sock, handler))
@@ -789,7 +801,6 @@ def main():
 
     while True:
         try:
-            handler.rebuild()
             comm_body = ""
             comm_args = []
             command = raw_input("~$ ")
