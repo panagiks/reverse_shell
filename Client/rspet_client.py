@@ -1,15 +1,8 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 # -*- coding: <UTF-8> -*-
-from __future__ import print_function
-
 """rspet_client.py: RSPET's Client-side script."""
-__author__ = "Kolokotronis Panagiotis"
-__copyright__ = "Copyright 2016, Kolokotronis Panagiotis"
-__credits__ = ["Kolokotronis Panagiotis", "Lain Iwakura"]
-__license__ = "MIT"
-__version__ = "0.1.0"
-__maintainer__ = "Kolokotronis Panagiotis"
 
+from __future__ import print_function
 from sys import exit as sysexit, argv
 from time import sleep
 from subprocess import Popen, PIPE
@@ -17,6 +10,13 @@ from multiprocessing import Process, freeze_support
 from socket import socket, IPPROTO_UDP, IPPROTO_RAW, SOCK_DGRAM, SOCK_STREAM, SOCK_RAW, AF_INET
 from socket import error as sock_error
 from pinject import UDP, IP
+
+__author__ = "Kolokotronis Panagiotis"
+__copyright__ = "Copyright 2016, Kolokotronis Panagiotis"
+__credits__ = ["Kolokotronis Panagiotis", "Lain Iwakura"]
+__license__ = "MIT"
+__version__ = "0.1.0"
+__maintainer__ = "Kolokotronis Panagiotis"
 
 address = None
 
@@ -32,7 +32,7 @@ def reconnect(sock=None):
     while True:
         try:
             sock.connect((address, 9000))
-        except ConnectionRefusedError:
+        except sock_error:
             sleep(5)
         else:
             if make_en_stdout(VERSION, sock) == 1:
