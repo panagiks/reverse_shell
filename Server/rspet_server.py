@@ -1,12 +1,6 @@
-#!/usr/bin/python
+#!/usr/bin/env python2
 # -*- coding: <UTF-8> -*-
 """rspet_server.py: RSPET's Server-side script."""
-__author__ = "Kolokotronis Panagiotis"
-__copyright__ = "Copyright 2016, Kolokotronis Panagiotis"
-__credits__ = ["Kolokotronis Panagiotis", "Lain Iwakura"]
-__license__ = "MIT"
-__version__ = "0.1.0"
-__maintainer__ = "Kolokotronis Panagiotis"
 from __future__ import print_function
 from sys import exit as sysexit
 from sys import argv
@@ -15,6 +9,12 @@ from threading import Thread
 from socket import socket, AF_INET, SOCK_STREAM
 from socket import error as sock_error
 import tab
+__author__ = "Kolokotronis Panagiotis"
+__copyright__ = "Copyright 2016, Kolokotronis Panagiotis"
+__credits__ = ["Kolokotronis Panagiotis", "Lain Iwakura"]
+__license__ = "MIT"
+__version__ = "0.1.0"
+__maintainer__ = "Kolokotronis Panagiotis"
 
 
 def conn_accept(sock, f_handler):
@@ -28,8 +28,11 @@ def conn_accept(sock, f_handler):
         (client, (cl_ip, port)) = sock.accept()
         f_decode = recv_comm(1024, client)
         f_decode = f_decode.split("-")
-        client_version = f_decode[0]
-        client_type = f_decode[1]
+        try:
+            client_version = f_decode[0]
+            client_type = f_decode[1]
+        except IndexError:
+            continue
         f_handler.add_host(client, (cl_ip, port), (client_version, client_type))
 
 
@@ -596,7 +599,7 @@ def select_hosts(handler, command):
         try:
             comm_trans = CONN_MUL_COMMAND_DICT[comm_body]
             if comm_trans == 0: #List_Commands
-                list_connected_commands()
+                list_connected_mult_commands()
             elif comm_trans == 1: #List_Sel_Hosts
                 active_hosts = handler.return_list_of_hosts()
                 print_hosts(active_hosts, list_of_selected_hosts)
@@ -641,7 +644,7 @@ def all_hosts(handler, command):
         try:
             comm_trans = CONN_MUL_COMMAND_DICT[comm_body]
             if comm_trans == 0: #List_Commands
-                list_connected_commands()
+                list_connected_mult_commands()
             elif comm_trans == 1: #List_Sel_Hosts
                 active_hosts = handler.return_list_of_hosts()
                 print_hosts(active_hosts, list_of_selected_hosts)
