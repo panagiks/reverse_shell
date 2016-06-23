@@ -103,7 +103,15 @@ class Server:
         ids     -- Array of ids of hosts. Empty array unselects all. None
         selects all
         """
-        pass
+        if ids is None:
+            self.selected = self.hosts
+            return self.selected
+
+        self.selected = []
+        for i in ids:
+            self.selected.append(self.hosts[i])
+
+        return self.selected
 
     def execute(self, cmd, args):
         """Execute function on all client objects.
@@ -113,18 +121,6 @@ class Server:
         Function signature myfunc(Host, args[0], args[1], ...)
         It should accept len(args) - 1 arguments
         args    -- Arguments to pass to the command function"""
-        pass
-
-    def getHost(self, ids=None):
-        """Get object(s) of given host(s) based on ids
-
-        Keyword argument:
-        ids     -- Array of ids of hosts. None means all.
-        """
-        pass
-
-    def getSelection(self):
-        """Get object(s) of currently selected host(s)"""
         pass
 
 class Host:
