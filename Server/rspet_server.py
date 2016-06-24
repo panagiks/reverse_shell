@@ -1,11 +1,13 @@
 #!/usr/bin/env python2
 from __future__ import print_function
+from socket import socket, AF_INET, SOCK_STREAM
+from socket import error as sock_error
 from sys import exit as sysexit
 from sys import argv
 from thread import start_new_thread
 from threading import Thread
-from socket import socket, AF_INET, SOCK_STREAM
-from socket import error as sock_error
+from Plugins.gen import Plugin
+import Plugins.test
 import tab
 
 class Console:
@@ -172,6 +174,9 @@ class Host:
         return out
 
 if __name__ == "__main__":
+    # for plugin in Plugin.plugins:
+        # plugin.hello()
+
     cli = Console()
     try:
         cli.loop(int(argv[1]))
