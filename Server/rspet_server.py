@@ -11,7 +11,7 @@ import Plugins.test
 import tab
 
 class Console:
-    """Class to interfere with the server"""
+    """Class to interfere with the server."""
     max_conns = 5 # Maximum connections that the server accepts
     server = None # The server object
     prompt = "~$ " # Current command prompt
@@ -52,18 +52,9 @@ class Console:
         print(r"#####################################################")
         print(r"")
 
-    def _help(self, menu):
-        """Help menu
-
-        Keyword argument:
-        menu    -- Menu to show
-        """
-
-    def _list(self):
-        """List connected clients"""
-
 class Server:
-    """Main class of the server. Manages all the connected hosts"""
+    """Main class of the server. Manages server socket, selections and calls
+    plugins."""
     ip = "0.0.0.0"
     port = "9000"
     max_conns = 5
@@ -124,16 +115,30 @@ class Server:
         It should accept len(args) - 1 arguments
         args    -- Arguments to pass to the command function"""
 
-        # TODO: Exceptions here...
-        if Plugin.servercmds[cmd] is not None:
+        # TODO: Exceptions & catches here...
+        # TODO: Can this be done from regular plugin?
+        if cmd == "help":
+            self.help()
+        elif Plugin.servercmds[cmd] is not None:
             Plugin.servercmds[cmd](self, args)
         elif Plugin.hostcmds[cmd] is not None:
             if len(self.selection) > 0:
                 for client in self.hosts:
                     Plugin.hostcmds[cmd](client, args)
 
+    def help(self):
+        print("Server commands:")
+        if Plugin.servercmds is not None:
+            for cmd in Plugin.servercmds:
+                print("\t%s: %s" % (cmd, Plugin.servercmds[cmd].__doc__))
+
+        if Plugin.hostcmds is not None and len(self.selection) > 0:
+            print("Host commands:")
+            for cmd in Plugin.hostcmds:
+                print("\t%s: %s" % (cmd, Plugin.hostcmds[cmd].__doc__))
+
 class Host:
-    """Class for host. Each Host object represent one client"""
+    """Class for hosts. Each Host object represent one host"""
     ip = None
     port = None
     version = None
