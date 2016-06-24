@@ -6,7 +6,7 @@ from sys import exit as sysexit
 from sys import argv
 from thread import start_new_thread
 from threading import Thread
-from Plugins.gen import Plugin
+from Plugins.mount import Plugin
 import Plugins.test
 import tab
 
@@ -27,7 +27,6 @@ class Console:
     def loop(self):
         """Main CLI loop"""
         self._logo()
-        print(self.server.ip)
         start_new_thread(self.server.loop, ())
         while True:
             cmd = raw_input(self.prompt)
@@ -35,6 +34,7 @@ class Console:
             cmdargs = cmd.split(" ")
             cmd = cmdargs[0]
             del cmdargs[0]
+            self.server.execute(cmd, cmdargs)
 
     def _logo(self):
         """Print logo and Authorship/Licence."""
@@ -123,7 +123,14 @@ class Server:
         Function signature myfunc(Host, args[0], args[1], ...)
         It should accept len(args) - 1 arguments
         args    -- Arguments to pass to the command function"""
-        pass
+
+        # TODO: Exceptions here...
+        if Plugin.servercmds[cmd] is not None:
+            Plugin.servercmds[cmd](self, args)
+        elif Plugin.hostcmds[cmd] is not None:
+            if len(self.selection) > 0:
+                for client in self.hosts:
+                    Plugin.hostcmds[cmd](client, args)
 
 class Host:
     """Class for host. Each Host object represent one client"""
@@ -174,9 +181,6 @@ class Host:
         return out
 
 if __name__ == "__main__":
-    # for plugin in Plugin.plugins:
-        # plugin.hello()
-
     cli = Console()
     try:
         cli.loop(int(argv[1]))
