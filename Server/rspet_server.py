@@ -9,7 +9,7 @@ from threading import Thread
 from Plugins.mount import Plugin
 import json
 import tab
-# import Plugins.essentials
+import Plugins.essentials
 
 class Console:
     """Class to interfere with the server."""
@@ -146,6 +146,15 @@ class Server:
             for cmd in Plugin.__host_cmds__:
                 print("\t%s: %s" % (cmd, Plugin.__host_cmds__[cmd].__doc__))
 
+    def clean(self):
+        for host in self.hosts:
+            if host.deleteme:
+                del host
+
+        for host in self.selection:
+            if host.deleteme:
+                del host
+
 class Host:
     """Class for hosts. Each Host object represent one host"""
     ip = None
@@ -153,6 +162,7 @@ class Host:
     version = None
     type = "full"
     sock = None
+    deleteme = False
 
     def __init__(self, sock, ip, port):
         """Accepts the connection and initializes variables"""
@@ -167,7 +177,12 @@ class Host:
 
     def __del__(self):
         """Graceful deletion of host"""
-        self.sock.close()
+        if not self.deleteme:
+            self.sock.close()
+            self.deleteme = True
+
+    def __eq__(self, other):
+        return self.sock == other.sock
 
     def send(self, msg):
         """Send message to host"""
