@@ -8,18 +8,20 @@ class PluginMount(type):
     def __init__(cls, name, base, attr):
         """Called when a Plugin derived class is imported
 
-        Gathers all hostcommands to hostcmds
-        and all servercommands to servercmds"""
+        Gathers all __host_commands__ to __host_cmds__
+        and all __server_commands__ to __server_cmds__"""
 
-        if not hasattr(cls, "hostcmds") or not hasattr(cls, "servercmds"):
-            cls.servercmds = {}
-            cls.hostcmds = {}
+        if not hasattr(cls, "__host_cmds__") or not hasattr(cls, "__server_cmds__"):
+            cls.__server_cmds__ = {}
+            cls.__host_cmds__ = {}
         else:
             tmp = cls()
-            for cmd in tmp.hostcommands:
-                cls.hostcmds[cmd] = tmp.hostcommands[cmd]
-            for cmd in tmp.servercommands:
-                cls.servercmds[cmd] = tmp.servercommands[cmd]
+            if tmp.__host_commands__ is not None:
+                for cmd in tmp.__host_commands__:
+                    cls.__host_cmds__[cmd] = tmp.__host_commands__[cmd]
+            if tmp.__server_commands__ is not None:
+                for cmd in tmp.__server_commands__:
+                    cls.__server_cmds__[cmd] = tmp.__server_commands__[cmd]
             print("%s was loaded" % name)
 
 class Plugin(object):

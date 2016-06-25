@@ -1,11 +1,11 @@
 from mount import Plugin
 
 class MyPlugin(Plugin):
-    hostcommands = {}
-    servercommands = {}
+    __host_commands__ = {}
+    __server_commands__ = {}
 
     def __init__(self):
-        self.servercommands = {
+        self.__server_commands__ = {
             "hello": self.hello
         }
         print("I was loaded!")

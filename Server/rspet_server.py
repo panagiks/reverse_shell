@@ -119,23 +119,23 @@ class Server:
         # TODO: Can this be done from regular plugin?
         if cmd == "help":
             self.help()
-        elif Plugin.servercmds[cmd] is not None:
-            Plugin.servercmds[cmd](self, args)
-        elif Plugin.hostcmds[cmd] is not None:
+        elif Plugin.__server_cmds__[cmd] is not None:
+            Plugin.__server_cmds__[cmd](self, args)
+        elif Plugin.__host_cmds__[cmd] is not None:
             if len(self.selection) > 0:
                 for client in self.hosts:
-                    Plugin.hostcmds[cmd](client, args)
+                    Plugin.__host_cmds__[cmd](client, args)
 
     def help(self):
         print("Server commands:")
-        if Plugin.servercmds is not None:
-            for cmd in Plugin.servercmds:
-                print("\t%s: %s" % (cmd, Plugin.servercmds[cmd].__doc__))
+        if Plugin.__server_cmds__ is not None:
+            for cmd in Plugin.__server_cmds__:
+                print("\t%s: %s" % (cmd, Plugin.__server_cmds__[cmd].__doc__))
 
-        if Plugin.hostcmds is not None and len(self.selection) > 0:
+        if Plugin.__host_cmds__ is not None and len(self.selection) > 0:
             print("Host commands:")
-            for cmd in Plugin.hostcmds:
-                print("\t%s: %s" % (cmd, Plugin.hostcmds[cmd].__doc__))
+            for cmd in Plugin.__host_cmds__:
+                print("\t%s: %s" % (cmd, Plugin.__host_cmds__[cmd].__doc__))
 
 class Host:
     """Class for hosts. Each Host object represent one host"""
