@@ -7,8 +7,9 @@ from sys import argv
 from thread import start_new_thread
 from threading import Thread
 from Plugins.mount import Plugin
-import Plugins.test
+import json
 import tab
+# import Plugins.essentials
 
 class Console:
     """Class to interfere with the server."""
@@ -62,6 +63,7 @@ class Server:
     selection = [] # List of selected hosts
     plugins = [] # List of active plugins
     sock = None
+    config = {}
 
     def __init__(self, max_conns=5, ip="0.0.0.0", port="9000"):
         """Starts to listen on socket"""
@@ -71,11 +73,18 @@ class Server:
 
         self.sock = socket(AF_INET, SOCK_STREAM)
         self.sock.setblocking(1)
+
         try:
             self.sock.bind((ip, int(port)))
             self.sock.listen(max_conns)
         except sock_error:
             print("Something went during binding & listening")
+
+        with open("config.json") as json_config:
+            self.config = json.load(json_config)
+
+        for plugin in self.config["plugins"]:
+            __import__("Plugins.%s" % plugin)
 
     def __del__(self):
         """Safely closes all sockets"""

@@ -16,13 +16,13 @@ class PluginMount(type):
             cls.__host_cmds__ = {}
         else:
             tmp = cls()
-            if tmp.__host_commands__ is not None:
+            if hasattr(cls, "__host_commands__"):
                 for cmd in tmp.__host_commands__:
                     cls.__host_cmds__[cmd] = tmp.__host_commands__[cmd]
-            if tmp.__server_commands__ is not None:
+            if hasattr(cls, "__server_commands__"):
                 for cmd in tmp.__server_commands__:
                     cls.__server_cmds__[cmd] = tmp.__server_commands__[cmd]
-            print("%s was loaded" % name)
+            # print("%s was loaded" % name)
 
 class Plugin(object):
     """Plugin class (to be extended by plugins)"""
