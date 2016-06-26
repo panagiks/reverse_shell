@@ -53,7 +53,7 @@ class Essentials(Plugin):
         """Kick the selected host(s)"""
         for host in server.selected:
             host.send("00000")
-            del selhost
+            del host
 
         server.clean()
 
