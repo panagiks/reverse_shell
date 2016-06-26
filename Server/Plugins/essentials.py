@@ -31,7 +31,7 @@ class Essentials(Plugin):
 
     def select(self, server, args):
         if len(args) == 0:
-            print("Usage: Choose_Host <id [id [id ...]]>")
+            print("Usage: Select <id [id [id ...]]>")
             return
 
         server.select(args)

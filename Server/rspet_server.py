@@ -96,6 +96,7 @@ class Server:
             self.sock.listen(max_conns)
         except sock_error:
             print("Something went during binding & listening")
+            sysexit()
 
         with open("config.json") as json_config:
             self.config = json.load(json_config)
@@ -211,12 +212,13 @@ class Host:
 
     def send(self, msg):
         """Send message to host"""
-        return self.sock.send(self._enc(msg))
+        if msg is not None and len(msg) > 0:
+            return self.sock.send(self._enc(msg))
 
     def recv(self, size=1024):
         """Receive from host"""
-        return self._dec(self.sock.recv(size))
-        # return self.sock.recv(size)
+        if size > 0:
+            return self._dec(self.sock.recv(size))
 
     def _enc(self, data):
         """Encrypt message (before send)"""
