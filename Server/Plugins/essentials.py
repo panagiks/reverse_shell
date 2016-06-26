@@ -17,20 +17,24 @@ class Essentials(Plugin):
         self.__host_commands__["Execute"] = self.execute
 
     def list_commands(self, server, args):
+        """List all availble commands"""
         server.help()
 
     def list_hosts(self, server, args):
+        """List all connected hosts"""
         for i in range(len(server.hosts)):
             tmp = server.hosts[i]
             print("[%d] %s:%s\t%s-%s" % (i, tmp.ip, tmp.port, tmp.version, tmp.type))
 
     def choose_host(self, server, args):
+        """Select a single host"""
         if len(args) != 1:
             print("Usage: Choose_Host <id>")
             return
         server.select([args[0]])
 
     def select(self, server, args):
+        """Select a multiple hosts"""
         if len(args) == 0:
             print("Usage: Select <id [id [id ...]]>")
             return
@@ -38,21 +42,26 @@ class Essentials(Plugin):
         server.select(args)
 
     def all(self, server, args):
+        """Select a all hosts"""
         server.select(None)
 
     def exit(self, server, args):
+        """Unselect all hosts"""
         server.select([])
 
     def close_connection(self, server, args):
+        """Kick the selected host(s)"""
         for host in server.selected:
             del selhost
 
         server.clean()
 
     def kill(self, host, args):
+        """Stop host(s) from doing the current task"""
         host.send("00008")
 
     def execute(self, host, args):
+        """Execute system command on host(s)"""
         if len(args) == 0:
             print("Usage: Execute <command>")
             return

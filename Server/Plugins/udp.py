@@ -9,6 +9,7 @@ class Files(Plugin):
         self.__host_commands__["UDP_Spoof"] = self.udp_spoof
 
     def udp_flood(self, host, args):
+        """Floods target machine with UDP packets"""
         if len(args) < 2:
             print("Usage: UDP_Flood <target_ip> <target_port> [payload]")
 
@@ -23,6 +24,7 @@ class Files(Plugin):
         host.send(cmd)
 
     def udp_spoof(self, host, args):
+        """Floods target machine with UDP packets via spoofed ip & port"""
         if len(args) < 4:
             print("Usage: UDP_Spoof <target_ip> <target_port> <spoofed_ip> <spoofed_port> [payload]")
 
