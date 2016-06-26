@@ -91,6 +91,7 @@ This project is open for contributors. If you have implemented a new feature, or
 ## Author
 
 [panagiks](https://twitter.com/panagiks)
+[dzervas](https://dzervas.gr)
 
 ## Contributors
 

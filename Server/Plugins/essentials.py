@@ -52,6 +52,7 @@ class Essentials(Plugin):
     def close_connection(self, server, args):
         """Kick the selected host(s)"""
         for host in server.selected:
+            host.send("00000")
             del selhost
 
         server.clean()
