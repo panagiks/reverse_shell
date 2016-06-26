@@ -28,14 +28,31 @@ class Console:
     def loop(self):
         """Main CLI loop"""
         self._logo()
-        start_new_thread(self.server.loop, ())
+        try:
+            start_new_thread(self.server.loop, ())
+        except sock_error:
+            print("Address is already in use")
+            sysexit()
+
         while True:
-            cmd = raw_input(self.prompt)
+            try:
+                cmd = raw_input(self.prompt)
+            except (KeyError, KeyboardInterrupt):
+                raise KeyboardInterrupt
 
             cmdargs = cmd.split(" ")
             cmd = cmdargs[0]
             del cmdargs[0]
             self.server.execute(cmd, cmdargs)
+
+            if len(self.server.selected) == 0:
+                self.prompt = "~$ "
+            elif len(self.server.selected) == 1:
+                self.prompt = "[%s]~$ " % self.server.selected[0].ip
+            elif len(self.server.selected) == len(self.server.hosts):
+                self.prompt = "[ALL]~$ "
+            else:
+                self.prompt = "[MULTIPLE]~$ "
 
     def _logo(self):
         """Print logo and Authorship/Licence."""
@@ -60,7 +77,7 @@ class Server:
     port = "9000"
     max_conns = 5
     hosts = [] # List of hosts
-    selection = [] # List of selected hosts
+    selected = [] # List of selected hosts
     plugins = [] # List of active plugins
     sock = None
     config = {}
@@ -95,7 +112,10 @@ class Server:
     def loop(self):
         """Main server loop. Better call it on its own thread"""
         while True:
-            (csock, (ip, port)) = self.sock.accept()
+            try:
+                (csock, (ip, port)) = self.sock.accept()
+            except sock_error:
+                raise sock_error
             self.hosts.append(Host(csock, ip, port))
 
     def select(self, ids=None):
@@ -111,6 +131,7 @@ class Server:
 
         self.selected = []
         for i in ids:
+            i = int(i)
             self.selected.append(self.hosts[i])
 
         return self.selected
@@ -124,16 +145,21 @@ class Server:
         It should accept len(args) - 1 arguments
         args    -- Arguments to pass to the command function"""
 
-        # TODO: Exceptions & catches here...
-        # TODO: Can this be done from regular plugin?
-        if cmd == "help":
-            self.help()
-        elif Plugin.__server_cmds__[cmd] is not None:
+        if len(cmd) == 0:
+            return
+
+        try:
             Plugin.__server_cmds__[cmd](self, args)
-        elif Plugin.__host_cmds__[cmd] is not None:
-            if len(self.selection) > 0:
-                for client in self.hosts:
-                    Plugin.__host_cmds__[cmd](client, args)
+        except KeyError:
+            if len(self.selected) > 0:
+                try:
+                    for client in self.hosts:
+                        Plugin.__host_cmds__[cmd](client, args)
+                    return
+                except KeyError:
+                    pass
+
+            print("Command not found. 'List_Commands' are your friends!")
 
     def help(self):
         print("Server commands:")
@@ -141,7 +167,7 @@ class Server:
             for cmd in Plugin.__server_cmds__:
                 print("\t%s: %s" % (cmd, Plugin.__server_cmds__[cmd].__doc__))
 
-        if Plugin.__host_cmds__ is not None and len(self.selection) > 0:
+        if Plugin.__host_cmds__ is not None and len(self.selected) > 0:
             print("Host commands:")
             for cmd in Plugin.__host_cmds__:
                 print("\t%s: %s" % (cmd, Plugin.__host_cmds__[cmd].__doc__))
@@ -151,7 +177,7 @@ class Server:
             if host.deleteme:
                 del host
 
-        for host in self.selection:
+        for host in self.selected:
             if host.deleteme:
                 del host
 
@@ -173,7 +199,6 @@ class Host:
         tmp = self.recv().split("-")
         self.version = tmp[0]
         self.type = tmp[1]
-        print(self.ip, self.port, self.version, self.type)
 
     def __del__(self):
         """Graceful deletion of host"""
@@ -215,6 +240,6 @@ if __name__ == "__main__":
         cli.loop(int(argv[1]))
     except IndexError:
         cli.loop()
-    except KeyError:
+    except (KeyError, KeyboardInterrupt):
         del cli
         sysexit()

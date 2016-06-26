@@ -13,6 +13,8 @@ class Essentials(Plugin):
         self.__server_commands__["Exit"] = self.exit
         self.__server_commands__["Close_Connection"] = self.close_connection
 
+        self.__host_commands__["KILL"] = self.kill
+
     def list_commands(self, server, args):
         server.help()
 
@@ -22,9 +24,16 @@ class Essentials(Plugin):
             print("[%d] %s:%s\t%s-%s" % (i, tmp.ip, tmp.port, tmp.version, tmp.type))
 
     def choose_host(self, server, args):
+        if len(args) != 1:
+            print("Usage: Choose_Host <id>")
+            return
         server.select([args[0]])
 
     def select(self, server, args):
+        if len(args) == 0:
+            print("Usage: Choose_Host <id [id [id ...]]>")
+            return
+
         server.select(args)
 
     def all(self, server, args):
@@ -34,7 +43,10 @@ class Essentials(Plugin):
         server.select([])
 
     def close_connection(self, server, args):
-        for host in server.selection:
+        for host in server.selected:
             del selhost
 
         server.clean()
+
+    def kill(self, host, args):
+        host.send("00008")
