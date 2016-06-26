@@ -10,7 +10,7 @@ class Files(Plugin):
         self.__host_commands__["Make_File"] = self.make_file
         self.__host_commands__["Make_Binary"] = self.make_binary
 
-    def pull_file(self, client, args):
+    def pull_file(self, host, args):
         """Pulls a regular text file from the host(s).
         Use it on a single selected host, otherwise each host will overwrite
         last's contents"""
@@ -24,22 +24,22 @@ class Files(Plugin):
         except IndexError:
             local_file = remote_file
 
-        client.send("00003")
-        client.send("%03d" % len(remote_file))
-        client.send(remote_file)
+        host.send("00003")
+        host.send("%03d" % len(remote_file))
+        host.send(remote_file)
 
-        if client.recv(3) == "fna":
+        if host.recv(3) == "fna":
             print("Something went bad...")
             return 2
 
         try:
             with open(local_file, "w") as fp:
-                filesize = int(client.recv(13))
-                fp.write(client.recv(filesize))
+                filesize = int(host.recv(13))
+                fp.write(host.recv(filesize))
         except IOError:
             print("Cannot create local file")
 
-    def pull_binary(self, client, args):
+    def pull_binary(self, host, args):
         """Pulls a binary file from the host(s).
         Use it on a single selected host, otherwise each host will overwrite
         last's contents"""
@@ -53,22 +53,22 @@ class Files(Plugin):
         except IndexError:
             local_file = remote_file
 
-        client.send("00004")
-        client.send("%03d" % len(remote_file))
-        client.send(remote_file)
+        host.send("00004")
+        host.send("%03d" % len(remote_file))
+        host.send(remote_file)
 
-        if client.recv(3) == "fna":
+        if host.recv(3) == "fna":
             print("Something went bad...")
             return 2
 
         try:
             with open(local_file, "wb") as fp:
-                filesize = int(client.recv(13))
-                fp.write(client.recv(filesize))
+                filesize = int(host.recv(13))
+                fp.write(host.recv(filesize))
         except IOError:
             print("Cannot create local file")
 
-    def make_file(self, client, args):
+    def make_file(self, host, args):
         """Sends a regular text file to the host(s)"""
         if len(args) == 0:
             print("Usage: Make_File <local_file> [remote_file]")
@@ -79,21 +79,21 @@ class Files(Plugin):
         except IndexError:
             remote_file = local_file
 
-        client.send("00001")
-        client.send("%03d" % len(remote_file))
-        client.send(remote_file)
+        host.send("00001")
+        host.send("%03d" % len(remote_file))
+        host.send(remote_file)
 
-        if client.recv(3) == "fna":
+        if host.recv(3) == "fna":
             print("Something went bad...")
             return 2
 
         with open(local_file) as fp:
             contents = fp.read()
-            client.send("%013d" % len(contents))
-            client.send(contents)
-            client.recv(3) # What to do with this?
+            host.send("%013d" % len(contents))
+            host.send(contents)
+            host.recv(3) # What to do with this?
 
-    def make_binary(self, client, args):
+    def make_binary(self, host, args):
         """Sends a binary file to the host(s)"""
         if len(args) == 0:
             print("Usage: Make_Binary <local_file> [remote_file]")
@@ -104,16 +104,16 @@ class Files(Plugin):
         except IndexError:
             remote_file = local_file
 
-        client.send("00002")
-        client.send("%03d" % len(remote_file))
-        client.send(remote_file)
+        host.send("00002")
+        host.send("%03d" % len(remote_file))
+        host.send(remote_file)
 
-        if client.recv(3) == "fna":
+        if host.recv(3) == "fna":
             print("Something went bad...")
             return 2
 
         with open(local_file, "rb") as fp:
             contents = fp.read()
-            client.send("%013d" % len(contents))
-            client.send(contents)
-            client.recv(3) # What to do with this?
+            host.send("%013d" % len(contents))
+            host.send(contents)
+            host.recv(3) # What to do with this?
