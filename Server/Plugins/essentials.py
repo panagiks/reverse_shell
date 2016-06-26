@@ -14,6 +14,7 @@ class Essentials(Plugin):
         self.__server_commands__["Close_Connection"] = self.close_connection
 
         self.__host_commands__["KILL"] = self.kill
+        self.__host_commands__["Execute"] = self.execute
 
     def list_commands(self, server, args):
         server.help()
@@ -50,3 +51,17 @@ class Essentials(Plugin):
 
     def kill(self, host, args):
         host.send("00008")
+
+    def execute(self, host, args):
+        if len(args) == 0:
+            print("Usage: Execute <command>")
+            return
+
+        command = " ".join(args)
+
+        host.send("00007")
+        host.send("%013d" % len(command))
+        host.send(command)
+
+        respsize = int(host.recv(13))
+        print(host.recv(respsize))
