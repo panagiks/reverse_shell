@@ -2,7 +2,7 @@
 
 ![MIT Licence](https://img.shields.io/badge/Licence-MIT_Licence-red.svg?style=plastic)
 [![Python 2.7](https://img.shields.io/badge/Python-2.7-yellow.svg?style=plastic)](https://www.python.org/)
-![v0.0.6](https://img.shields.io/badge/Release-v0.1.0-orange.svg?style=plastic)
+![v0.0.6](https://img.shields.io/badge/Release-v0.2.0-orange.svg?style=plastic)
 ![Maintained](https://img.shields.io/badge/Maintained-Yes-green.svg?style=plastic)
 [![Twitter](https://img.shields.io/badge/Twitter-@TheRSPET-blue.svg?style=plastic)](https://twitter.com/theRSPET)
 
@@ -12,7 +12,7 @@ DISCLAIMER: This software is provided for educational purposes and as a proof of
 
 NOTE: As of v0.0.3 folder `min` has been added. Since the new version has many more features not essential to the main functionality (a reverse shell that is), min will not recieve any more features beyond v0.0.3 and will only get bug and performance related fixes.
 
-Current Version: `v0.1.0`
+Current Version: `v0.2.0`
 
 Follow: [@TheRSPET](https://twitter.com/TheRSPET) on Twitter for updates.
 
@@ -26,6 +26,7 @@ Follow: [@TheRSPET](https://twitter.com/TheRSPET) on Twitter for updates.
 * Multiple/All Hosts management; order File/Binary transfer and UDP Flood from Multiple/All connected Hosts
 * Modular Code Design to allow easy customization[3]
 * Client script is tested and is compatible with PyInstaller (can be made into .exe)[4]
+* Full plug-in support.
 
 *[1]The idea for XORing as well as the skeleton for the client came from [primalsecurity.net](http://www.primalsecurity.net) so if you like this pack of scripts you'll probably love what they do
 
@@ -79,6 +80,10 @@ As always if you have any suggestion, bug report or complain feel free to contac
 - [x] ~~Add client version and type (min or full) as a property when client connects and at `List_Hosts`~~
 - [ ] Add client update mechanism (being worked on)
 - [ ] Add UDP Reflection functionality (already in the workings)
+- [ ] Provide more settings via config file
+- [ ] Re-introduce multythreading when handling multiple hosts.
+- [ ] Make commands available with 'Tab' automaticly generated based on loaded plugins.
+- [ ] Fix logical bug when deleting a client. (Client still shows up on List_Hosts)
 
 ## Styleguide
 
@@ -88,10 +93,13 @@ This project is following [Google's Python Styleguide](https://google.github.io/
 
 This project is open for contributors. If you have implemented a new feature, or maybe an improvment to the current code feel free to open a pull request. If you want to sugest a new feature open an issue. Additionally Testers are needed to run a few standard scenarios (and a few of their own maybe) to decrease the chance a bug slips into a new version. Should there be any interest about testing a `beta` folder will be created (where code to be tested will be uploaded) along with a list of scenarios.
 
-## Author
+## Author - Project Owner/Manager
 
 [panagiks](https://twitter.com/panagiks)
-[dzervas](https://dzervas.gr)
+
+## Co-Author
+
+[dzervas](https://dzervas.gr) -- Code (OO-redesign, Plugin-system implementation)
 
 ## Contributors
 
