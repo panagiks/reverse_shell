@@ -56,7 +56,7 @@ class Files(Plugin):
             host.send(remote_file)
 
             if host.recv(3) == "fna":
-                print("Something went bad...")s
+                print("Something went bad...")
             else:
                 try:
                     with open(local_file, "wb") as fp:
