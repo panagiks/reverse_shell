@@ -19,8 +19,8 @@ Follow: [@TheRSPET](https://twitter.com/TheRSPET) on Twitter for updates.
 ## Features
 
 * Remote Command Execution
-* Trafic masking (XORed insted of cleartext); for better results use port 443[1]
-* Built-in File/Binary transfer (both ways) over the masked trafic
+* Trafic masking (XORed instead of cleartext); for better results use port 443[1]
+* Built-in File/Binary transfer (both ways) over the masked traffic
 * Built-in UDP Flooding tool
 * Built-in UDP Spoofing tool[2]
 * Multiple/All Hosts management; order File/Binary transfer and UDP Flood from Multiple/All connected Hosts
@@ -77,24 +77,24 @@ As always if you have any suggestion, bug report or complain feel free to contac
 
 ## Todo
 
-- [x] ~~Fix logic bug where if a dirrect command to Host OS has no output Server displays command not recognised~~
-- [ ] Fix logic bug where if a dirrect command's to Host OS execution is perpetual the Server deadlocks
+- [x] ~~Fix logic bug where if a direct command to Host OS has no output Server displays command not recognized~~
+- [ ] Fix logic bug where if a direct command's to Host OS execution is perpetual the Server deadlocks
 - [x] ~~Add client version and type (min or full) as a property when client connects and at `List_Hosts`~~
 - [ ] Add client update mechanism (being worked on)
 - [ ] Add UDP Reflection functionality (already in the workings)
 - [ ] Provide more settings via config file
 - [ ] Re-introduce multythreading when handling multiple hosts.
-- [ ] Make commands available with 'Tab' automaticly generated based on loaded plugins.
+- [ ] Make commands available with 'Tab' automatically generated based on loaded plugins.
 - [ ] Fix logical bug when deleting a client. (Client still shows up on List_Hosts)
 - [ ] Create comprehensive plug-in creation guide. 
 
 ## Styleguide
 
-This project is following [Google's Python Styleguide](https://google.github.io/styleguide/pyguide.html) with a minor varitation on the use of whitespaces to align ":" tokens.
+This project is following [Google's Python Styleguide](https://google.github.io/styleguide/pyguide.html) with a minor variation on the use of whitespaces to align ":" tokens.
 
 ## Contribution Opportunities
 
-This project is open for contributors. If you have implemented a new feature, or maybe an improvment to the current code feel free to open a pull request. If you want to sugest a new feature open an issue. Additionally Testers are needed to run a few standard scenarios (and a few of their own maybe) to decrease the chance a bug slips into a new version. Should there be any interest about testing a `beta` branch will be created (where code to be tested will be uploaded) along with a list of scenarios.
+This project is open for contributors. If you have implemented a new feature, or maybe an improvement to the current code feel free to open a pull request. If you want to sugest a new feature open an issue. Additionally Testers are needed to run a few standard scenarios (and a few of their own maybe) to decrease the chance a bug slips into a new version. Should there be any interest about testing a `beta` branch will be created (where code to be tested will be uploaded) along with a list of scenarios.
 
 ## Author - Project Owner/Manager
 
@@ -102,7 +102,7 @@ This project is open for contributors. If you have implemented a new feature, or
 
 ## Co-Author
 
-[dzervas](https://dzervas.gr) -- Code (OO-redesign, Plugin-system implementation)
+[dzervas](https://dzervas.gr) -- Code (OO-redesign, Plug-in system implementation)
 
 ## Contributors
 
