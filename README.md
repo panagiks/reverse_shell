@@ -15,6 +15,7 @@ NOTE: As of v0.0.3 folder `min` has been added. Since the new version has many m
 Current Version: `v0.2.0`
 
 Follow: [@TheRSPET](https://twitter.com/TheRSPET) on Twitter for updates.
+
 Documentation : [rspet.readthedocs.io](http://rspet.readthedocs.io)
 
 ## Features
