@@ -80,7 +80,7 @@ As always if you have any suggestion, bug report or complain feel free to contac
 - [x] ~~Fix logic bug where if a direct command to Host OS has no output Server displays command not recognized~~
 - [ ] Fix logic bug where if a direct command's to Host OS execution is perpetual the Server deadlocks
 - [x] ~~Add client version and type (min or full) as a property when client connects and at `List_Hosts`~~
-- [ ] Add client update mechanism (being worked on)
+- [ ] Add client update mechanism
 - [ ] Add UDP Reflection functionality (already in the workings)
 - [ ] Provide more settings via config file
 - [ ] Re-introduce multythreading when handling multiple hosts.
