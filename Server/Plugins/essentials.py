@@ -43,87 +43,108 @@ class Essentials(Plugin):
         self.__cmd_help__["Execute"] = "Execute <command>"
 
     def help(self, server, args):
-        """List all availble commands."""
+        """List commands available in current state or provide syntax for a command."""
+        ret = [None,0,""]
         if len(args) > 1:
-            print("Syntax : %s" % self.__cmd_help__["help"])
+            ret[2] = ("Syntax : %s" % self.__cmd_help__["help"])
+            ret[1] = 1 #Invalid Syntax Error Code
         else:
-            server.help(args)
-        return None
+            ret[2] = server.help(args)
+        return ret
 
     def list_hosts(self, server, args):
         """List all connected hosts."""
+        ret = [None,0,""]
         hosts = server.get_hosts()
-        for i in range(len(hosts)):
-            tmp = hosts[i]
-            print("[%d] %s:%s\t%s-%s" % (i, tmp.ip, tmp.port, tmp.version, tmp.type))
-        return None
+        if hosts:
+            ret[2] += "Hosts:"
+            for i in hosts:
+                tmp = hosts[i]
+                ret[2] += ("\n[%s] %s:%s\t%s-%s" % (i, tmp.ip, tmp.port, tmp.version, tmp.type))
+        else:
+            ret[2] += "No hosts connected to the Server."
+        return ret
 
     def list_sel_hosts(self, server, args):
         """List selected hosts."""
+        ret = [None,0,""]
         hosts = server.get_selected()
-        for i in range(len(hosts)):
-            tmp = hosts[i]
-            print("[%d] %s:%s\t%s-%s" % (i, tmp.ip, tmp.port, tmp.version, tmp.type))
-        return None
+        ret[2] += "Selected Hosts:"
+        #for i in range(len(hosts)):
+        for tmp in hosts:
+            #tmp = hosts[i]
+            ret[2] += ("\n[%s] %s:%s\t%s-%s" % (tmp.id, tmp.ip, tmp.port, tmp.version, tmp.type))
+        return ret
 
     def choose_host(self, server, args):
         """Select a single host."""
-        state = "connected"
+        ret = [None,0,""]
         if len(args) != 1 or not args[0].isdigit():
-            print("Usage: Choose_Host <id>")
-            state =  None
+            ret[2] = ("Syntax : %s" % self.__cmd_help__["Choose_Host"])
+            ret[1] = 1 #Invalid Syntax Error Code
         else:
-            server.select([args[0]])
-        return state
+            ret[1], ret[2] = server.select([args[0]])
+            ret[0] = "connected"
+        return ret
 
     def select(self, server, args):
-        """Select a multiple hosts."""
-        state = "selected"
+        """Select multiple hosts."""
+        ret = [None,0,""]
         if len(args) == 0:
-            print("Usage: Select <id [id [id ...]]>")
-            state = None
+            ret[2] = ("Syntax : %s" % self.__cmd_help__["Select"])
+            ret[1] = 1 #Invalid Syntax Error Code
         else:
-            server.select(args)
-        return state
+            ret[1], ret[2] = server.select(args)
+            ret[0] = "multiple"
+        return ret
 
     def all(self, server, args):
         """Select all hosts."""
-        server.select(None)
-        return "all"
+        ret = [None,0,""]
+        ret[1], ret[2] = server.select(None)
+        ret[0] = "all"
+        return ret
 
     def exit(self, server, args):
         """Unselect all hosts."""
-        return "basic"
+        ret = [None,0,""]
+        ret[0] = "basic"
+        return ret
 
     def quit(self, server, args):
-        """Quit the CLI."""
+        """Quit the CLI and terminate the server."""
+        ret = [None,0,""]
         server.quit()
+        return ret
 
     def close_connection(self, server, args):
         """Kick the selected host(s)."""
+        ret = [None,0,""]
         hosts = server.get_selected()
         for host in hosts:
             host.trash() #
-        return "basic"
+        ret[0] = "basic"
+        return ret
 
     def kill(self, server, args):
         """Stop host(s) from doing the current task."""
+        ret = [None,0,""]
         hosts = server.get_selected()
-        state = None
         for host in hosts:
             try:
                 host.send(host.command_dict['KILL'])
             except sock_error:
                 host.purge()
-                state = "basic"
-        return state
+                ret[0] = "basic"
+        return ret
 
     def execute(self, server, args):
         """Execute system command on host."""
+        ret = [None,0,""]
         host = server.get_selected()[0]
-        state = None
         if len(args) == 0:
-            print("Usage: Execute <command>")
+            ret[2] = ("Syntax : %s" % self.__cmd_help__["Execute"])
+            ret[1] = 1 #Invalid Syntax Error Code
         else:
             command = " ".join(args)
             try:
@@ -132,8 +153,8 @@ class Essentials(Plugin):
                 host.send(command)
             except sock_error:
                 host.purge()
-                state = "basic"
+                ret[0] = "basic"
             else:
                 respsize = int(host.recv(13))
-                print(host.recv(respsize))
-        return state
+                ret[2] += str(host.recv(respsize))
+        return ret
