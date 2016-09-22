@@ -38,7 +38,7 @@ def commands():
         "UDP_Flood",
         "UDP_Spoof",
         "KILL",
-        "List_Commands",
+        "help",
         "List_Sel_Hosts",
         "Close_Connection",
         "Exit",
