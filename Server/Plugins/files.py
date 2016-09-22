@@ -30,10 +30,11 @@ class Files(Plugin):
 
     def pull_file(self, server, args):
         """Pull a regular text file from the host."""
+        ret = [None,0,""]
         host = server.get_selected()[0]
-        state = None
         if len(args) == 0:
-            print("Usage: Pull_File <remote_file> [local_file]")
+            ret[2] = ("Syntax : %s" % self.__cmd_help__["Pull_File"])
+            ret[1] = 1 # Invalid Syntax Error Code
         else:
             remote_file = args[0]
             try:
@@ -45,28 +46,33 @@ class Files(Plugin):
                 host.send("%03d" % len(remote_file))
                 host.send(remote_file)
             except sock_error:
-                state = "basic"
+                ret[0] = "basic"
+                ret[1] = 2 # Socket Error Code
             else:
                 try:
                     if host.recv(3) == "fna": # recv can raise sock_error
-                        print("File does not exist or Access Denied")
+                        ret[2] += "File does not exist or Access Denied"
+                        ret[1] = 4 # Remote Access Denied Error Code
                     else:
                         try:
                             with open(local_file, "w") as file_obj:
                                 filesize = int(host.recv(13))
                                 file_obj.write(host.recv(filesize))
                         except IOError:
-                            print("Cannot create local file")
+                            ret[2] += "Cannot create local file"
+                            ret[1] = 3 # Local Access Denied Error Code
                 except sock_error:
-                    pass
-        return state
+                    ret[0] = "basic"
+                    ret[1] = 2 # Socket Error Code
+        return ret
 
     def pull_binary(self, server, args):
-        """Pull a binary file from the host(s)."""
+        """Pull a binary file from the host."""
+        ret = [None,0,""]
         host = server.get_selected()[0]
-        state = None
         if len(args) == 0:
-            print("Usage: Pull_Binary <remote_file> [local_file]")
+            ret[2] = ("Syntax : %s" % self.__cmd_help__["Pull_Binary"])
+            ret[1] = 1 # Invalid Syntax Error Code
         else:
             remote_file = args[0]
             try:
@@ -78,28 +84,33 @@ class Files(Plugin):
                 host.send("%03d" % len(remote_file))
                 host.send(remote_file)
             except sock_error:
-                state = "basic"
+                ret[0] = "basic"
+                ret[1] = 2 # Socket Error Code
             else:
                 try:
                     if host.recv(3) == "fna": # recv can raise sock_error
-                        print("File does not exist or Access Denied")
+                        ret[2] += "File does not exist or Access Denied"
+                        ret[1] = 4 # Remote Access Denied Error Code
                     else:
                         try:
                             with open(local_file, "wb") as file_obj:
                                 filesize = int(host.recv(13))
                                 file_obj.write(host.recv(filesize))
                         except IOError:
-                            print("Cannot create local file")
+                            ret[2] += "Cannot create local file"
+                            ret[1] = 3 # Local Access Denied Error Code
                 except sock_error:
-                    state = "basic"
-        return state
+                    ret[0] = "basic"
+                    ret[1] = 2 # Socket Error Code
+        return ret
 
     def make_file(self, server, args):
-        """Send a regular text file to the host(s)"""
+        """Send a regular text file to the host(s)."""
+        ret = [None,0,""]
         hosts = server.get_selected()
-        state = None
         if len(args) == 0:
-            print("Usage: Make_File <local_file> [remote_file]")
+            ret[2] = ("Syntax : %s" % self.__cmd_help__["Make_File"])
+            ret[1] = 1 # Invalid Syntax Error Code
         else:
             local_file = args[0]
             try:
@@ -112,11 +123,13 @@ class Files(Plugin):
                     host.send("%03d" % len(remote_file))
                     host.send(remote_file)
                 except sock_error:
-                    state = "basic"
+                    ret[0] = "basic"
+                    ret[1] = 2 # Socket Error Code
                 else:
                     try:
                         if host.recv(3) == "fna":
-                            print("Access Denied")
+                            ret[2] += "Access Denied"
+                            ret[1] = 4 # Remote Access Denied Error Code
                         else:
                             with open(local_file) as file_obj:
                                 contents = file_obj.read()
@@ -124,15 +137,17 @@ class Files(Plugin):
                                 host.send(contents)
                                 host.recv(3) #For future use?
                     except sock_error:
-                        state = "basic"
-        return state
+                        ret[0] = "basic"
+                        ret[1] = 2 # Socket Error Code
+        return ret
 
     def make_binary(self, server, args):
-        """Send a binary file to the host(s)"""
+        """Send a binary file to the host(s)."""
+        ret = [None,0,""]
         hosts = server.get_selected()
-        state = None
         if len(args) == 0:
-            print("Usage: Make_Binary <local_file> [remote_file]")
+            ret[2] = ("Syntax : %s" % self.__cmd_help__["Make_Binary"])
+            ret[1] = 1 # Invalid Syntax Error Code
         else:
             local_file = args[0]
             try:
@@ -145,11 +160,13 @@ class Files(Plugin):
                     host.send("%03d" % len(remote_file))
                     host.send(remote_file)
                 except sock_error:
-                    state = "basic"
+                    ret[0] = "basic"
+                    ret[1] = 2 # Socket Error Code
                 else:
                     try:
                         if host.recv(3) == "fna":
-                            print("Access Denied")
+                            ret[2] += "Access Denied"
+                            ret[1] = 4 # Remote Access Denied Error Code
                         else:
                             with open(local_file, "rb") as file_obj:
                                 contents = file_obj.read()
@@ -157,5 +174,6 @@ class Files(Plugin):
                                 host.send(contents)
                                 host.recv(3) # For future use?
                     except sock_error:
-                        state = "basic"
-        return state
+                        ret[0] = "basic"
+                        ret[1] = 2 # Socket Error Code
+        return ret
