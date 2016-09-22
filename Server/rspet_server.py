@@ -8,14 +8,76 @@ from socket import socket, AF_INET, SOCK_STREAM
 from socket import error as sock_error
 from datetime import datetime
 from thread import start_new_thread
-from threading import Thread
+#from threading import Thread # Will bring back at some point 
 import json
 from Plugins.mount import Plugin
 import tab
 
 
+
+class ReturnCodes(object):
+    """Enumeration containing the Return Codes of the Server."""
+    OK, InvalidSyntax, SocketError, LocalAccessError, RemoteAccessError = range(5)
+    OutOfScope, CommandNotFound, InvalidHostID = range(5, 8)
+
+
+class API(object):
+    """Define RSPET Server's Api."""
+    def __init__(self, max_conns=5):
+        """Initialize Server object."""
+        self.server = Server(max_conns)
+        try:
+            start_new_thread(self.server.loop, ())
+        except sock_error:
+            raise sock_error
+
+    def call_plugin(self, command, args=[]):
+        """Call a plugin command"""
+        ret = self.server.execute(command, args)
+        return {"transition":ret[0],
+                "code":ret[1],
+                "string":ret[2]}
+
+    def select(self, args=[]):
+        """Manage host selection."""
+        ret = self.server.select(args)
+        return {"transition":None,
+                "code":ret[0],
+                "string":ret[1]}
+
+    def help(self):
+        """
+        Temporary. Should interface Server's help when Circular references are removed.
+        """
+        help_dct = {}
+        for cmd in Plugin.__server_cmds__:
+            help_dct[cmd] = {'help':Plugin.__server_cmds__[cmd].__doc__,
+                             'syntax':Plugin.__help__[cmd],
+                             'states':Plugin.__cmd_states__[cmd]}
+        return help_dct
+
+    def refresh(self):
+        """Interface Server object's clean function."""
+        self.server.clean()
+
+    def get_server(self):
+        """Return the instance of Server object for low level API."""
+        return self.server
+
+    def get_hosts(self):
+        """Return hosts by ID."""
+        host = self.server.get_hosts()
+        ret = {}
+        for h_id in host:
+            tmp_host = host[h_id]
+            ret[h_id] = {"ip":tmp_host.ip,
+                         "port":tmp_host.port,
+                         "version":str(tmp_host.version),
+                         "type":str(tmp_host.type)}
+        return ret
+
 class Console(object):
-    """Class to interface with the server."""
+    """Provide command line interface for the server."""
     prompt = "~$ " # Current command prompt.
     states = {} # Dictionary that defines available states.
     state = "basic" #CLI "entry" state.
@@ -58,7 +120,18 @@ class Console(object):
             cmd = cmdargs[0]
             del cmdargs[0]
             #Execute command.
-            tmp_state = self.server.execute(cmd, cmdargs)
+            try:
+                if Console.state in Plugin.__cmd_states__[cmd]:
+                    results = self.server.execute(cmd, cmdargs)
+                else:
+                    results = [None, 5, "Command used out of scope."]
+            except KeyError:
+                results = [None, 6, "Command not found. Try help for a list of all commands!"]
+            tmp_state = results[0]
+            #return_code = results[1] # Future use ? Also API.
+            return_string = results[2]
+            if return_string != "":
+                print(return_string)
             try:
                 Console.states[tmp_state](self) #State transition.
             except KeyError: #If none is returned make no state change.
@@ -66,6 +139,7 @@ class Console(object):
 
     def _basic(self):
         self.server.clean()
+        self.server.select([])
         Console.prompt = "~$ "
         Console.state = "basic"
 
@@ -88,7 +162,7 @@ class Console(object):
             Console.state = "multiple"
 
     def _logo(self):
-        """Print logo and Authorship/Licence."""
+        """Print logo and Authorship/License."""
         print(r"#####################################################")
         print(r"__________  _________________________________________")
         print(r"\______   \/   _____/\______   \_   _____/\__    ___/")
@@ -106,19 +180,33 @@ class Console(object):
 
 class Server(object):
     """Main class of the server. Manage server socket, selections and call plugins."""
-    hosts = [] # List of hosts
-    selected = [] # List of selected hosts
-    plugins = [] # List of active plugins
+    #hosts = [] # List of hosts
+    #selected = [] # List of selected hosts
+    #plugins = [] # List of active plugins
     #config = {} # Reserved for future use (dynamic plug-in loading).
 
     def __init__(self, max_conns=5, ip="0.0.0.0", port="9000"):
-        """Starts to listen on socket"""
-        self._log("L", "Session Start.")
+        """Start listening on socket."""
         self.ip = ip
         self.port = port
         self.max_conns = max_conns
         self.sock = socket(AF_INET, SOCK_STREAM)
+        self.serial = 0
+        self.hosts = {} # List of hosts
+        self.selected = [] # List of selected hosts
+        self.plugins = [] # List of active plugins
+        self.log_opt = [] # List of Letters. Indicates logging level
 
+        with open("config.json") as json_config:
+            self.config = json.load(json_config)
+        self.log_opt = self.config["log"]
+        self._log("L", "Session Start.")
+        for plugin in self.config["plugins"]:
+            try:
+                __import__("Plugins.%s" % plugin)
+                self._log("L", "%s plugin loaded." % plugin)
+            except ImportError:
+                self._log("E", "%s plugin failed to load." % plugin)
         try:
             self.sock.bind((ip, int(port)))
             self.sock.listen(max_conns)
@@ -128,24 +216,17 @@ class Server(object):
             self._log("E", "Error binding socket @ %s:%s." %(self.ip, self.port))
             sysexit()
 
-        with open("config.json") as json_config:
-            self.config = json.load(json_config)
-
-        for plugin in self.config["plugins"]:
-            try:
-                __import__("Plugins.%s" % plugin)
-                self._log("L", "%s plugin loaded." % plugin)
-            except ImportError:
-                self._log("E", "%s plugin failed to load." % plugin)
-
     def trash(self):
         """Safely closes all sockets"""
         for host in self.hosts:
-            host.trash()
+            self.hosts[host].trash()
         self.clean()
+        self.select([])
         self.sock.close()
 
     def _log(self, level, action):
+        if level not in self.log_opt:
+            return
         timestamp = datetime.now()
         with open("log.txt", 'a') as logfile:
             logfile.write("%s : [%s/%s/%s %s:%s:%s] => %s\n" %(level,
@@ -158,7 +239,7 @@ class Server(object):
                                                                action))
 
     def loop(self):
-        """Main server loop. Better call it on its own thread"""
+        """Main server loop for accepting connections. Better call it on its own thread"""
         while True:
             try:
                 (csock, (ip, port)) = self.sock.accept()
@@ -166,7 +247,8 @@ class Server(object):
                                                               str(port)))
             except sock_error:
                 raise sock_error
-            self.hosts.append(Host(csock, ip, port))
+            self.hosts[str(self.serial)] = Host(csock, ip, port, self.serial)
+            self.serial += 1
 
     def select(self, ids=None):
         """Selects given host(s) based on ids
@@ -175,20 +257,24 @@ class Server(object):
         ids     -- Array of ids of hosts. Empty array unselects all. None
         selects all
         """
+        ret = [0, ""]
         flag = False
         if ids is None:
-            self.selected = self.hosts
+            for h_id in self.hosts:
+                self.selected.append(self.hosts[h_id])
         else:
-            self.selected = []
+            #self.selected = []
             for i in ids:
-                i = int(i)
+                i = str(i)
                 try:
-                    self.selected.append(self.hosts[i])
-                except IndexError:
+                    if self.hosts[i] not in self.selected:
+                        self.selected.append(self.hosts[i])
+                except KeyError:
                     flag = True
         if flag:
-            print("One or more host IDs were invalid. Continuing with valid hosts ...")
-        return self.selected
+            ret[0] = 7
+            ret[1] = "One or more host IDs were invalid. Continuing with valid hosts ..."
+        return ret
 
     def get_selected(self):
         """
@@ -203,7 +289,7 @@ class Server(object):
         return self.hosts
 
     def execute(self, cmd, args):
-        """Execute function on all client objects.
+        """Execute a command on all selected clients.
 
         Keyword argument:
         cmd     -- Function to call for each selected host.
@@ -211,49 +297,50 @@ class Server(object):
         It should accept len(args) - 1 arguments
         args    -- Arguments to pass to the command function"""
 
-        state = None
+        ret = [None, 0, ""]
         try:
-            if Console.state in Plugin.__cmd_states__[cmd]:
-                try:
-                    state = Plugin.__server_cmds__[cmd](self, args)
-                except KeyError:
-                    raise KeyError
-            else:
-                print("Command used out of scope.")
+            ret = Plugin.__server_cmds__[cmd](self, args)
         except KeyError:
-            print("Command not found. Try help for a list of all commands!")
-        return state
+            raise KeyError
+        return ret
 
     def help(self, args):
         """Print all the commands available in the current interface allong with
         their docsting."""
+        help_str = ""
         if len(args) == 0:
-            print("Server commands:")
+            help_str += "Server commands:"
             if Plugin.__server_cmds__ is not None:
                 for cmd in Plugin.__server_cmds__:
                     if Console.state in Plugin.__cmd_states__[cmd]:
-                        print("\t%s: %s" % (cmd, Plugin.__server_cmds__[cmd].__doc__))
+                        help_str += ("\n\t%s: %s"\
+                                     % (cmd, Plugin.__server_cmds__[cmd].__doc__))
         else:
-            print("Command : %s" % args[0])
+            help_str += ("Command : %s" % args[0])
             try:
-                print("Syntax : %s" % Plugin.__help__[args[0]])
+                help_str += ("\nSyntax : %s" % Plugin.__help__[args[0]])
             except KeyError:
-                print("Command not found! Try help with no arguments for a list of all command available in current scope.")
+                help_str += "\nCommand not found! Try help with no arguments for\
+                             a list of all commands available in current scope."
+        return help_str
 
     def clean(self):
-        """Remove hosts taged for deletion and unselect all selected hosts."""
-        for host_id in range(len(self.hosts)):
-            if self.hosts[host_id].deleteme:
-                self.hosts[host_id] = None
-
-        self.hosts = [a for a in self.hosts if a is not None]
-
-        self.select([])
+        """Remove hosts tagged for deletion."""
+        tmp_dct = {}
+        for host_id in self.hosts:
+            if not self.hosts[host_id].deleteme:
+                #self.hosts.pop(host_id)
+                tmp_dct[host_id] = self.hosts[host_id]
+            elif self.hosts[host_id] in self.selected:
+                self.selected.remove(self.hosts[host_id])
+        self.hosts = tmp_dct
+        #self.hosts = [a for a in self.hosts if a is not None]
+        #self.select([])
 
 
     def quit(self):
         """
-        Interface function. Handle a Quit signal.
+        Interface function. Raise a Quit signal.
         """
         Console.quit_signal = True
 
@@ -271,12 +358,13 @@ class Host(object):
         'KILL'       : '00008'
     }
 
-    def __init__(self, sock, ip, port):
-        """Accept the connection and initialize variables"""
+    def __init__(self, sock, ip, port, h_id):
+        """Accept the connection and initialize variables."""
         self.deleteme = False
         self.sock = sock
         self.ip = ip
         self.port = port
+        self.id = h_id
 
         tmp = self.recv().split("-")
         self.version = tmp[0]
@@ -298,6 +386,7 @@ class Host(object):
 
     def __eq__(self, other):
         """Check weather two sockets are the same socket."""
+        #Why is this here ?
         return self.sock == other.sock
 
     def send(self, msg):
@@ -319,15 +408,15 @@ class Host(object):
     def _enc(self, data):
         """Obfuscate message (before sending)"""
         out = bytearray(data)
-        for i in range(len(out)):
+        for i in enumerate(out):
             out[i] = out[i] ^ 0x41
 
         return out
 
     def _dec(self, data):
-        """Deobfuscate message (after receiving)"""
+        """Deobfuscate message (after receiving)."""
         out = bytearray(data)
-        for i in range(len(out)):
+        for i in enumerate(out):
             out[i] = out[i] ^ 0x41
 
         return out
