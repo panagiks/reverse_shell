@@ -8,11 +8,17 @@ from socket import socket, AF_INET, SOCK_STREAM
 from socket import error as sock_error
 from datetime import datetime
 from thread import start_new_thread
-#from threading import Thread # Will bring back at some point 
+#from threading import Thread # Will bring back at some point
 import json
 from Plugins.mount import Plugin
 import tab
 
+__author__ = "Kolokotronis Panagiotis"
+__copyright__ = "Copyright 2016, Kolokotronis Panagiotis"
+__credits__ = ["Kolokotronis Panagiotis", "Dimitris Zervas"]
+__license__ = "MIT"
+__version__ = "0.2.6"
+__maintainer__ = "Kolokotronis Panagiotis"
 
 
 class ReturnCodes(object):
@@ -408,17 +414,15 @@ class Host(object):
     def _enc(self, data):
         """Obfuscate message (before sending)"""
         out = bytearray(data)
-        for i in enumerate(out):
-            out[i] = out[i] ^ 0x41
-
+        for i, val in enumerate(out):
+            out[i] = val ^ 0x41
         return out
 
     def _dec(self, data):
         """Deobfuscate message (after receiving)."""
         out = bytearray(data)
-        for i in enumerate(out):
-            out[i] = out[i] ^ 0x41
-
+        for i, val in enumerate(out):
+            out[i] = val ^ 0x41
         return out
 
 
