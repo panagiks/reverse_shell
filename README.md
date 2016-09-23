@@ -54,10 +54,12 @@ max_connections defaults to 5 if left blank
 
 * RESTful API:
   * Install Flask with pip
+  
     ```sh
     pip2 install Flask
     ```
   * Start the API
+  
     ```sh
     python rspet_server_api.py
     ```
