@@ -4,6 +4,13 @@
 from flask import Flask, jsonify, abort, make_response, request, url_for
 import rspet_server
 
+__author__ = "Kolokotronis Panagiotis"
+__copyright__ = "Copyright 2016, Kolokotronis Panagiotis"
+__credits__ = ["Kolokotronis Panagiotis"]
+__license__ = "MIT"
+__version__ = "1.0"
+__maintainer__ = "Kolokotronis Panagiotis"
+
 
 APP = Flask(__name__)
 
@@ -74,8 +81,8 @@ def run_cmd_host(host_id):
         abort(400)
     try:
         args = request.json['args']
-        for i in enumerate(args):
-            args[i] = str(args[i])
+        for i, val in enumerate(args):
+            args[i] = str(val)
     except KeyError:
         args = []
     res = RSPET_API.call_plugin(comm, args)
@@ -98,8 +105,8 @@ def mul_cmd():
         abort(400)
     try:
         args = request.json['args']
-        for i in enumerate(args):
-            args[i] = str(args[i])
+        for i, val in enumerate(args):
+            args[i] = str(val)
     except KeyError:
         args = []
     res = RSPET_API.call_plugin(comm, args)
@@ -118,8 +125,8 @@ def run_cmd():
         abort(400)
     try:
         args = request.json['args']
-        for i in enumerate(args):
-            args[i] = str(args[i])
+        for i, val in enumerate(args):
+            args[i] = str(val)
     except KeyError:
         args = []
     ret = RSPET_API.call_plugin(comm, args)
