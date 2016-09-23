@@ -2,7 +2,7 @@
 
 ![MIT Licence](https://img.shields.io/badge/Licence-MIT_Licence-red.svg?style=plastic)
 [![Python 2.7](https://img.shields.io/badge/Python-2.7-yellow.svg?style=plastic)](https://www.python.org/)
-![v0.0.6](https://img.shields.io/badge/Release-v0.2.5-orange.svg?style=plastic)
+![v0.2.6](https://img.shields.io/badge/Release-v0.2.6-orange.svg?style=plastic)
 ![Maintained](https://img.shields.io/badge/Maintained-Yes-green.svg?style=plastic)
 [![Twitter](https://img.shields.io/badge/Twitter-@TheRSPET-blue.svg?style=plastic)](https://twitter.com/theRSPET)
 
@@ -12,7 +12,7 @@ DISCLAIMER: This software is provided for educational and PenTesting purposes an
 
 NOTE: As of v0.0.3 folder `min` has been added. Since the new version has many more features not essential to the main functionality (a reverse shell that is), min will not recieve any more features beyond v0.0.3 and will only get bug and performance related fixes.
 
-Current Version: `v0.2.5`
+Current Version: `v0.2.6`
 
 Follow: [@TheRSPET](https://twitter.com/TheRSPET) on Twitter for updates.
 
@@ -53,9 +53,14 @@ python rspet_server.py (max_connections)
 max_connections defaults to 5 if left blank
 
 * RESTful API:
-```sh
-python rspet_server_api.py
-```
+  * Install Flask with pip
+    ```sh
+    pip2 install Flask
+    ```
+  * Start the API
+    ```sh
+    python rspet_server_api.py
+    ```
 
 * Client: 
 ```sh
@@ -108,7 +113,7 @@ This project is open for contributors. If you have implemented a new feature, or
 
 ## Co-Author
 
-[dzervas](https://dzervas.gr) -- Code (OO-redesign, Plug-in system implementation)
+[dzervas](https://dzervas.gr) -- Code (Server OO-redesign, Server Plug-in system implementation, bug reports, bug fixes)
 
 ## Contributors
 
