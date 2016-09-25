@@ -115,7 +115,7 @@ This project is following [Google's Python Styleguide](https://google.github.io/
 
 ## Contribution Opportunities
 
-This project is open for contributors. If you have implemented a new feature, or maybe an improvement to the current code feel free to open a pull request. If you want to sugest a new feature open an issue. Additionally Testers are needed to run a few standard scenarios (and a few of their own maybe) to decrease the chance a bug slips into a new version. Should there be any interest about testing a `beta` branch will be created (where code to be tested will be uploaded) along with a list of scenarios.
+This project is open for contributors. If you have implemented a new feature, or maybe an improvement to the current code feel free to open a pull request. If you want to sugest a new feature open an issue. Additionally Testers are needed to run a few standard scenarios (and a few of their own maybe) to decrease the chance a bug slips into a new version. Should there be any interest about testing a `beta` branch will be created (where code to be tested will be uploaded) along with a list of scenarios. For a full guide on contribution opportunities and guides check out [the "Contributing" chapter on RSPET's Online Documentation](http://rspet.readthedocs.io/en/latest/contribute/)
 
 ## Author - Project Owner/Manager
 
