@@ -94,6 +94,7 @@ As always if you have any suggestion, bug report or complain feel free to contac
 - [ ] Fix logic bug where if a direct command's to Host OS execution is perpetual the Server deadlocks
 - [x] ~~Add client version and type (min or full) as a property when client connects and at `List_Hosts`~~
 - [ ] Replace XORing with private key encryption (with random private key generated and traded upon connection)
+ - [ ] Must find a way that does not require any extra installation on the client 
  - [ ] Add a NoSQL (at least server-side) to store and handle traded keys
  - [ ] Add public key encryption in order to:
    - [ ] Encrypt the exchange of the private key
