@@ -10,7 +10,7 @@
 
 DISCLAIMER: This software is provided for educational and PenTesting purposes and as a proof of concept. The developer(s) do not endorse, incite or in any other way support unauthorised computer access and networks disruption.
 
-NOTE: As of v0.0.3 folder `min` has been added. Since the new version has many more features not essential to the main functionality (a reverse shell that is), min will not recieve any more features beyond v0.0.3 and will only get bug and performance related fixes.
+NOTE: `min` folder has been removed. The added overhead of maintaining two versions lead to `min` not recieving bug-fixes and important updates. If there is interest (both in using and maintaining) a more bare-bone and simplistic version, a new branch will be created to host it.
 
 Current Version: `v0.2.6`
 
@@ -41,8 +41,8 @@ Documentation : [rspet.readthedocs.io](http://rspet.readthedocs.io)
 
 ## Deployment:
 
-* `rspet_server.py` or `RSPET_server_min.py` is situated at the attacker's machine and running to accept connections
-* `rspet_client.py` or `RSPET_client_min.py` is situated in the infected machine(s) and will initiate the connection and wait for input. 
+* `rspet_server.py` is situated at the attacker's machine and running to accept connections
+* `rspet_client.py` is situated in the infected machine(s) and will initiate the connection and wait for input. 
 
 ## Execution:
 
@@ -53,7 +53,7 @@ python rspet_server.py (max_connections)
 max_connections defaults to 5 if left blank
 
 * RESTful API:
-  * Install Flask with pip
+  * Install Flask with pip (only the first time)
   
     ```sh
     pip2 install Flask
@@ -93,12 +93,20 @@ As always if you have any suggestion, bug report or complain feel free to contac
 - [x] ~~Fix logic bug where if a direct command to Host OS has no output Server displays command not recognized~~
 - [ ] Fix logic bug where if a direct command's to Host OS execution is perpetual the Server deadlocks
 - [x] ~~Add client version and type (min or full) as a property when client connects and at `List_Hosts`~~
-- [ ] Add client update mechanism
-- [ ] Add UDP Reflection functionality (already in the workings)
+- [ ] Replace XORing with private key encryption (with random private key generated and traded upon connection)
+ - [ ] Add a NoSQL (at least server-side) to store and handle traded keys
+ - [ ] Add public key encryption in order to:
+   - [ ] Encrypt the exchange of the private key
+    - [ ] Verify the "authenticity" of clients 
+- [ ] Add client update mechanism (initial thought was the use of execv but it acts up)
+- [ ] Add a plugin system to clinet (a more compact one)
+ - [ ] Add remote installation of plugins to client
+ - [ ] Add installed plugins report from client to server
+- [ ] Add UDP Reflection functionality
 - [ ] Provide more settings via config file
 - [ ] Re-introduce multythreading when handling multiple hosts.
 - [ ] Make commands available with 'Tab' automatically generated based on loaded plugins.
-- [ ] Fix logical bug when deleting a client. (Client still shows up on List_Hosts)
+- [x] ~~Fix logical bug when deleting a client. (Client still shows up on List_Hosts)~~
 - [x] ~~Create comprehensive plug-in creation guide.~~
 
 ## Styleguide
