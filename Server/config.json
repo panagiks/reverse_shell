@@ -1,0 +1,11 @@
+{
+	"plugins": [
+		"essentials",
+		"files",
+		"udp"
+	],
+	"log": [
+		"L",
+		"E"
+	]
+}
