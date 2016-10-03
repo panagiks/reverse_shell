@@ -10,7 +10,7 @@
 
 DISCLAIMER: This software is provided for educational and PenTesting purposes and as a proof of concept. The developer(s) do not endorse, incite or in any other way support unauthorised computer access and networks disruption.
 
-NOTE: `min` folder has been removed. The added overhead of maintaining two versions lead to `min` not recieving bug-fixes and important updates. If there is interest (both in using and maintaining) a more bare-bone and simplistic version, a new branch will be created to host it.
+NOTE: `min` folder has been removed. The added overhead of maintaining two versions lead to `min` not recieving bug-fixes and important updates. If there is interest, both in using and maintaining, a more bare-bone and simplistic version, a new branch will be created to host it.
 
 Current Version: `v0.2.6`
 
