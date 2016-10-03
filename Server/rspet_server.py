@@ -17,7 +17,7 @@ __author__ = "Kolokotronis Panagiotis"
 __copyright__ = "Copyright 2016, Kolokotronis Panagiotis"
 __credits__ = ["Kolokotronis Panagiotis", "Dimitris Zervas"]
 __license__ = "MIT"
-__version__ = "0.2.6"
+__version__ = "0.2.7"
 __maintainer__ = "Kolokotronis Panagiotis"
 
 
@@ -79,7 +79,9 @@ class API(object):
             ret[h_id] = {"ip":tmp_host.ip,
                          "port":tmp_host.port,
                          "version":str(tmp_host.version),
-                         "type":str(tmp_host.type)}
+                         "type":str(tmp_host.type),
+                         "system":tmp_host.systemtype,
+                         "hostname":tmp_host.hostname}
         return ret
 
 class Console(object):
@@ -372,9 +374,20 @@ class Host(object):
         self.port = port
         self.id = h_id
 
-        tmp = self.recv().split("-")
+        ###Get Version###
+        msg_len = self.recv(2) # len is 2-digit (i.e. up to 99 chars)
+        tmp = self.recv(int(msg_len)).split("-")
         self.version = tmp[0]
         self.type = tmp[1]
+        #################
+        ###Get System Type###
+        msg_len = self.recv(2) # len is 2-digit (i.e. up to 99 chars)
+        self.systemtype = self.recv(int(msg_len))
+        #####################
+        ###Get Hostname###
+        msg_len = self.recv(2) # len is 2-digit (i.e. up to 99 chars)
+        self.hostname = self.recv(int(msg_len))
+        ##################
 
     def trash(self):
         """Gracefully delete host."""
