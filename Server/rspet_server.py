@@ -80,8 +80,8 @@ class API(object):
                          "port":tmp_host.port,
                          "version":str(tmp_host.version),
                          "type":str(tmp_host.type),
-                         "system":tmp_host.systemtype,
-                         "hostname":tmp_host.hostname}
+                         "system":str(tmp_host.systemtype),
+                         "hostname":str(tmp_host.hostname)}
         return ret
 
 class Console(object):
