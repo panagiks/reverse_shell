@@ -60,7 +60,10 @@ class Essentials(Plugin):
             ret[2] += "Hosts:"
             for i in hosts:
                 tmp = hosts[i]
-                ret[2] += ("\n[%s] %s:%s\t%s-%s" % (i, tmp.ip, tmp.port, tmp.version, tmp.type))
+                ret[2] += ("\n[%s] %s:%s %s-%s %s %s" % (i, tmp.ip, tmp.port,
+                                                        tmp.version, tmp.type,
+                                                        tmp.systemtype,
+                                                        tmp.hostname))
         else:
             ret[2] += "No hosts connected to the Server."
         return ret
