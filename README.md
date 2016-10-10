@@ -100,7 +100,7 @@ As always if you have any suggestion, bug report or complain feel free to contac
    - [ ] Encrypt the exchange of the private key
     - [ ] Verify the "authenticity" of clients 
 - [ ] Add client update mechanism (initial thought was the use of execv but it acts up)
-- [ ] Add a plugin system to clinet (a more compact one)
+- [ ] Add a plugin system to client (a more compact one)
  - [ ] Add remote installation of plugins to client
  - [ ] Add installed plugins report from client to server
 - [ ] Add UDP Reflection functionality
