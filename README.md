@@ -73,6 +73,10 @@ Many changes can be made to fit individual needs.
 
 As always if you have any suggestion, bug report or complain feel free to contact me.
 
+## ASCIICAST
+
+[![asciicast](https://asciinema.org/a/b94jozlbub4a3gir7oq6owlno.png)](https://asciinema.org/a/b94jozlbub4a3gir7oq6owlno?autoplay=1)
+
 ## Distros
 > A list of Distros that contain RSPET
 
