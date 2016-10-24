@@ -2,6 +2,7 @@
 # -*- coding: <UTF-8> -*-
 """RSPET Server's RESTful API."""
 from flask import Flask, jsonify, abort, make_response, request, url_for
+from flask_cors import CORS, cross_origin
 import rspet_server
 
 __author__ = "Kolokotronis Panagiotis"
@@ -13,6 +14,7 @@ __maintainer__ = "Kolokotronis Panagiotis"
 
 
 APP = Flask(__name__)
+CORS(APP)
 
 # TODO:
 # There's a handful of commands there is no point whatsoever in executing through here
