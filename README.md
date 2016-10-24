@@ -56,7 +56,7 @@ max_connections defaults to 5 if left blank
   * Install Flask with pip (only the first time)
   
     ```sh
-    pip2 install Flask
+    pip2 install Flask flask-cors
     ```
   * Start the API
   
