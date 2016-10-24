@@ -134,6 +134,7 @@ This project is open for contributors. If you have implemented a new feature, or
 
 * [b3mb4m](https://github.com/b3mb4m) -- Code (tab.py and bug fixes)
 * [junzy](https://github.com/junzy) -- Docstings (udp_spoof & udp_spoof_send)
+* [gxskar](https://github.com/gxskar) -- Documentation (ASCIICAST of RSPET's basic execution)
 
 ## License
 
