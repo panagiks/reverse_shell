@@ -207,7 +207,8 @@ def refresh():
 def shutdown():
     RSPET_API.quit()
     shutdown_server()
-    return 'Server shutting down...'
+    print 'Server shutting down...'
+    return make_response('', 204)
 
 
 if __name__ == '__main__':
