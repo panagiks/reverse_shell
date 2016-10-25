@@ -135,7 +135,7 @@ This project is open for contributors. If you have implemented a new feature, or
 * [b3mb4m](https://github.com/b3mb4m) -- Code (tab.py and bug fixes)
 * [junzy](https://github.com/junzy) -- Docstings (udp_spoof & udp_spoof_send)
 * [gxskar](https://github.com/gxskar) -- Documentation (ASCIICAST of RSPET's basic execution)
-* [n1zzo](https://github.com/n1zzo) -- Bug Report & Fix (PR #31)
+* [n1zzo](https://github.com/n1zzo) -- Bug Report & Fix (PR [#31](https://github.com/panagiks/RSPET/pull/31))
 
 ## License
 
