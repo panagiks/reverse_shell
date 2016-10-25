@@ -161,6 +161,8 @@ class Client(object):
             try:
                 en_data = self.comm_dict[en_data]
             except KeyError:
+                if en_data == '':
+                    self.reconnect()
                 continue
             self.comm_swtch[en_data]()
         self.sock.close()
