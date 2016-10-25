@@ -1,6 +1,7 @@
 #!/usr/bin/env python2
 # -*- coding: <UTF-8> -*-
 """RSPET Server's RESTful API."""
+from sys import argv, exit
 from flask import Flask, jsonify, abort, make_response, request, url_for
 from flask_cors import CORS, cross_origin
 import rspet_server
@@ -23,9 +24,13 @@ EXCLUDED_FUNCTIONS = ["help", "List_Sel_Hosts", "List_Hosts", "Choose_Host", "Se
                         "ALL", "Exit", "Quit"]
 
 try:
-    max_conns = argv[1]
-except: IndexError:
+    max_conns = int(argv[1])
+except IndexError:
     max_conns = 5
+except ValueError:
+    print("Argument must be int! Exitting ...")
+    sys.exit()
+
 
 RSPET_API = rspet_server.API(max_conns)
 
@@ -42,6 +47,13 @@ def make_public_help(command, hlp_sntx):
     new_command = hlp_sntx
     new_command['uri'] = url_for('command_help', command=command, _external=True)
     return new_command
+
+
+def shutdown_server():
+    func = request.environ.get('werkzeug.server.shutdown')
+    if func is None:
+        raise RuntimeError('Not running with the Werkzeug Server')
+    func()
 
 
 @APP.errorhandler(404)
@@ -189,6 +201,13 @@ def refresh():
     """Refresh server. Check for lost hosts."""
     RSPET_API.refresh()
     return make_response('', 204)
+
+
+@APP.route('/rspet/api/v1.0/quit', methods=['GET'])
+def shutdown():
+    RSPET_API.quit()
+    shutdown_server()
+    return 'Server shutting down...'
 
 
 if __name__ == '__main__':
