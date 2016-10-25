@@ -9,11 +9,11 @@ from threading import Thread
 from subprocess import Popen, PIPE
 
 
-def serverCall(api):
+def serverCall(api, num_of_clients):
     if api:
-        os.system("cd test/Server/ && ./rspet_server_api.py")
+        os.system(("cd test/Server/ && ./rspet_server_api.py %d" % num_of_clients))
     else:
-        os.system("cd test/Server/ && ./rspet_server.py")
+        os.system(("cd test/Server/ && ./rspet_server.py %d" % num_of_clients))
 
 
 def clientCall(clientNo):
@@ -58,7 +58,7 @@ def main():
     for i in range(0, num_of_clients):
         thr = Thread(target=clientCall, args=[i])
         f_jobs.append(thr)
-    thr = Thread(target=serverCall, args=[args.rest])
+    thr = Thread(target=serverCall, args=[args.rest, args.clients[0]])
     f_jobs.append(thr)
     for k in f_jobs:
         k.start()

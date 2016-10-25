@@ -22,8 +22,12 @@ CORS(APP)
 EXCLUDED_FUNCTIONS = ["help", "List_Sel_Hosts", "List_Hosts", "Choose_Host", "Select",\
                         "ALL", "Exit", "Quit"]
 
+try:
+    max_conns = argv[1]
+except: IndexError:
+    max_conns = 5
 
-RSPET_API = rspet_server.API()
+RSPET_API = rspet_server.API(max_conns)
 
 
 def make_public_host(host, h_id):
