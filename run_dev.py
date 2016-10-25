@@ -65,6 +65,7 @@ def main():
     for k in f_jobs:
         k.join()
 
+    shutil.rmtree("test/")
 
 if __name__ == '__main__':
     main()
