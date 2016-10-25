@@ -116,7 +116,7 @@ class Files(Plugin):
             try:
                 remote_file = args[1]
             except IndexError:
-                remote_file = local_file
+                remote_file = local_file.split("/")[-1]
             for host in hosts:
                 try:
                     host.send(host.command_dict['getFile'])
@@ -125,6 +125,9 @@ class Files(Plugin):
                 except sock_error:
                     ret[0] = "basic"
                     ret[1] = 2 # Socket Error Code
+                except ValueError:
+                    ret[1] = 3 # LocalAccessError Code
+                    ret[2] += "File not found!"
                 else:
                     try:
                         if host.recv(3) == "fna":
@@ -162,6 +165,9 @@ class Files(Plugin):
                 except sock_error:
                     ret[0] = "basic"
                     ret[1] = 2 # Socket Error Code
+                except ValueError:
+                    ret[1] = 3 # LocalAccessError Code
+                    ret[2] += "File not found!"
                 else:
                     try:
                         if host.recv(3) == "fna":
