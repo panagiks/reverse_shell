@@ -8,6 +8,7 @@ from subprocess import Popen, PIPE
 from multiprocessing import Process, freeze_support
 from socket import socket, IPPROTO_UDP, IPPROTO_RAW, SOCK_DGRAM, SOCK_STREAM, SOCK_RAW, AF_INET
 from socket import error as sock_error
+import ssl
 from pinject import UDP, IP
 
 __author__ = "Kolokotronis Panagiotis"
@@ -128,6 +129,15 @@ class Client(object):
     """Class for Client."""
     def __init__(self, addr, port=9000):
         self.sock = socket(AF_INET, SOCK_STREAM)
+        try:
+            _create_unverified_https_context = ssl._create_unverified_context
+        except AttributeError:
+            # Legacy Python that doesn't verify HTTPS certificates by default
+            pass
+        else:
+            # Handle target environment that doesn't support HTTPS verification
+            ssl._create_default_https_context = _create_unverified_https_context
+        self.sock = ssl.wrap_socket(self.sock)
         self.address = addr
         self.port = port
         self.quit_signal = False

@@ -6,6 +6,7 @@ from sys import argv
 from sys import exit as sysexit
 from socket import socket, AF_INET, SOCK_STREAM
 from socket import error as sock_error
+import ssl
 from datetime import datetime
 from thread import start_new_thread
 #from threading import Thread # Will bring back at some point
@@ -259,6 +260,8 @@ class Server(object):
                                                               str(port)))
             except sock_error:
                 raise sock_error
+            csock = ssl.wrap_socket(csock,server_side=True, certfile="server.crt",
+                            keyfile="server.key")
             self.hosts[str(self.serial)] = Host(csock, ip, port, self.serial)
             self.serial += 1
 
