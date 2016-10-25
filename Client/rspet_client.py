@@ -206,7 +206,7 @@ class Client(object):
             try:
                 self.connect()
             except sock_error:
-                exponential_backoff(c_factor)
+                sleep(exponential_backoff(c_factor))
                 c_factor += 1
             else:
                 connected = True
@@ -431,7 +431,10 @@ def main():
         myself = Client(rhost, argv[2])
     except IndexError:
         myself = Client(rhost)
-    myself.connect()
+    try:
+        myself.connect()
+    except sock_error:
+        myself.reconnect()
     myself.loop()
 
 
