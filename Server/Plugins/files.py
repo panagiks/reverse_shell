@@ -153,7 +153,7 @@ class Files(Plugin):
             try:
                 remote_file = args[1]
             except IndexError:
-                remote_file = local_file
+                remote_file = local_file.split("/")[-1]
             for host in hosts:
                 try:
                     host.send(host.command_dict['getBinary'])
