@@ -84,6 +84,9 @@ class API(object):
                          "hostname":str(tmp_host.hostname)}
         return ret
 
+    def quit(self):
+        self.server.trash()
+
 class Console(object):
     """Provide command line interface for the server."""
     prompt = "~$ " # Current command prompt.
@@ -144,6 +147,7 @@ class Console(object):
                 Console.states[tmp_state](self) #State transition.
             except KeyError: #If none is returned make no state change.
                 continue
+        self.server.trash()
 
     def _basic(self):
         self.server.clean()
