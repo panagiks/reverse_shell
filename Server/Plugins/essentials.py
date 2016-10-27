@@ -73,10 +73,12 @@ class Essentials(Plugin):
         ret = [None,0,""]
         hosts = server.get_selected()
         ret[2] += "Selected Hosts:"
-        #for i in range(len(hosts)):
         for tmp in hosts:
             #tmp = hosts[i]
-            ret[2] += ("\n[%s] %s:%s\t%s-%s" % (tmp.id, tmp.ip, tmp.port, tmp.version, tmp.type))
+            ret[2] += ("\n[%s] %s:%s %s-%s %s %s" % (tmp.id, tmp.ip, tmp.port,
+                                                    tmp.version, tmp.type,
+                                                    tmp.systemtype,
+                                                    tmp.hostname))
         return ret
 
     def choose_host(self, server, args):
@@ -125,7 +127,7 @@ class Essentials(Plugin):
         ret = [None,0,""]
         hosts = server.get_selected()
         for host in hosts:
-            host.trash() #
+            host.trash()
         ret[0] = "basic"
         return ret
 
@@ -139,6 +141,7 @@ class Essentials(Plugin):
             except sock_error:
                 host.purge()
                 ret[0] = "basic"
+                ret[1] = 2 # Socket Error Code
         return ret
 
     def execute(self, server, args):
@@ -154,10 +157,10 @@ class Essentials(Plugin):
                 host.send(host.command_dict['command'])
                 host.send("%013d" % len(command))
                 host.send(command)
+                respsize = int(host.recv(13))
+                ret[2] += str(host.recv(respsize))
             except sock_error:
                 host.purge()
                 ret[0] = "basic"
-            else:
-                respsize = int(host.recv(13))
-                ret[2] += str(host.recv(respsize))
+                ret[1] = 2 # Socket Error Code
         return ret
