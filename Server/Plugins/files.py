@@ -45,25 +45,21 @@ class Files(Plugin):
                 host.send(host.command_dict['sendFile'])
                 host.send("%03d" % len(remote_file))
                 host.send(remote_file)
+                if host.recv(3) == "fna":
+                    ret[2] += "File does not exist or Access Denied"
+                    ret[1] = 4 # Remote Access Denied Error Code
+                else:
+                    try:
+                        with open(local_file, "w") as file_obj:
+                            filesize = int(host.recv(13))
+                            file_obj.write(host.recv(filesize))
+                    except IOError:
+                        ret[2] += "Cannot create local file"
+                        ret[1] = 3 # Local Access Denied Error Code
             except sock_error:
+                host.purge()
                 ret[0] = "basic"
                 ret[1] = 2 # Socket Error Code
-            else:
-                try:
-                    if host.recv(3) == "fna": # recv can raise sock_error
-                        ret[2] += "File does not exist or Access Denied"
-                        ret[1] = 4 # Remote Access Denied Error Code
-                    else:
-                        try:
-                            with open(local_file, "w") as file_obj:
-                                filesize = int(host.recv(13))
-                                file_obj.write(host.recv(filesize))
-                        except IOError:
-                            ret[2] += "Cannot create local file"
-                            ret[1] = 3 # Local Access Denied Error Code
-                except sock_error:
-                    ret[0] = "basic"
-                    ret[1] = 2 # Socket Error Code
         return ret
 
     def pull_binary(self, server, args):
@@ -83,25 +79,21 @@ class Files(Plugin):
                 host.send(host.command_dict['sendBinary'])
                 host.send("%03d" % len(remote_file))
                 host.send(remote_file)
+                if host.recv(3) == "fna":
+                    ret[2] += "File does not exist or Access Denied"
+                    ret[1] = 4 # Remote Access Denied Error Code
+                else:
+                    try:
+                        with open(local_file, "wb") as file_obj:
+                            filesize = int(host.recv(13))
+                            file_obj.write(host.recv(filesize))
+                    except IOError:
+                        ret[2] += "Cannot create local file"
+                        ret[1] = 3 # Local Access Denied Error Code
             except sock_error:
+                host.purge()
                 ret[0] = "basic"
                 ret[1] = 2 # Socket Error Code
-            else:
-                try:
-                    if host.recv(3) == "fna": # recv can raise sock_error
-                        ret[2] += "File does not exist or Access Denied"
-                        ret[1] = 4 # Remote Access Denied Error Code
-                    else:
-                        try:
-                            with open(local_file, "wb") as file_obj:
-                                filesize = int(host.recv(13))
-                                file_obj.write(host.recv(filesize))
-                        except IOError:
-                            ret[2] += "Cannot create local file"
-                            ret[1] = 3 # Local Access Denied Error Code
-                except sock_error:
-                    ret[0] = "basic"
-                    ret[1] = 2 # Socket Error Code
         return ret
 
     def make_file(self, server, args):
@@ -122,26 +114,22 @@ class Files(Plugin):
                     host.send(host.command_dict['getFile'])
                     host.send("%03d" % len(remote_file))
                     host.send(remote_file)
+                    if host.recv(3) == "fna":
+                        ret[2] += "Access Denied"
+                        ret[1] = 4 # Remote Access Denied Error Code
+                    else:
+                        with open(local_file) as file_obj:
+                            contents = file_obj.read()
+                            host.send("%013d" % len(contents))
+                            host.send(contents)
+                            host.recv(3) # For future use?
                 except sock_error:
+                    host.purge()
                     ret[0] = "basic"
                     ret[1] = 2 # Socket Error Code
-                except ValueError:
+                except IOError:
                     ret[1] = 3 # LocalAccessError Code
                     ret[2] += "File not found!"
-                else:
-                    try:
-                        if host.recv(3) == "fna":
-                            ret[2] += "Access Denied"
-                            ret[1] = 4 # Remote Access Denied Error Code
-                        else:
-                            with open(local_file) as file_obj:
-                                contents = file_obj.read()
-                                host.send("%013d" % len(contents))
-                                host.send(contents)
-                                host.recv(3) #For future use?
-                    except sock_error:
-                        ret[0] = "basic"
-                        ret[1] = 2 # Socket Error Code
         return ret
 
     def make_binary(self, server, args):
@@ -162,24 +150,20 @@ class Files(Plugin):
                     host.send(host.command_dict['getBinary'])
                     host.send("%03d" % len(remote_file))
                     host.send(remote_file)
+                    if host.recv(3) == "fna":
+                        ret[2] += "Access Denied"
+                        ret[1] = 4 # Remote Access Denied Error Code
+                    else:
+                        with open(local_file, "rb") as file_obj:
+                            contents = file_obj.read()
+                            host.send("%013d" % len(contents))
+                            host.send(contents)
+                            host.recv(3) # For future use?
                 except sock_error:
+                    host.purge()
                     ret[0] = "basic"
                     ret[1] = 2 # Socket Error Code
-                except ValueError:
+                except IOError:
                     ret[1] = 3 # LocalAccessError Code
                     ret[2] += "File not found!"
-                else:
-                    try:
-                        if host.recv(3) == "fna":
-                            ret[2] += "Access Denied"
-                            ret[1] = 4 # Remote Access Denied Error Code
-                        else:
-                            with open(local_file, "rb") as file_obj:
-                                contents = file_obj.read()
-                                host.send("%013d" % len(contents))
-                                host.send(contents)
-                                host.recv(3) # For future use?
-                    except sock_error:
-                        ret[0] = "basic"
-                        ret[1] = 2 # Socket Error Code
         return ret
