@@ -7,12 +7,14 @@ from sys import exit as sysexit
 from socket import socket, AF_INET, SOCK_STREAM
 from socket import error as sock_error
 import ssl
+import argparse
 from datetime import datetime
 from thread import start_new_thread
 #from threading import Thread # Will bring back at some point
 import json
 from Plugins.mount import Plugin
 import tab
+
 
 __author__ = "Kolokotronis Panagiotis"
 __copyright__ = "Copyright 2016, Kolokotronis Panagiotis"
@@ -88,17 +90,16 @@ class API(object):
     def quit(self):
         self.server.trash()
 
+
 class Console(object):
     """Provide command line interface for the server."""
     prompt = "~$ " # Current command prompt.
     states = {} # Dictionary that defines available states.
     state = "basic" #CLI "entry" state.
-    quit_signal = False
 
-    def __init__(self, max_conns=5):
+    def __init__(self, max_conns, ip, port):
         """Start server and initialize states."""
-        self.max_conns = max_conns
-        self.server = Server()
+        self.server = Server(max_conns, ip, port)
         #If done directly @ Class attributes, Class funcs are not recognised.
         Console.states['basic'] = Console._basic
         Console.states['connected'] = Console._connected
@@ -118,7 +119,7 @@ class Console(object):
             print("Address is already in use")
             sysexit()
 
-        while not Console.quit_signal:
+        while not self.server.quit_signal:
             try:
                 cmd = raw_input(Console.prompt)
             except KeyboardInterrupt:
@@ -205,6 +206,7 @@ class Server(object):
         self.max_conns = max_conns
         self.sock = socket(AF_INET, SOCK_STREAM)
         self.serial = 0
+        self.quit_signal = False
         self.hosts = {} # List of hosts
         self.selected = [] # List of selected hosts
         self.plugins = [] # List of active plugins
@@ -353,12 +355,11 @@ class Server(object):
         #self.hosts = [a for a in self.hosts if a is not None]
         #self.select([])
 
-
     def quit(self):
         """
         Interface function. Raise a Quit signal.
         """
-        Console.quit_signal = True
+        self.quit_signal = True
 
 class Host(object):
     """Class for hosts. Each Host object represent one host"""
@@ -430,10 +431,6 @@ class Host(object):
     def recv(self, size=1024):
         """Receive from host"""
         if size > 0:
-            #try:
-            #    return self.sock.recv(size)
-            #except sock_error:
-            #    raise sock_error
             data = self.sock.recv(size)
             if data == '':
                 raise sock_error
@@ -442,10 +439,17 @@ class Host(object):
 
 def main():
     """Main function."""
-    try:
-        cli = Console(int(argv[1]))
-    except IndexError:
-        cli = Console()
+    parser = argparse.ArgumentParser(description='RSPET Server module.')
+    parser.add_argument("-c", "--clients", nargs=1, type=int, metavar='N',
+                        help="Number of clients to accept.", default=[5])
+    parser.add_argument("--ip", nargs=1, type=str, metavar='IP',
+                        help="IP to listen for incoming connections.",
+                        default=["0.0.0.0"])
+    parser.add_argument("-p", "--port", nargs=1, type=int, metavar='PORT',
+                        help="Port number to listen for incoming connections.",
+                        default=[9000])
+    args = parser.parse_args()
+    cli = Console(args.clients[0], args.ip[0], args.port[0])
     try:
         cli.loop()
     except KeyError:
@@ -459,6 +463,7 @@ def main():
         sysexit()
     cli.trash()
     del cli
+
 
 if __name__ == "__main__":
     main()
