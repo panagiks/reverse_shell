@@ -2,7 +2,7 @@
 
 ![MIT Licence](https://img.shields.io/badge/Licence-MIT_Licence-red.svg?style=plastic)
 [![Python 2.7](https://img.shields.io/badge/Python-2.7-yellow.svg?style=plastic)](https://www.python.org/)
-![v0.2.7](https://img.shields.io/badge/Release-v0.2.7-orange.svg?style=plastic)
+![v0.3.0](https://img.shields.io/badge/Release-v0.3.0-orange.svg?style=plastic)
 ![Maintained](https://img.shields.io/badge/Maintained-Yes-green.svg?style=plastic)
 [![Twitter](https://img.shields.io/badge/Twitter-@TheRSPET-blue.svg?style=plastic)](https://twitter.com/theRSPET)
 
@@ -10,9 +10,9 @@
 
 DISCLAIMER: This software is provided for educational and PenTesting purposes and as a proof of concept. The developer(s) do not endorse, incite or in any other way support unauthorised computer access and networks disruption.
 
-NOTE: `min` folder has been removed. The added overhead of maintaining two versions lead to `min` not recieving bug-fixes and important updates. If there is interest, both in using and maintaining, a more bare-bone and simplistic version, a new branch will be created to host it.
+NOTE: `min` folder has been removed. The added overhead of maintaining two versions lead to `min` not receiving bug-fixes and important updates. If there is interest, both in using and maintaining, a more bare-bone and simplistic version, a new branch will be created to host it.
 
-Current Version: `v0.2.7`
+Current Version: `v0.3.0`
 
 Follow: [@TheRSPET](https://twitter.com/TheRSPET) on Twitter for updates.
 
@@ -21,15 +21,16 @@ Documentation : [rspet.readthedocs.io](http://rspet.readthedocs.io)
 ## Features
 
 * Remote Command Execution
-* Trafic masking (XORed instead of cleartext); for better results use port 443[1]
-* Built-in File/Binary transfer (both ways) over the masked traffic
+* ~~Trafic masking (XORed instead of cleartext); for better results use port 443~~[1]
+* TLS Encryption of the Server-Client communication
+* Built-in File/Binary transfer (both ways) over the ~~masked~~ Encrypted traffic
 * Built-in UDP Flooding tool
 * Built-in UDP Spoofing tool[2]
 * Multiple/All Hosts management; order File/Binary transfer and UDP Flood from Multiple/All connected Hosts
 * Modular Code Design to allow easy customization
 * Client script is tested and is compatible with PyInstaller (can be made into .exe)[3]
-* Full server side plug-in support.[4]
-* RESTful API for the Server Module.
+* Full server side plug-in support[4]
+* RESTful API for the Server Module
 
 *[1]The idea for XORing as well as the skeleton for the client came from [primalsecurity.net](http://www.primalsecurity.net) so if you like this pack of scripts you'll probably love what they do
 
@@ -120,7 +121,7 @@ This project is following [Google's Python Styleguide](https://google.github.io/
 
 ## Contribution Opportunities
 
-This project is open for contributors. If you have implemented a new feature, or maybe an improvement to the current code feel free to open a pull request. If you want to sugest a new feature open an issue. Additionally Testers are needed to run a few standard scenarios (and a few of their own maybe) to decrease the chance a bug slips into a new version. Should there be any interest about testing a `beta` branch will be created (where code to be tested will be uploaded) along with a list of scenarios. For a full guide on contribution opportunities and guides check out [the "Contributing" chapter on RSPET's Online Documentation](http://rspet.readthedocs.io/en/latest/contribute/)
+This project is open for contributors. If you have implemented a new feature, or maybe an improvement to the current code feel free to open a pull request. If you want to suggest a new feature open an issue. Additionally Testers are needed to run a few standard scenarios (and a few of their own maybe) to decrease the chance a bug slips into a new version. Should there be any interest about testing a `beta` branch will be created (where code to be tested will be uploaded) along with a list of scenarios. For a full guide on contribution opportunities and guides check out [the "Contributing" chapter on RSPET's Online Documentation](http://rspet.readthedocs.io/en/latest/contribute/)
 
 ## Author - Project Owner/Manager
 
