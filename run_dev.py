@@ -11,7 +11,8 @@ from subprocess import Popen, PIPE
 
 def serverCall(api, num_of_clients, ip, port):
     if api:
-        os.system(("cd test/Server/ && ./rspet_server_api.py %d" % num_of_clients))
+        os.system(("cd test/Server/ && ./rspet_server_api.py -c %d --ip %s -p %d" %
+                    (num_of_clients, ip, port)))
     else:
         os.system(("cd test/Server/ && ./rspet_server.py -c %d --ip %s -p %d" %
                     (num_of_clients, ip, port)))
