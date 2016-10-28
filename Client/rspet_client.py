@@ -87,17 +87,11 @@ class Client(object):
     """Class for Client."""
     def __init__(self, addr, port=9000):
         self.sock = socket(AF_INET, SOCK_STREAM)
-        # HACK: START. Do not verify Server's Cert.
         try:
-            _create_unverified_https_context = ssl._create_unverified_context
-        except AttributeError:
-            # Legacy Python that doesn't verify HTTPS certificates by default
-            pass
-        else:
-            # Handle target environment that doesn't support HTTPS verification
-            ssl._create_default_https_context = _create_unverified_https_context
-        # HACK: END.
-        self.sock = ssl.wrap_socket(self.sock)
+            cntx = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+        except AttributeError: # All PROTOCOL consts are merged on TLS in Python2.7.13
+            cntx = ssl.SSLContext(ssl.PROTOCOL_TLS)
+        self.sock = cntx.wrap_socket(self.sock)
         self.address = addr
         self.port = port
         self.quit_signal = False
