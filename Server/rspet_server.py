@@ -20,7 +20,7 @@ __author__ = "Kolokotronis Panagiotis"
 __copyright__ = "Copyright 2016, Kolokotronis Panagiotis"
 __credits__ = ["Kolokotronis Panagiotis", "Dimitris Zervas"]
 __license__ = "MIT"
-__version__ = "0.2.7"
+__version__ = "0.3.0"
 __maintainer__ = "Kolokotronis Panagiotis"
 
 
@@ -32,9 +32,9 @@ class ReturnCodes(object):
 
 class API(object):
     """Define RSPET Server's Api."""
-    def __init__(self, max_conns=5):
+    def __init__(self, max_conns, ip, port):
         """Initialize Server object."""
-        self.server = Server(max_conns)
+        self.server = Server(max_conns, ip, port)
         try:
             start_new_thread(self.server.loop, ())
         except sock_error:
