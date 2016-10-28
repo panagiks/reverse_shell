@@ -9,7 +9,6 @@ from multiprocessing import Process, freeze_support
 from socket import socket, IPPROTO_UDP, IPPROTO_RAW, SOCK_DGRAM, SOCK_STREAM, SOCK_RAW, AF_INET
 from socket import error as sock_error
 import ssl
-from pinject import UDP, IP
 
 __author__ = "Kolokotronis Panagiotis"
 __copyright__ = "Copyright 2016, Kolokotronis Panagiotis"
@@ -25,6 +24,7 @@ def exponential_backoff(c_factor):
 
 
 def sys_info():
+    """Get platform info."""
     import platform
     sys_info_tup = platform.uname()
     return (sys_info_tup[0], sys_info_tup[1])
@@ -61,6 +61,7 @@ def udp_spoof_pck(dest_ip, dest_port, source_ip, source_port, payload):
     source_ip -- the desired source ip
     source_port -- the desired source port
     """
+    from pinject import UDP, IP
     udp_header = UDP(source_port, dest_port, payload).pack(source_ip, dest_ip)
     ip_header = IP(source_ip, dest_ip, udp_header, IPPROTO_UDP).pack()
     return ip_header+udp_header+payload
