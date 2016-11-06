@@ -213,4 +213,4 @@ def shutdown():
 
 
 if __name__ == '__main__':
-    APP.run(debug=False)
+    APP.run(debug=False, threaded=True)
