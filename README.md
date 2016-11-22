@@ -45,6 +45,13 @@ Documentation : [rspet.readthedocs.io](http://rspet.readthedocs.io)
 * `rspet_server.py` is situated at the attacker's machine and running to accept connections
 * `rspet_client.py` is situated in the infected machine(s) and will initiate the connection and wait for input.
 
+## Installation
+
+Executing `./setup.py` while on the project's root folder will generate the required certificates and install all needed components through pip.    
+
+Of course you can manually install the pip packages required by executing `pip2 install Flask flask-cors`.
+Also you can generate your own key-cert set (just name them `server.key` & `server.crt` and place them inside the Server folder). For more information on the topic visit the [online documentation](http://rspet.readthedocs.io/en/latest/dev/) 
+
 ## Execution:
 
 * Server:
@@ -54,13 +61,6 @@ python rspet_server.py (max_connections)
 max_connections defaults to 5 if left blank
 
 * RESTful API:
-  * Install Flask with pip (only the first time)
-
-    ```sh
-    pip2 install Flask flask-cors
-    ```
-  * Start the API
-
     ```sh
     python rspet_server_api.py
     ```
