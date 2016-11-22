@@ -262,8 +262,14 @@ class Server(object):
                                                               str(port)))
             except sock_error:
                 raise sock_error
-            csock = ssl.wrap_socket(csock, server_side=True, certfile="server.crt",
-                                    keyfile="server.key")
+            try:
+                csock = ssl.wrap_socket(csock, server_side=True, certfile="server.crt",
+                                        keyfile="server.key",
+                                        ssl_version=ssl.PROTOCOL_TLSv1_2)
+            except AttributeError: # All PROTOCOL consts are merged on TLS in Python2.7.13
+                csock = ssl.wrap_socket(csock, server_side=True, certfile="server.crt",
+                                        keyfile="server.key",
+                                        ssl_version=ssl.PROTOCOL_TLS)
             self.hosts[str(self.serial)] = Host(csock, ip, port, self.serial)
             self.serial += 1
 
