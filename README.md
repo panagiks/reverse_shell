@@ -50,7 +50,7 @@ Documentation : [rspet.readthedocs.io](http://rspet.readthedocs.io)
 Executing `./setup.py` while on the project's root folder will generate the required certificates and install all needed components through pip.    
 
 Of course you can manually install the pip packages required by executing `pip2 install Flask flask-cors`.
-Also you can generate your own key-cert set (just name them `server.key` & `server.crt` and place them inside the Server folder). For more information on the topic visit the [online documentation](http://rspet.readthedocs.io/en/latest/dev/) 
+Also you can generate your own key-cert set (just name them `server.key` & `server.crt` and place them inside the Server folder). For more information on the topic visit the [online documentation](http://rspet.readthedocs.io/en/latest/dev/)
 
 ## Execution:
 
@@ -98,12 +98,11 @@ As always if you have any suggestion, bug report or complain feel free to contac
 - [x] ~~Fix logic bug where if a direct command to Host OS has no output Server displays command not recognized~~
 - [ ] Fix logic bug where if a direct command's to Host OS execution is perpetual the Server deadlocks
 - [x] ~~Add client version and type (min or full) as a property when client connects and at `List_Hosts`~~
-- [ ] Replace XORing with private key encryption (with random private key generated and traded upon connection)
- - [ ] Must find a way that does not require any extra installation on the client
- - [ ] Add a NoSQL (at least server-side) to store and handle traded keys
- - [ ] Add public key encryption in order to:
-   - [ ] Encrypt the exchange of the private key
-    - [ ] Verify the "authenticity" of clients
+- [x] Add TLS encryption in order to:
+  - [x] Replace XORing (and subsequently obfuscation with encryption)
+  - [ ] Verify the "authenticity" of clients
+    - [ ] A mechanism to issue and verify client certificates
+    - [ ] A mechanism to recognize compromised client certs
 - [ ] Add client update mechanism (initial thought was the use of execv but it acts up)
 - [ ] Add a plugin system to client (a more compact one)
  - [ ] Add remote installation of plugins to client
