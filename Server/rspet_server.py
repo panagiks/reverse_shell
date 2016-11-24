@@ -42,7 +42,10 @@ class API(object):
 
     def call_plugin(self, command, args=[]):
         """Call a plugin command"""
-        ret = self.server.execute(command, args)
+        try:
+            ret = self.server.execute(command, args)
+        except KeyError:
+            ret = [None, 6, ("%s : No such command." %command)]
         return {"transition":ret[0],
                 "code":ret[1],
                 "string":ret[2]}
@@ -207,7 +210,7 @@ class Server(object):
         self.sock = socket(AF_INET, SOCK_STREAM)
         self.serial = 0
         self.quit_signal = False
-        self.hosts = {} # List of hosts
+        self.hosts = {} # Dictionary of hosts
         self.selected = [] # List of selected hosts
         self.plugins = [] # List of active plugins
         self.log_opt = [] # List of Letters. Indicates logging level
