@@ -6,6 +6,8 @@ from sys import argv
 from sys import exit as sysexit
 from socket import socket, AF_INET, SOCK_STREAM
 from socket import error as sock_error
+import ssl
+import argparse
 from datetime import datetime
 from thread import start_new_thread
 #from threading import Thread # Will bring back at some point
@@ -13,11 +15,12 @@ import json
 from Plugins.mount import Plugin
 import tab
 
+
 __author__ = "Kolokotronis Panagiotis"
 __copyright__ = "Copyright 2016, Kolokotronis Panagiotis"
 __credits__ = ["Kolokotronis Panagiotis", "Dimitris Zervas"]
 __license__ = "MIT"
-__version__ = "0.2.7"
+__version__ = "0.3.0"
 __maintainer__ = "Kolokotronis Panagiotis"
 
 
@@ -29,9 +32,9 @@ class ReturnCodes(object):
 
 class API(object):
     """Define RSPET Server's Api."""
-    def __init__(self, max_conns=5):
+    def __init__(self, max_conns, ip, port):
         """Initialize Server object."""
-        self.server = Server(max_conns)
+        self.server = Server(max_conns, ip, port)
         try:
             start_new_thread(self.server.loop, ())
         except sock_error:
@@ -39,7 +42,10 @@ class API(object):
 
     def call_plugin(self, command, args=[]):
         """Call a plugin command"""
-        ret = self.server.execute(command, args)
+        try:
+            ret = self.server.execute(command, args)
+        except KeyError:
+            ret = [None, 6, ("%s : No such command." %command)]
         return {"transition":ret[0],
                 "code":ret[1],
                 "string":ret[2]}
@@ -87,17 +93,16 @@ class API(object):
     def quit(self):
         self.server.trash()
 
+
 class Console(object):
     """Provide command line interface for the server."""
     prompt = "~$ " # Current command prompt.
     states = {} # Dictionary that defines available states.
     state = "basic" #CLI "entry" state.
-    quit_signal = False
 
-    def __init__(self, max_conns=5):
+    def __init__(self, max_conns, ip, port):
         """Start server and initialize states."""
-        self.max_conns = max_conns
-        self.server = Server()
+        self.server = Server(max_conns, ip, port)
         #If done directly @ Class attributes, Class funcs are not recognised.
         Console.states['basic'] = Console._basic
         Console.states['connected'] = Console._connected
@@ -117,7 +122,7 @@ class Console(object):
             print("Address is already in use")
             sysexit()
 
-        while not Console.quit_signal:
+        while not self.server.quit_signal:
             try:
                 cmd = raw_input(Console.prompt)
             except KeyboardInterrupt:
@@ -204,7 +209,8 @@ class Server(object):
         self.max_conns = max_conns
         self.sock = socket(AF_INET, SOCK_STREAM)
         self.serial = 0
-        self.hosts = {} # List of hosts
+        self.quit_signal = False
+        self.hosts = {} # Dictionary of hosts
         self.selected = [] # List of selected hosts
         self.plugins = [] # List of active plugins
         self.log_opt = [] # List of Letters. Indicates logging level
@@ -259,6 +265,14 @@ class Server(object):
                                                               str(port)))
             except sock_error:
                 raise sock_error
+            try:
+                csock = ssl.wrap_socket(csock, server_side=True, certfile="server.crt",
+                                        keyfile="server.key",
+                                        ssl_version=ssl.PROTOCOL_TLSv1_2)
+            except AttributeError: # All PROTOCOL consts are merged on TLS in Python2.7.13
+                csock = ssl.wrap_socket(csock, server_side=True, certfile="server.crt",
+                                        keyfile="server.key",
+                                        ssl_version=ssl.PROTOCOL_TLS)
             self.hosts[str(self.serial)] = Host(csock, ip, port, self.serial)
             self.serial += 1
 
@@ -271,6 +285,7 @@ class Server(object):
         """
         ret = [0, ""]
         flag = False
+        self.selected = []
         if ids is None:
             for h_id in self.hosts:
                 self.selected.append(self.hosts[h_id])
@@ -349,12 +364,11 @@ class Server(object):
         #self.hosts = [a for a in self.hosts if a is not None]
         #self.select([])
 
-
     def quit(self):
         """
         Interface function. Raise a Quit signal.
         """
-        Console.quit_signal = True
+        self.quit_signal = True
 
 class Host(object):
     """Class for hosts. Each Host object represent one host"""
@@ -378,20 +392,23 @@ class Host(object):
         self.port = port
         self.id = h_id
 
-        ###Get Version###
-        msg_len = self.recv(2) # len is 2-digit (i.e. up to 99 chars)
-        tmp = self.recv(int(msg_len)).split("-")
-        self.version = tmp[0]
-        self.type = tmp[1]
-        #################
-        ###Get System Type###
-        msg_len = self.recv(2) # len is 2-digit (i.e. up to 99 chars)
-        self.systemtype = self.recv(int(msg_len))
-        #####################
-        ###Get Hostname###
-        msg_len = self.recv(2) # len is 2-digit (i.e. up to 99 chars)
-        self.hostname = self.recv(int(msg_len))
-        ##################
+        try:
+            ###Get Version###
+            msg_len = self.recv(2) # len is 2-digit (i.e. up to 99 chars)
+            tmp = self.recv(int(msg_len)).split("-")
+            self.version = tmp[0]
+            self.type = tmp[1]
+            #################
+            ###Get System Type###
+            msg_len = self.recv(2) # len is 2-digit (i.e. up to 99 chars)
+            self.systemtype = self.recv(int(msg_len))
+            #####################
+            ###Get Hostname###
+            msg_len = self.recv(2) # len is 2-digit (i.e. up to 99 chars)
+            self.hostname = self.recv(int(msg_len))
+            ##################
+        except sock_error:
+            self.trash()
 
     def trash(self):
         """Gracefully delete host."""
@@ -416,39 +433,32 @@ class Host(object):
         """Send message to host"""
         if msg is not None and len(msg) > 0:
             try:
-                self.sock.send(self._enc(msg))
+                self.sock.send(msg)
             except sock_error:
                 raise sock_error
 
     def recv(self, size=1024):
         """Receive from host"""
         if size > 0:
-            try:
-                return self._dec(self.sock.recv(size))
-            except sock_error:
+            data = self.sock.recv(size)
+            if data == '':
                 raise sock_error
-
-    def _enc(self, data):
-        """Obfuscate message (before sending)"""
-        out = bytearray(data)
-        for i, val in enumerate(out):
-            out[i] = val ^ 0x41
-        return out
-
-    def _dec(self, data):
-        """Deobfuscate message (after receiving)."""
-        out = bytearray(data)
-        for i, val in enumerate(out):
-            out[i] = val ^ 0x41
-        return out
+            return data
 
 
 def main():
     """Main function."""
-    try:
-        cli = Console(int(argv[1]))
-    except IndexError:
-        cli = Console()
+    parser = argparse.ArgumentParser(description='RSPET Server module.')
+    parser.add_argument("-c", "--clients", nargs=1, type=int, metavar='N',
+                        help="Number of clients to accept.", default=[5])
+    parser.add_argument("--ip", nargs=1, type=str, metavar='IP',
+                        help="IP to listen for incoming connections.",
+                        default=["0.0.0.0"])
+    parser.add_argument("-p", "--port", nargs=1, type=int, metavar='PORT',
+                        help="Port number to listen for incoming connections.",
+                        default=[9000])
+    args = parser.parse_args()
+    cli = Console(args.clients[0], args.ip[0], args.port[0])
     try:
         cli.loop()
     except KeyError:
@@ -462,6 +472,7 @@ def main():
         sysexit()
     cli.trash()
     del cli
+
 
 if __name__ == "__main__":
     main()

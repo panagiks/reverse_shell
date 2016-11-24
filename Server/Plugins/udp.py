@@ -44,6 +44,7 @@ class Files(Plugin):
                     host.send("%03d" % len(cmd))
                     host.send(cmd)
                 except sock_error:
+                    host.purge()
                     ret[0] = "basic"
                     ret[1] = 2 # Socket Error Code
         return ret
@@ -67,6 +68,7 @@ class Files(Plugin):
                     host.send("%03d" % len(cmd))
                     host.send(cmd)
                 except sock_error:
+                    host.purge()
                     ret[0] = "basic"
                     ret[1] = 2 # Socket Error Code
         return ret

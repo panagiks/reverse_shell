@@ -9,11 +9,13 @@ from threading import Thread
 from subprocess import Popen, PIPE
 
 
-def serverCall(api, num_of_clients):
+def serverCall(api, num_of_clients, ip, port):
     if api:
-        os.system(("cd test/Server/ && ./rspet_server_api.py %d" % num_of_clients))
+        os.system(("cd test/Server/ && ./rspet_server_api.py -c %d --ip %s -p %d" %
+                    (num_of_clients, ip, port)))
     else:
-        os.system(("cd test/Server/ && ./rspet_server.py %d" % num_of_clients))
+        os.system(("cd test/Server/ && ./rspet_server.py -c %d --ip %s -p %d" %
+                    (num_of_clients, ip, port)))
 
 
 def clientCall(clientNo):
@@ -31,17 +33,17 @@ def clientCall(clientNo):
 def main():
     parser = argparse.ArgumentParser(description='Automate test deployment.')
     parser.add_argument("-c", "--clients", nargs=1, type=int, metavar='N',
-                        help="Number of clients to spawn.")
+                        help="Number of clients to spawn.", default=[5])
     parser.add_argument("--rest", action='store_true', help="Invoke the RESTful WebAPI.")
+    parser.add_argument("--ip", nargs=1, type=str, metavar='IP',
+                        help="IP to listen for incoming connections.",
+                        default=["0.0.0.0"])
+    parser.add_argument("-p", "--port", nargs=1, type=int, metavar='PORT',
+                        help="Port number to listen for incoming connections.",
+                        default=[9000])
     args = parser.parse_args()
 
-    try:
-        num_of_clients = int(args.clients[0])
-    except IndexError:
-        num_of_clients = 3
-    except ValueError:
-        print("Argument must be int! Exitting ...")
-        sys.exit()
+    num_of_clients = int(args.clients[0])
 
     try:
         shutil.copytree("Server", "test/Server")
@@ -58,7 +60,8 @@ def main():
     for i in range(0, num_of_clients):
         thr = Thread(target=clientCall, args=[i])
         f_jobs.append(thr)
-    thr = Thread(target=serverCall, args=[args.rest, args.clients[0]])
+    thr = Thread(target=serverCall, args=[args.rest, args.clients[0], args.ip[0],
+                args.port[0]])
     f_jobs.append(thr)
     for k in f_jobs:
         k.start()

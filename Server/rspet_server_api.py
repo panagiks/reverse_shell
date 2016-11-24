@@ -4,6 +4,7 @@
 from sys import argv, exit
 from flask import Flask, jsonify, abort, make_response, request, url_for
 from flask_cors import CORS, cross_origin
+import argparse
 import rspet_server
 
 __author__ = "Kolokotronis Panagiotis"
@@ -22,17 +23,17 @@ CORS(APP)
 # so in lack of a better solution (that will come in following versions) lets' do this.
 EXCLUDED_FUNCTIONS = ["help", "List_Sel_Hosts", "List_Hosts", "Choose_Host", "Select",\
                         "ALL", "Exit", "Quit"]
-
-try:
-    max_conns = int(argv[1])
-except IndexError:
-    max_conns = 5
-except ValueError:
-    print("Argument must be int! Exitting ...")
-    sys.exit()
-
-
-RSPET_API = rspet_server.API(max_conns)
+parser = argparse.ArgumentParser(description='RSPET Server module.')
+parser.add_argument("-c", "--clients", nargs=1, type=int, metavar='N',
+                    help="Number of clients to accept.", default=[5])
+parser.add_argument("--ip", nargs=1, type=str, metavar='IP',
+                    help="IP to listen for incoming connections.",
+                    default=["0.0.0.0"])
+parser.add_argument("-p", "--port", nargs=1, type=int, metavar='PORT',
+                    help="Port number to listen for incoming connections.",
+                    default=[9000])
+args = parser.parse_args()
+RSPET_API = rspet_server.API(args.clients[0], args.ip[0], args.port[0])
 
 
 def make_public_host(host, h_id):
