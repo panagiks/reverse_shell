@@ -8,6 +8,7 @@ from subprocess import Popen, PIPE
 from multiprocessing import Process, freeze_support
 from socket import socket, IPPROTO_UDP, IPPROTO_RAW, SOCK_DGRAM, SOCK_STREAM, SOCK_RAW, AF_INET
 from socket import error as sock_error
+from socket import SHUT_RDWR
 import ssl
 
 __author__ = "Kolokotronis Panagiotis"
@@ -130,6 +131,7 @@ class Client(object):
                     self.reconnect()
                 continue
             self.comm_swtch[en_data]()
+        self.sock.shutdown(SHUT_RDWR)
         self.sock.close()
 
     def connect(self):
