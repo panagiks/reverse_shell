@@ -56,18 +56,18 @@ Also you can generate your own key-cert set (just name them `server.key` & `serv
 
 * Server:
 ```sh
-python rspet_server.py (max_connections)
+python rspet_server.py [-c #clients, --ip ipToBind, -p portToBind]
 ```
 max_connections defaults to 5 if left blank
 
 * RESTful API:
     ```sh
-    python rspet_server_api.py
+    python rspet_server_api.py [-c #clients, --ip ipToBind, -p portToBind]
     ```
 
 * Client:
 ```sh
-python rspet_client.py server_ip
+python rspet_client.py <server_ip> [server_port]
 ```
 
 Many changes can be made to fit individual needs.
