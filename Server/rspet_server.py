@@ -6,6 +6,7 @@ from sys import argv
 from sys import exit as sysexit
 from socket import socket, AF_INET, SOCK_STREAM
 from socket import error as sock_error
+from socket import SHUT_RDWR
 import ssl
 import argparse
 from datetime import datetime
@@ -35,10 +36,6 @@ class API(object):
     def __init__(self, max_conns, ip, port):
         """Initialize Server object."""
         self.server = Server(max_conns, ip, port)
-        try:
-            start_new_thread(self.server.loop, ())
-        except sock_error:
-            raise sock_error
 
     def call_plugin(self, command, args=[]):
         """Call a plugin command"""
@@ -116,11 +113,6 @@ class Console(object):
     def loop(self):
         """Main CLI loop"""
         self._logo()
-        try:
-            start_new_thread(self.server.loop, ())
-        except sock_error:
-            print("Address is already in use")
-            sysexit()
 
         while not self.server.quit_signal:
             try:
@@ -204,14 +196,18 @@ class Server(object):
 
     def __init__(self, max_conns=5, ip="0.0.0.0", port="9000"):
         """Start listening on socket."""
+        ################## Replace with dict named connection. #################
         self.ip = ip
         self.port = port
         self.max_conns = max_conns
         self.sock = socket(AF_INET, SOCK_STREAM)
-        self.serial = 0
+        ########################################################################
         self.quit_signal = False
+        ################### Replace with dict named clients. ###################
         self.hosts = {} # Dictionary of hosts
         self.selected = [] # List of selected hosts
+        self.serial = 0
+        ########################################################################
         self.plugins = [] # List of active plugins
         self.log_opt = [] # List of Letters. Indicates logging level
 
@@ -233,6 +229,7 @@ class Server(object):
             print("Something went wrong during binding & listening")
             self._log("E", "Error binding socket @ %s:%s." %(self.ip, self.port))
             sysexit()
+        start_new_thread(self.loop, ())
 
     def trash(self):
         """Safely closes all sockets"""
@@ -421,6 +418,7 @@ class Host(object):
 
     def purge(self):
         """Delete host not so gracefully."""
+        self.sock.shutdown(SHUT_RDWR)
         self.sock.close()
         self.deleteme = True
 
