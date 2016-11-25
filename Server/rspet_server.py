@@ -89,6 +89,7 @@ class API(object):
         return ret
 
     def quit(self):
+        """Quit API and Destroy Server instance."""
         self.server.trash()
 
 
@@ -229,14 +230,14 @@ class Server(object):
             self.load_plugin(plugin)
         try:
             self.connection["sock"].bind((self.connection["ip"],
-                                        int(self.connection["port"])))
+                                          int(self.connection["port"])))
             self.connection["sock"].listen(self.connection["max_conns"])
             self._log("L", "Socket bound @ %s:%s." %(self.connection["ip"],
-                                                    self.connection["port"]))
+                                                     self.connection["port"]))
         except sock_error:
             print("Something went wrong during binding & listening")
             self._log("E", "Error binding socket @ %s:%s." %(self.connection["ip"],
-                                                            self.connection["port"]))
+                                                             self.connection["port"]))
             sysexit()
         start_new_thread(self.loop, ())
 
@@ -279,10 +280,12 @@ class Server(object):
                 csock = ssl.wrap_socket(csock, server_side=True, certfile="server.crt",
                                         keyfile="server.key",
                                         ssl_version=ssl.PROTOCOL_TLS)
-            self.clients["hosts"][str(self.clients["serial"])] = Host(csock, ip, port, self.clients["serial"])
+            self.clients["hosts"][str(self.clients["serial"])] = Host(csock, ip, port,
+                                                                      self.clients["serial"])
             self.clients["serial"] += 1
 
     def load_plugin(self, plugin):
+        """Asyncronously load a plugin."""
         if plugin in self.plugins["installed"]:
             try:
                 __import__("Plugins.%s" % plugin)
@@ -294,6 +297,7 @@ class Server(object):
             self._log("E", "%s: plugin not installed" % plugin)
 
     def install_plugin(self, plugin):
+        """Install an officially endorsed plugin."""
         official_plugins = self.available_plugins()
         try:
             plugin_url = self.plugins["base_url"] + official_plugins[plugin]
@@ -302,22 +306,24 @@ class Server(object):
         else:
             plugin_obj = urlopen(plugin_url)
             plugin_cont = plugin_obj.read()
-            with open(("Plugins/%s.py" %plugin),'w') as plugin_file:
+            with open(("Plugins/%s.py" %plugin), 'w') as plugin_file:
                 plugin_file.write(plugin_cont)
             self._log("L", "%s: plugin installed" % plugin)
 
     def available_plugins(self):
+        """Get a list of all available plugins."""
         json_file = urlopen(self.plugins["base_url"] + '/plugins.json')
         self.plugins["available"] = json.load(json_file)
         return self.plugins["available"]
 
     def installed_plugins(self):
+        """List all plugins installed."""
         from os import listdir
         from fnmatch import fnmatch
         files = listdir('Plugins')
         plugins = []
         for element in files:
-            if fnmatch(element,'*.py') and not fnmatch(element,'_*'):
+            if fnmatch(element, '*.py') and not fnmatch(element, '_*'):
                 plugins.append(element[:-3]) # Remove .py
         try:
             plugins.remove('mount')
