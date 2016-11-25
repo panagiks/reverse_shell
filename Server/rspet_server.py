@@ -155,19 +155,19 @@ class Console(object):
 
     def _connected(self):
         try:
-            Console.prompt = "[%s]~$ " % self.server.selected[0].ip
+            Console.prompt = "[%s]~$ " % self.server.get_selected()[0].ip
         except IndexError:
             pass
         else:
             Console.state = "connected"
 
     def _multiple(self):
-        if len(self.server.selected) != 0:
+        if len(self.server.get_selected()) != 0:
             Console.prompt = "[MULTIPLE]~$ "
             Console.state = "multiple"
 
     def _all(self):
-        if len(self.server.selected) != 0:
+        if len(self.server.get_selected()) != 0:
             Console.prompt = "[ALL]~$ "
             Console.state = "multiple"
 
@@ -197,20 +197,22 @@ class Server(object):
 
     def __init__(self, max_conns=5, ip="0.0.0.0", port="9000"):
         """Start listening on socket."""
-        ################## Replace with dict named connection. #################
-        self.ip = ip
-        self.port = port
-        self.max_conns = max_conns
-        self.sock = socket(AF_INET, SOCK_STREAM)
+        ################# Replaced with dict named connection. #################
+        self.connection = {}
+        self.connection["ip"] = ip
+        self.connection["port"] = port
+        self.connection["max_conns"] = max_conns
+        self.connection["sock"] = socket(AF_INET, SOCK_STREAM)
         ########################################################################
         self.quit_signal = False
-        ################### Replace with dict named clients. ###################
-        self.hosts = {} # Dictionary of hosts
-        self.selected = [] # List of selected hosts
-        self.serial = 0
+        ################### Replaced with dict named clients. ##################
+        self.clients = {}
+        self.clients["hosts"] = {} # Dictionary of hosts
+        self.clients["selected"] = [] # List of selected hosts
+        self.clients["serial"] = 0
         ########################################################################
         self.log_opt = [] # List of Letters. Indicates logging level
-        #################### Replaced with dict named plugins ###################
+        ################### Replaced with dict named plugins. ##################
         self.plugins = {}
         self.plugins["loaded"] = [] # List of loaded plugins
         self.plugins["installed"] = self.installed_plugins() # List of installed plugins
@@ -226,22 +228,25 @@ class Server(object):
         for plugin in self.config["plugins"]:
             self.load_plugin(plugin)
         try:
-            self.sock.bind((ip, int(port)))
-            self.sock.listen(max_conns)
-            self._log("L", "Socket bound @ %s:%s." %(self.ip, self.port))
+            self.connection["sock"].bind((self.connection["ip"],
+                                        int(self.connection["port"])))
+            self.connection["sock"].listen(self.connection["max_conns"])
+            self._log("L", "Socket bound @ %s:%s." %(self.connection["ip"],
+                                                    self.connection["port"]))
         except sock_error:
             print("Something went wrong during binding & listening")
-            self._log("E", "Error binding socket @ %s:%s." %(self.ip, self.port))
+            self._log("E", "Error binding socket @ %s:%s." %(self.connection["ip"],
+                                                            self.connection["port"]))
             sysexit()
         start_new_thread(self.loop, ())
 
     def trash(self):
         """Safely closes all sockets"""
-        for host in self.hosts:
-            self.hosts[host].trash()
+        for host in self.clients["hosts"]:
+            self.clients["hosts"][host].trash()
         self.clean()
         self.select([])
-        self.sock.close()
+        self.connection["sock"].close()
 
     def _log(self, level, action):
         if level not in self.log_opt:
@@ -261,7 +266,7 @@ class Server(object):
         """Main server loop for accepting connections. Better call it on its own thread"""
         while True:
             try:
-                (csock, (ip, port)) = self.sock.accept()
+                (csock, (ip, port)) = self.connection["sock"].accept()
                 self._log("L", "New connection from %s:%s" % (str(ip),
                                                               str(port)))
             except sock_error:
@@ -274,8 +279,8 @@ class Server(object):
                 csock = ssl.wrap_socket(csock, server_side=True, certfile="server.crt",
                                         keyfile="server.key",
                                         ssl_version=ssl.PROTOCOL_TLS)
-            self.hosts[str(self.serial)] = Host(csock, ip, port, self.serial)
-            self.serial += 1
+            self.clients["hosts"][str(self.clients["serial"])] = Host(csock, ip, port, self.clients["serial"])
+            self.clients["serial"] += 1
 
     def load_plugin(self, plugin):
         if plugin in self.plugins["installed"]:
@@ -321,6 +326,10 @@ class Server(object):
             pass
         return plugins
 
+    def loaded_plugins(self):
+        """Interface function. Return loaded plugins."""
+        return self.plugins["loaded"]
+
     def select(self, ids=None):
         """Selects given host(s) based on ids
 
@@ -330,17 +339,17 @@ class Server(object):
         """
         ret = [0, ""]
         flag = False
-        self.selected = []
+        self.clients["selected"] = []
         if ids is None:
-            for h_id in self.hosts:
-                self.selected.append(self.hosts[h_id])
+            for h_id in self.clients["hosts"]:
+                self.clients["selected"].append(self.clients["hosts"][h_id])
         else:
-            #self.selected = []
+            #self.clients["selected"] = []
             for i in ids:
                 i = str(i)
                 try:
-                    if self.hosts[i] not in self.selected:
-                        self.selected.append(self.hosts[i])
+                    if self.clients["hosts"][i] not in self.clients["selected"]:
+                        self.clients["selected"].append(self.clients["hosts"][i])
                 except KeyError:
                     flag = True
         if flag:
@@ -349,16 +358,12 @@ class Server(object):
         return ret
 
     def get_selected(self):
-        """
-        Interface function. Return selected hosts.
-        """
-        return self.selected
+        """Interface function. Return selected hosts."""
+        return self.clients["selected"]
 
     def get_hosts(self):
-        """
-        Interface function. Return all hosts.
-        """
-        return self.hosts
+        """Interface function. Return all hosts."""
+        return self.clients["hosts"]
 
     def execute(self, cmd, args):
         """Execute a command on all selected clients.
@@ -399,20 +404,18 @@ class Server(object):
     def clean(self):
         """Remove hosts tagged for deletion."""
         tmp_dct = {}
-        for host_id in self.hosts:
-            if not self.hosts[host_id].deleteme:
-                #self.hosts.pop(host_id)
-                tmp_dct[host_id] = self.hosts[host_id]
-            elif self.hosts[host_id] in self.selected:
-                self.selected.remove(self.hosts[host_id])
-        self.hosts = tmp_dct
-        #self.hosts = [a for a in self.hosts if a is not None]
+        for host_id in self.clients["hosts"]:
+            if not self.clients["hosts"][host_id].deleteme:
+                #self.clients["hosts"].pop(host_id)
+                tmp_dct[host_id] = self.clients["hosts"][host_id]
+            elif self.clients["hosts"][host_id] in self.clients["selected"]:
+                self.clients["selected"].remove(self.clients["hosts"][host_id])
+        self.clients["hosts"] = tmp_dct
+        #self.clients["hosts"] = [a for a in self.clients["hosts"] if a is not None]
         #self.select([])
 
     def quit(self):
-        """
-        Interface function. Raise a Quit signal.
-        """
+        """Interface function. Raise a Quit signal."""
         self.quit_signal = True
 
 class Host(object):
