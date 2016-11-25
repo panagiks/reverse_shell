@@ -41,6 +41,19 @@ class Essentials(Plugin):
         self.__cmd_help__["KILL"] = "KILL"
         self.__server_commands__["Execute"] = [self.execute, "connected"]
         self.__cmd_help__["Execute"] = "Execute <command>"
+        self.__server_commands__["Install_Plugin"] = [self.install_plugin, "basic"]
+        self.__cmd_help__["Install_Plugin"] = "Install_Plugin <plugin [plugin] ...>"
+        self.__server_commands__["Load_Plugin"] = [self.load_plugin, "basic"]
+        self.__cmd_help__["Load_Plugin"] = "Load_Plugin <plugin [plugin] ...>"
+        self.__server_commands__["Installed_Plugins"] = [self.installed_plugins,
+                                                        "basic"]
+        self.__cmd_help__["Installed_Plugins"] = "Installed_Plugins"
+        self.__server_commands__["Available_Plugins"] = [self.available_plugins,
+                                                        "basic"]
+        self.__cmd_help__["Available_Plugins"] = "Available_Plugins"
+        self.__server_commands__["Loaded_Plugins"] = [self.loaded_plugins,
+                                                    "basic"]
+        self.__cmd_help__["Loaded_Plugins"] = "Loaded_Plugins"
 
     def help(self, server, args):
         """List commands available in current state or provide syntax for a command."""
@@ -163,4 +176,42 @@ class Essentials(Plugin):
                 host.purge()
                 ret[0] = "basic"
                 ret[1] = 2 # Socket Error Code
+        return ret
+
+    def install_plugin(self, server, args):
+        """Download an official plugin (Install)."""
+        ret = [None,0,""]
+        for plugin in args:
+            server.install_plugin(plugin)
+        return ret
+
+    def load_plugin(self, server, args):
+        """Load an already installed plugin."""
+        ret = [None,0,""]
+        for plugin in args:
+            server.load_plugin(plugin)
+        return ret
+
+    def available_plugins(self, server, args):
+        ret = [None,0,""]
+        avail_plug = server.available_plugins()
+        ret[2] += "Available Plugins:"
+        for plug in avail_plug:
+            ret[2] += ("\n\t%s" % plug)
+        return ret
+
+    def installed_plugins(self, server, args):
+        ret = [None,0,""]
+        inst_plug = server.installed_plugins()
+        ret[2] += "Installed Plugins:"
+        for plug in inst_plug:
+            ret[2] += ("\n\t%s" % plug)
+        return ret
+
+    def loaded_plugins(self, server, args):
+        ret = [None,0,""]
+        load_plug = server.plugins["loaded"]
+        ret[2] += "Loaded Plugins:"
+        for plug in load_plug:
+            ret[2] += ("\n\t%s" % plug)
         return ret

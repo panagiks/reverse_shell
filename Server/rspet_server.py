@@ -8,6 +8,7 @@ from socket import socket, AF_INET, SOCK_STREAM
 from socket import error as sock_error
 from socket import SHUT_RDWR
 import ssl
+from urllib2 import urlopen
 import argparse
 from datetime import datetime
 from thread import start_new_thread
@@ -208,19 +209,22 @@ class Server(object):
         self.selected = [] # List of selected hosts
         self.serial = 0
         ########################################################################
-        self.plugins = [] # List of active plugins
         self.log_opt = [] # List of Letters. Indicates logging level
+        #################### Replaced with dict named plugins ###################
+        self.plugins = {}
+        self.plugins["loaded"] = [] # List of loaded plugins
+        self.plugins["installed"] = self.installed_plugins() # List of installed plugins
+        self.plugins["available"] = [] # List of available plugins
+        self.plugins["base_url"] = ""
+        ########################################################################
 
         with open("config.json") as json_config:
             self.config = json.load(json_config)
         self.log_opt = self.config["log"]
+        self.plugins["base_url"] = self.config["plugin_base_url"]
         self._log("L", "Session Start.")
         for plugin in self.config["plugins"]:
-            try:
-                __import__("Plugins.%s" % plugin)
-                self._log("L", "%s plugin loaded." % plugin)
-            except ImportError:
-                self._log("E", "%s plugin failed to load." % plugin)
+            self.load_plugin(plugin)
         try:
             self.sock.bind((ip, int(port)))
             self.sock.listen(max_conns)
@@ -272,6 +276,50 @@ class Server(object):
                                         ssl_version=ssl.PROTOCOL_TLS)
             self.hosts[str(self.serial)] = Host(csock, ip, port, self.serial)
             self.serial += 1
+
+    def load_plugin(self, plugin):
+        if plugin in self.plugins["installed"]:
+            try:
+                __import__("Plugins.%s" % plugin)
+                self._log("L", "%s: plugin loaded." % plugin)
+                self.plugins["loaded"].append(plugin)
+            except ImportError:
+                self._log("E", "%s: plugin failed to load." % plugin)
+        else:
+            self._log("E", "%s: plugin not installed" % plugin)
+
+    def install_plugin(self, plugin):
+        official_plugins = self.available_plugins()
+        try:
+            plugin_url = self.plugins["base_url"] + official_plugins[plugin]
+        except KeyError:
+            self._log("E", "%s: plugin does not exist" % plugin)
+        else:
+            plugin_obj = urlopen(plugin_url)
+            plugin_cont = plugin_obj.read()
+            with open(("Plugins/%s.py" %plugin),'w') as plugin_file:
+                plugin_file.write(plugin_cont)
+            self._log("L", "%s: plugin installed" % plugin)
+
+    def available_plugins(self):
+        json_file = urlopen(self.plugins["base_url"] + '/plugins.json')
+        self.plugins["available"] = json.load(json_file)
+        return self.plugins["available"]
+
+    def installed_plugins(self):
+        from os import listdir
+        from fnmatch import fnmatch
+        files = listdir('Plugins')
+        plugins = []
+        for element in files:
+            if fnmatch(element,'*.py') and not fnmatch(element,'_*'):
+                plugins.append(element[:-3]) # Remove .py
+        try:
+            plugins.remove('mount')
+            plugins.remove('template')
+        except ValueError:
+            pass
+        return plugins
 
     def select(self, ids=None):
         """Selects given host(s) based on ids

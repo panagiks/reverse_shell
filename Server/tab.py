@@ -44,6 +44,11 @@ def commands():
         "Exit",
         "Quit",
         "Execute",
+        "Install_Plugin",
+        "Load_Plugin",
+        "Available_Plugins",
+        "Installed_Plugins",
+        "Loaded_Plugins",
         ]
 
 
