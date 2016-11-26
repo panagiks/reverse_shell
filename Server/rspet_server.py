@@ -2,7 +2,6 @@
 # -*- coding: <UTF-8> -*-
 """rspet_server.py: RSPET's Server-side script."""
 from __future__ import print_function
-from sys import argv
 from sys import exit as sysexit
 from socket import socket, AF_INET, SOCK_STREAM
 from socket import error as sock_error
@@ -76,16 +75,16 @@ class API(object):
 
     def get_hosts(self):
         """Return hosts by ID."""
-        host = self.server.get_hosts()
+        hosts = self.server.get_hosts()
         ret = {}
-        for h_id in host:
-            tmp_host = host[h_id]
-            ret[h_id] = {"ip":tmp_host.ip,
-                         "port":tmp_host.port,
-                         "version":str(tmp_host.version),
-                         "type":str(tmp_host.type),
-                         "system":str(tmp_host.systemtype),
-                         "hostname":str(tmp_host.hostname)}
+        for h_id in hosts:
+            host = hosts[h_id]
+            ret[h_id] = {"ip":host.get_ip(),
+                         "port":host.get_port(),
+                         "version":str(host.get_version()),
+                         "type":str(host.get_type()),
+                         "system":str(host.get_systemtype()),
+                         "hostname":str(host.get_hostsname())}
         return ret
 
     def quit(self):
@@ -156,7 +155,7 @@ class Console(object):
 
     def _connected(self):
         try:
-            Console.prompt = "[%s]~$ " % self.server.get_selected()[0].ip
+            Console.prompt = "[%s]~$ " % self.server.get_selected()[0].get_ip()
         except IndexError:
             pass
         else:
@@ -267,8 +266,8 @@ class Server(object):
         """Main server loop for accepting connections. Better call it on its own thread"""
         while True:
             try:
-                (csock, (ip, port)) = self.connection["sock"].accept()
-                self._log("L", "New connection from %s:%s" % (str(ip),
+                (csock, (ipaddr, port)) = self.connection["sock"].accept()
+                self._log("L", "New connection from %s:%s" % (str(ipaddr),
                                                               str(port)))
             except sock_error:
                 raise sock_error
@@ -280,7 +279,7 @@ class Server(object):
                 csock = ssl.wrap_socket(csock, server_side=True, certfile="server.crt",
                                         keyfile="server.key",
                                         ssl_version=ssl.PROTOCOL_TLS)
-            self.clients["hosts"][str(self.clients["serial"])] = Host(csock, ip, port,
+            self.clients["hosts"][str(self.clients["serial"])] = Host(csock, ipaddr, port,
                                                                       self.clients["serial"])
             self.clients["serial"] += 1
 
@@ -300,7 +299,7 @@ class Server(object):
         """Install an officially endorsed plugin."""
         official_plugins = self.available_plugins()
         try:
-            plugin_url = self.plugins["base_url"] + official_plugins[plugin]
+            plugin_url = self.plugins["base_url"] + official_plugins[plugin]['uri']
         except KeyError:
             self._log("E", "%s: plugin does not exist" % plugin)
         else:
@@ -441,28 +440,62 @@ class Host(object):
     def __init__(self, sock, ip, port, h_id):
         """Accept the connection and initialize variables."""
         self.deleteme = False
-        self.sock = sock
-        self.ip = ip
-        self.port = port
+        ################# Replaced with dict named connection. #################
+        self.connection = {}
+        self.connection["sock"] = sock
+        self.connection["ip"] = ip
+        self.connection["port"] = port
+        ########################################################################
         self.id = h_id
+        #################### Replaced with dict named info. ####################
+        self.info = {}
+        self.info["version"] = ""
+        self.info["type"] = ""
+        self.info["systemtype"] = ""
+        self.info["hostname"] = ""
+        ########################################################################
 
         try:
             ###Get Version###
             msg_len = self.recv(2) # len is 2-digit (i.e. up to 99 chars)
             tmp = self.recv(int(msg_len)).split("-")
-            self.version = tmp[0]
-            self.type = tmp[1]
+            self.info["version"] = tmp[0]
+            self.info["type"] = tmp[1]
             #################
             ###Get System Type###
             msg_len = self.recv(2) # len is 2-digit (i.e. up to 99 chars)
-            self.systemtype = self.recv(int(msg_len))
+            self.info["systemtype"] = self.recv(int(msg_len))
             #####################
             ###Get Hostname###
             msg_len = self.recv(2) # len is 2-digit (i.e. up to 99 chars)
-            self.hostname = self.recv(int(msg_len))
+            self.info["hostname"] = self.recv(int(msg_len))
             ##################
         except sock_error:
             self.trash()
+
+    def get_ip(self):
+        """Interface function. Return Client's IP address."""
+        return self.connection["ip"]
+
+    def get_port(self):
+        """Interface function. Return Client's port."""
+        return self.connection["port"]
+
+    def get_version(self):
+        """Interface function. Return Client Module's version."""
+        return self.info["version"]
+
+    def get_type(self):
+        """Interface function. Return the type of the Client Module."""
+        return self.info["type"]
+
+    def get_systemtype(self):
+        """Interface function. Retrun the type of the Client's system."""
+        return self.info["systemtype"]
+
+    def get_hostsname(self):
+        """Interface function. Return Client's hostname."""
+        return self.info["hostname"]
 
     def trash(self):
         """Gracefully delete host."""
@@ -475,27 +508,27 @@ class Host(object):
 
     def purge(self):
         """Delete host not so gracefully."""
-        self.sock.shutdown(SHUT_RDWR)
-        self.sock.close()
+        self.connection["sock"].shutdown(SHUT_RDWR)
+        self.connection["sock"].close()
         self.deleteme = True
 
     def __eq__(self, other):
         """Check weather two sockets are the same socket."""
         #Why is this here ?
-        return self.sock == other.sock
+        return self.connection["sock"] == other.connection["sock"]
 
     def send(self, msg):
         """Send message to host"""
         if msg is not None and len(msg) > 0:
             try:
-                self.sock.send(msg)
+                self.connection["sock"].send(msg)
             except sock_error:
                 raise sock_error
 
     def recv(self, size=1024):
         """Receive from host"""
         if size > 0:
-            data = self.sock.recv(size)
+            data = self.connection["sock"].recv(size)
             if data == '':
                 raise sock_error
             return data
