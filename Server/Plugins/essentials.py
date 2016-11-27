@@ -207,15 +207,11 @@ class Essentials(Plugin):
 
     def installed_plugins(self, server, args):
         """List installed plugins."""
-        import compiler
-        import inspect
         ret = [None, 0, ""]
         inst_plug = server.installed_plugins()
         ret[2] += "Installed Plugins:"
         for plug in inst_plug:
-            plug_doc = compiler.parseFile('Plugins/' + plug + '.py').doc
-            plug_doc = inspect.cleandoc(plug_doc)
-            ret[2] += ("\n\t%s: %s" % (plug, plug_doc))
+            ret[2] += ("\n\t%s: %s" % (plug, inst_plug[plug]))
         return ret
 
     def loaded_plugins(self, server, args):
@@ -224,5 +220,5 @@ class Essentials(Plugin):
         load_plug = server.plugins["loaded"]
         ret[2] += "Loaded Plugins:"
         for plug in load_plug:
-            ret[2] += ("\n\t%s" % plug)
+            ret[2] += ("\n\t%s: %s" % (plug, load_plug[plug]))
         return ret
