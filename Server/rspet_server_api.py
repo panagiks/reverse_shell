@@ -50,6 +50,7 @@ def make_public_help(command, hlp_sntx):
 
 
 def shutdown_server():
+    """Shutdown server if running on werkzeug"""
     func = request.environ.get('werkzeug.server.shutdown')
     if func is None:
         raise RuntimeError('Not running with the Werkzeug Server')
@@ -201,6 +202,7 @@ def refresh():
 
 @APP.route('/rspet/api/v1.0/quit', methods=['GET'])
 def shutdown():
+    """Shutdown the Server."""
     RSPET_API.quit()
     shutdown_server()
     print 'Server shutting down...'
