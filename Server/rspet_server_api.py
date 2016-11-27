@@ -22,17 +22,17 @@ CORS(APP)
 # so in lack of a better solution (that will come in following versions) lets' do this.
 EXCLUDED_FUNCTIONS = ["help", "List_Sel_Hosts", "List_Hosts", "Choose_Host", "Select",\
                         "ALL", "Exit", "Quit"]
-parser = argparse.ArgumentParser(description='RSPET Server module.')
-parser.add_argument("-c", "--clients", nargs=1, type=int, metavar='N',
+PARSER = argparse.ArgumentParser(description='RSPET Server module.')
+PARSER.add_argument("-c", "--clients", nargs=1, type=int, metavar='N',
                     help="Number of clients to accept.", default=[5])
-parser.add_argument("--ip", nargs=1, type=str, metavar='IP',
+PARSER.add_argument("--ip", nargs=1, type=str, metavar='IP',
                     help="IP to listen for incoming connections.",
                     default=["0.0.0.0"])
-parser.add_argument("-p", "--port", nargs=1, type=int, metavar='PORT',
+PARSER.add_argument("-p", "--port", nargs=1, type=int, metavar='PORT',
                     help="Port number to listen for incoming connections.",
                     default=[9000])
-args = parser.parse_args()
-RSPET_API = rspet_server.API(args.clients[0], args.ip[0], args.port[0])
+ARGS = PARSER.parse_args()
+RSPET_API = rspet_server.API(ARGS.clients[0], ARGS.ip[0], ARGS.port[0])
 
 
 def make_public_host(host, h_id):
