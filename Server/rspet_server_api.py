@@ -1,10 +1,9 @@
 #!/usr/bin/env python2
 # -*- coding: <UTF-8> -*-
 """RSPET Server's RESTful API."""
-from sys import argv, exit
-from flask import Flask, jsonify, abort, make_response, request, url_for
-from flask_cors import CORS, cross_origin
 import argparse
+from flask_cors import CORS, cross_origin
+from flask import Flask, jsonify, abort, make_response, request, url_for
 import rspet_server
 
 __author__ = "Kolokotronis Panagiotis"
