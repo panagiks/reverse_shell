@@ -167,10 +167,6 @@ def sitemap():
                     'methods':list(rule.methods)})
     return jsonify(rat)
 
-#As much as it would suit me RESTful has to be stateless sooooo ...
-#@APP.route('/rspet/api/v1.0/hosts/<string:host_id>/select', methods=['GET'])
-#def select_host(host_id):
-#    res = RSPET_API.select([host_id])
 
 @APP.route('/rspet/api/v1.0/help', methods=['GET'])
 def general_help():
