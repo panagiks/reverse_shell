@@ -2,7 +2,7 @@
 
 ![MIT Licence](https://img.shields.io/badge/Licence-MIT_Licence-red.svg?style=plastic)
 [![Python 2.7](https://img.shields.io/badge/Python-2.7-yellow.svg?style=plastic)](https://www.python.org/)
-![v0.3.0](https://img.shields.io/badge/Release-v0.3.0-orange.svg?style=plastic)
+![v0.3.1](https://img.shields.io/badge/Release-v0.3.1-orange.svg?style=plastic)
 ![Maintained](https://img.shields.io/badge/Maintained-Yes-green.svg?style=plastic)
 [![Twitter](https://img.shields.io/badge/Twitter-@TheRSPET-blue.svg?style=plastic)](https://twitter.com/theRSPET)
 
@@ -12,7 +12,7 @@ DISCLAIMER: This software is provided for educational and PenTesting purposes an
 
 NOTE: `min` folder has been removed. The added overhead of maintaining two versions lead to `min` not receiving bug-fixes and important updates. If there is interest, both in using and maintaining, a more bare-bone and simplistic version, a new branch will be created to host it.
 
-Current Version: `v0.3.0`
+Current Version: `v0.3.1`
 
 Follow: [@TheRSPET](https://twitter.com/TheRSPET) on Twitter for updates.
 

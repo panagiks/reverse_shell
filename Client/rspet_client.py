@@ -15,7 +15,7 @@ __author__ = "Kolokotronis Panagiotis"
 __copyright__ = "Copyright 2016, Kolokotronis Panagiotis"
 __credits__ = ["Kolokotronis Panagiotis", "Dimitris Zervas", "Lain Iwakura"]
 __license__ = "MIT"
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 __maintainer__ = "Kolokotronis Panagiotis"
 
 
