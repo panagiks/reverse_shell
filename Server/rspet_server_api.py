@@ -193,6 +193,54 @@ def command_help(command):
     return jsonify(make_public_help(command, help_cm))
 
 
+@APP.route('/rspet/api/v1.0/plugins/available', methods=['GET'])
+def available_plugins():
+    """Low-level interaction. Get available plugins."""
+    server = RSPET_API.get_server()
+    avail_plug = server.available_plugins()
+    return jsonify(avail_plug)
+
+
+@APP.route('/rspet/api/v1.0/plugins/installed', methods=['GET'])
+def installed_plugins():
+    """Low-level interaction. Get installed plugins."""
+    server = RSPET_API.get_server()
+    inst_plug = server.installed_plugins()
+    return jsonify(inst_plug)
+
+
+@APP.route('/rspet/api/v1.0/plugins/loaded', methods=['GET'])
+def loaded_plugins():
+    """Low-level interaction. Get loaded plugins."""
+    server = RSPET_API.get_server()
+    load_plug = server.loaded_plugins()
+    return jsonify(load_plug)
+
+
+@APP.route('/rspet/api/v1.0/plugins/install', methods=['POST'])
+def install_plugin():
+    """Low-level interaction. Install plugins."""
+    if not request.json or 'plugins' not in request.json:
+        abort(400)
+    plugins = request.json['plugins']
+    server = RSPET_API.get_server()
+    for plugin in plugins:
+        server.install_plugin(plugin)
+    return make_response('', 204)
+
+
+@APP.route('/rspet/api/v1.0/plugins/load', methods=['POST'])
+def load_plugin():
+    """Low-level interaction. Load plugins."""
+    if not request.json or 'plugins' not in request.json:
+        abort(400)
+    plugins = request.json['plugins']
+    server = RSPET_API.get_server()
+    for plugin in plugins:
+        server.load_plugin(plugin)
+    return make_response('', 204)
+
+
 @APP.route('/rspet/api/v1.0/refresh', methods=['GET'])
 def refresh():
     """Refresh server. Check for lost hosts."""
