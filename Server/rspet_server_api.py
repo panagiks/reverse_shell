@@ -1,10 +1,9 @@
 #!/usr/bin/env python2
 # -*- coding: <UTF-8> -*-
 """RSPET Server's RESTful API."""
-from sys import argv, exit
-from flask import Flask, jsonify, abort, make_response, request, url_for
-from flask_cors import CORS, cross_origin
 import argparse
+from flask_cors import CORS, cross_origin
+from flask import Flask, jsonify, abort, make_response, request, url_for
 import rspet_server
 
 __author__ = "Kolokotronis Panagiotis"
@@ -23,17 +22,17 @@ CORS(APP)
 # so in lack of a better solution (that will come in following versions) lets' do this.
 EXCLUDED_FUNCTIONS = ["help", "List_Sel_Hosts", "List_Hosts", "Choose_Host", "Select",\
                         "ALL", "Exit", "Quit"]
-parser = argparse.ArgumentParser(description='RSPET Server module.')
-parser.add_argument("-c", "--clients", nargs=1, type=int, metavar='N',
+PARSER = argparse.ArgumentParser(description='RSPET Server module.')
+PARSER.add_argument("-c", "--clients", nargs=1, type=int, metavar='N',
                     help="Number of clients to accept.", default=[5])
-parser.add_argument("--ip", nargs=1, type=str, metavar='IP',
+PARSER.add_argument("--ip", nargs=1, type=str, metavar='IP',
                     help="IP to listen for incoming connections.",
                     default=["0.0.0.0"])
-parser.add_argument("-p", "--port", nargs=1, type=int, metavar='PORT',
+PARSER.add_argument("-p", "--port", nargs=1, type=int, metavar='PORT',
                     help="Port number to listen for incoming connections.",
                     default=[9000])
-args = parser.parse_args()
-RSPET_API = rspet_server.API(args.clients[0], args.ip[0], args.port[0])
+ARGS = PARSER.parse_args()
+RSPET_API = rspet_server.API(ARGS.clients[0], ARGS.ip[0], ARGS.port[0])
 
 
 def make_public_host(host, h_id):
@@ -51,6 +50,7 @@ def make_public_help(command, hlp_sntx):
 
 
 def shutdown_server():
+    """Shutdown server if running on werkzeug"""
     func = request.environ.get('werkzeug.server.shutdown')
     if func is None:
         raise RuntimeError('Not running with the Werkzeug Server')
@@ -168,10 +168,6 @@ def sitemap():
                     'methods':list(rule.methods)})
     return jsonify(rat)
 
-#As much as it would suit me RESTful has to be stateless sooooo ...
-#@APP.route('/rspet/api/v1.0/hosts/<string:host_id>/select', methods=['GET'])
-#def select_host(host_id):
-#    res = RSPET_API.select([host_id])
 
 @APP.route('/rspet/api/v1.0/help', methods=['GET'])
 def general_help():
@@ -197,6 +193,54 @@ def command_help(command):
     return jsonify(make_public_help(command, help_cm))
 
 
+@APP.route('/rspet/api/v1.0/plugins/available', methods=['GET'])
+def available_plugins():
+    """Low-level interaction. Get available plugins."""
+    server = RSPET_API.get_server()
+    avail_plug = server.available_plugins()
+    return jsonify(avail_plug)
+
+
+@APP.route('/rspet/api/v1.0/plugins/installed', methods=['GET'])
+def installed_plugins():
+    """Low-level interaction. Get installed plugins."""
+    server = RSPET_API.get_server()
+    inst_plug = server.installed_plugins()
+    return jsonify(inst_plug)
+
+
+@APP.route('/rspet/api/v1.0/plugins/loaded', methods=['GET'])
+def loaded_plugins():
+    """Low-level interaction. Get loaded plugins."""
+    server = RSPET_API.get_server()
+    load_plug = server.loaded_plugins()
+    return jsonify(load_plug)
+
+
+@APP.route('/rspet/api/v1.0/plugins/install', methods=['POST'])
+def install_plugin():
+    """Low-level interaction. Install plugins."""
+    if not request.json or 'plugins' not in request.json:
+        abort(400)
+    plugins = request.json['plugins']
+    server = RSPET_API.get_server()
+    for plugin in plugins:
+        server.install_plugin(plugin)
+    return make_response('', 204)
+
+
+@APP.route('/rspet/api/v1.0/plugins/load', methods=['POST'])
+def load_plugin():
+    """Low-level interaction. Load plugins."""
+    if not request.json or 'plugins' not in request.json:
+        abort(400)
+    plugins = request.json['plugins']
+    server = RSPET_API.get_server()
+    for plugin in plugins:
+        server.load_plugin(plugin)
+    return make_response('', 204)
+
+
 @APP.route('/rspet/api/v1.0/refresh', methods=['GET'])
 def refresh():
     """Refresh server. Check for lost hosts."""
@@ -206,6 +250,7 @@ def refresh():
 
 @APP.route('/rspet/api/v1.0/quit', methods=['GET'])
 def shutdown():
+    """Shutdown the Server."""
     RSPET_API.quit()
     shutdown_server()
     print 'Server shutting down...'
