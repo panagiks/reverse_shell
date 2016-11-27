@@ -29,16 +29,17 @@ Documentation : [rspet.readthedocs.io](http://rspet.readthedocs.io)
 * Multiple/All Hosts management; order File/Binary transfer and UDP Flood from Multiple/All connected Hosts
 * Modular Code Design to allow easy customization
 * Client script is tested and is compatible with PyInstaller (can be made into .exe)[3]
-* Full server side plug-in support[4]
+* Full server side Plug-in support[4]
+* Plug-in management, including the ability to Install(Download) and Dynamically Load Plug-ins.
 * RESTful API for the Server Module
 
 *[1]The idea for XORing as well as the skeleton for the client came from [primalsecurity.net](http://www.primalsecurity.net) so if you like this pack of scripts you'll probably love what they do
 
-*[2]UDP Spoofing uses RAW_SOCKETS so in order to utilize it, the client has to run on an OS that supports RAW_SOCKETS (most Unix-Based) and with root privilages. Finally, most of the ISPs have implementations in place that will either drop or re-structure spoofed packets
+*[2]UDP Spoofing uses RAW_SOCKETS so in order to utilize it, the client has to run on an OS that supports RAW_SOCKETS (most Unix-Based) and with root privileges. Finally, most of the ISPs have implementations in place that will either drop or re-structure spoofed packets
 
 *[3]Again check [primalsecurity.net's](http://www.primalsecurity.net) perfect blogpost about producing an .exe
 
-*[4]Detailed documentation on creating plugins available in [Online Documentation](http://rspet.readthedocs.io/en/latest/dev/)!
+*[4]Detailed documentation on creating Plug-ins available in [Online Documentation](http://rspet.readthedocs.io/en/latest/dev/)!
 
 ## Deployment:
 
@@ -50,7 +51,7 @@ Documentation : [rspet.readthedocs.io](http://rspet.readthedocs.io)
 Executing `./setup.py` while on the project's root folder will generate the required certificates and install all needed components through pip.    
 
 Of course you can manually install the pip packages required by executing `pip2 install Flask flask-cors`.
-Also you can generate your own key-cert set (just name them `server.key` & `server.crt` and place them inside the Server folder). For more information on the topic visit the [online documentation](http://rspet.readthedocs.io/en/latest/dev/)
+Also you can generate your own key-cert set (just name them `server.key` & `server.crt` and place them inside the Server folder).
 
 ## Execution:
 
@@ -97,6 +98,7 @@ As always if you have any suggestion, bug report or complain feel free to contac
 
 - [x] ~~Fix logic bug where if a direct command to Host OS has no output Server displays command not recognized~~
 - [ ] Fix logic bug where if a direct command's to Host OS execution is perpetual the Server deadlocks
+  - [ ] Investigate weather the issue resides in the Server logic or the linearity of the CLI.
 - [x] ~~Add client version and type (min or full) as a property when client connects and at `List_Hosts`~~
 - [x] Add TLS encryption in order to:
   - [x] Replace XORing (and subsequently obfuscation with encryption)
@@ -104,15 +106,15 @@ As always if you have any suggestion, bug report or complain feel free to contac
     - [ ] A mechanism to issue and verify client certificates
     - [ ] A mechanism to recognize compromised client certs
 - [ ] Add client update mechanism (initial thought was the use of execv but it acts up)
-- [ ] Add a plugin system to client (a more compact one)
- - [ ] Add remote installation of plugins to client
- - [ ] Add installed plugins report from client to server
+- [ ] Add a Plug-in system to client (a more compact one)
+ - [ ] Add remote installation of Plug-ins to client
+ - [ ] Add installed Plug-ins report from client to server
 - [ ] Add UDP Reflection functionality
 - [ ] Provide more settings via config file
 - [ ] Re-introduce multythreading when handling multiple hosts.
-- [ ] Make commands available with 'Tab' automatically generated based on loaded plugins.
+- [ ] Make commands available with 'Tab' automatically generated based on loaded Plug-ins.
 - [x] ~~Fix logical bug when deleting a client. (Client still shows up on List_Hosts)~~
-- [x] ~~Create comprehensive plug-in creation guide.~~
+- [x] ~~Create comprehensive Plug-in creation guide.~~
 
 ## Styleguide
 
