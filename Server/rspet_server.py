@@ -21,7 +21,7 @@ __author__ = "Kolokotronis Panagiotis"
 __copyright__ = "Copyright 2016, Kolokotronis Panagiotis"
 __credits__ = ["Kolokotronis Panagiotis", "Dimitris Zervas"]
 __license__ = "MIT"
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 __maintainer__ = "Kolokotronis Panagiotis"
 
 
@@ -214,9 +214,9 @@ class Server(object):
         self.log_opt = [] # List of Letters. Indicates logging level
         ################### Replaced with dict named plugins. ##################
         self.plugins = {}
-        self.plugins["loaded"] = [] # List of loaded plugins
+        self.plugins["loaded"] = {} # List of loaded plugins
         self.plugins["installed"] = self.installed_plugins() # List of installed plugins
-        self.plugins["available"] = [] # List of available plugins
+        self.plugins["available"] = {} # List of available plugins
         self.plugins["base_url"] = ""
         ########################################################################
 
@@ -289,7 +289,7 @@ class Server(object):
             try:
                 __import__("Plugins.%s" % plugin)
                 self._log("L", "%s: plugin loaded." % plugin)
-                self.plugins["loaded"].append(plugin)
+                self.plugins["loaded"][plugin] = self.plugins["installed"][plugin]
             except ImportError:
                 self._log("E", "%s: plugin failed to load." % plugin)
         else:
@@ -319,16 +319,20 @@ class Server(object):
         """List all plugins installed."""
         from os import listdir
         from fnmatch import fnmatch
+        import compiler
+        import inspect
         files = listdir('Plugins')
-        plugins = []
-        for element in files:
-            if fnmatch(element, '*.py') and not fnmatch(element, '_*'):
-                plugins.append(element[:-3]) # Remove .py
         try:
-            plugins.remove('mount')
-            plugins.remove('template')
+            files.remove('mount.py')
+            files.remove('template.py')
         except ValueError:
             pass
+        plugins = {}
+        for element in files:
+            if fnmatch(element, '*.py') and not fnmatch(element, '_*'):
+                plug_doc = compiler.parseFile('Plugins/' + element).doc
+                plug_doc = inspect.cleandoc(plug_doc)
+                plugins[element[:-3]] = plug_doc # Remove .py)
         return plugins
 
     def loaded_plugins(self):
