@@ -438,7 +438,8 @@ class Host(object):
         'udpFlood'   : '00005',
         'udpSpoof'   : '00006',
         'command'    : '00007',
-        'KILL'       : '00008'
+        'KILL'       : '00008',
+        'loadPlugin' : '00009'
     }
 
     def __init__(self, sock, ip, port, h_id):

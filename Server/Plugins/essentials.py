@@ -55,6 +55,10 @@ class Essentials(Plugin):
                                                       "basic"]
         self.__cmd_help__["Loaded_Plugins"] = "Loaded_Plugins"
 
+        self.__server_commands__["Client_Load_Plugin"] = [self.client_load_plugin,
+                                                      "connected"]
+        self.__cmd_help__["Client_Load_Plugin"] = "Available_Plugins"
+
     def help(self, server, args):
         """List commands available in current state or provide syntax for a command."""
         ret = [None, 0, ""]
@@ -221,4 +225,24 @@ class Essentials(Plugin):
         ret[2] += "Loaded Plugins:"
         for plug in load_plug:
             ret[2] += ("\n\t%s: %s" % (plug, load_plug[plug]))
+        return ret
+
+    def client_load_plugin(self, server, args):
+        """Load plugin on remote client."""
+        ret = [None,0,""]
+        hosts = server.get_selected()
+        if len(args) < 1:
+            ret[2] = ("Syntax : %s" % self.__cmd_help__["Client_Load_Plugin"])
+            ret[1] = 1 # Invalid Syntax Error Code
+        else:
+            cmd = args[0]
+            for host in hosts:
+                try:
+                    host.send(host.command_dict['loadPlugin'])
+                    host.send("%03d" % len(cmd))
+                    host.send(cmd)
+                except sock_error:
+                    host.purge()
+                    ret[0] = "basic"
+                    ret[1] = 2 # Socket Error Code
         return ret
