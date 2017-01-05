@@ -1,37 +1,38 @@
-class PluginMount(type):
-    """
-    A plugin mount point derived from:
-    http://martyalchin.com/2008/jan/10/simple-plugin-framework/
-    Acts as a metaclass which creates anything inheriting from Plugin
-    """
+# We use a decorator to mark a function as a command.
+# Then, the PluginMount metaclass is called and it
+# creates an actual object from each plugin's class
+# and saves the methods needed.
 
+# Suggestion: We could throw away the metaclass if we
+# use simple functions (and not classes). Not sure if
+# that would be useful
+
+
+class PluginMount(type):
     def __init__(cls, name, base, attr):
         """Called when a Plugin derived class is imported
 
-        Gathers all __server_commands__ to __server_cmds__
-        and all __cmd_help__ to __help__
-        Generate __cmd_states__"""
-        if not hasattr(cls, "__help__"):
-            cls.__help__ = {}
-        if not hasattr(cls, "__cmd_states__"):
-            cls.__cmd_states__ = {}
-        if not hasattr(cls, "__server_cmds__"):
-            cls.__server_cmds__ = {}
+        Gathers all methods needed from __cmd_states__ to __server_cmds__"""
 
         tmp = cls()
-        if hasattr(cls, "__server_commands__"):
-            for cmd in tmp.__server_commands__:
-                cls.__server_cmds__[cmd] = tmp.__server_commands__[cmd][0]
-                try:
-                    cls.__cmd_states__[cmd] = tmp.__server_commands__[cmd][1:]
-                except:
-                    print("Command %s is not callable from any state" %cmd)
-                    cls.__cmd_states__[cmd] = []
-        if hasattr(cls, "__cmd_help__"):
-            for cmd in tmp.__cmd_help__:
-                cls.__help__[cmd] = tmp.__cmd_help__[cmd]
-        #print("%s was loaded" % name)
+        for fn in cls.__cmd_states__:
+            cls.__server_cmds__[fn] = getattr(tmp, fn)
+
 
 class Plugin(object):
     """Plugin class (to be extended by plugins)"""
     __metaclass__ = PluginMount
+
+    __server_cmds__ = {}
+    __cmd_states__ = {}
+    __help__ = {}
+
+
+def command(*states):
+    def decorator(fn):
+        Plugin.__cmd_states__[fn.__name__] = states
+
+        def wrapper(*args, **kwargs):
+            return fn(*args, **kwargs)
+        return wrapper
+    return decorator

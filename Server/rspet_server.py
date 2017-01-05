@@ -130,6 +130,7 @@ class Console(object):
             del cmdargs[0]
             #Execute command.
             try:
+                # print(Plugin.__cmd_states__[cmd])
                 if Console.state in Plugin.__cmd_states__[cmd]:
                     results = self.server.execute(cmd, cmdargs)
                 else:
