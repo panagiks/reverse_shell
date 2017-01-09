@@ -3,10 +3,6 @@
 # creates an actual object from each plugin's class
 # and saves the methods needed.
 
-# Suggestion: We could throw away the metaclass if we
-# use simple functions (and not classes). Not sure if
-# that would be useful
-
 
 class PluginMount(type):
     def __init__(cls, name, base, attr):
@@ -16,13 +12,26 @@ class PluginMount(type):
 
         tmp = cls()
         for fn in cls.__cmd_states__:
-            cls.__server_cmds__[fn] = getattr(tmp, fn)
+            # Load the function (if its from the current plugin) and see if
+            # it's marked. All plugins' commands are saved as function names
+            # without saving from which plugin they come, so we have to mark
+            # them and try to load them
+            try:
+                f = cls.__server_cmds__[fn] = getattr(tmp, fn)
+                if f.__is_command__:
+                    cls.__server_cmds__[fn] = f
+            except AttributeError:
+                pass
 
 
+# Suggestion: We could throw away the metaclass if we
+# use simple functions (and not classes). Not sure if
+# that would be useful
 class Plugin(object):
     """Plugin class (to be extended by plugins)"""
     __metaclass__ = PluginMount
 
+    __loaded_plugins__ = {}
     __server_cmds__ = {}
     __cmd_states__ = {}
     __help__ = {}
@@ -30,6 +39,8 @@ class Plugin(object):
 
 def command(*states):
     def decorator(fn):
+        # Mark function for loading
+        fn.__is_command__ = True
         Plugin.__cmd_states__[fn.__name__] = states
 
         def wrapper(*args, **kwargs):
