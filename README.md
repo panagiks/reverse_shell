@@ -106,7 +106,7 @@ As always if you have any suggestion, bug report or complain feel free to contac
     - [ ] A mechanism to issue and verify client certificates
     - [ ] A mechanism to recognize compromised client certs
 - [ ] Add client update mechanism (initial thought was the use of execv but it acts up)
-- [ ] Add a Plug-in system to client (a more compact one)
+- [x] Add a Plug-in system to client (a more compact one)
  - [ ] Add remote installation of Plug-ins to client
  - [ ] Add installed Plug-ins report from client to server
 - [ ] Add UDP Reflection functionality
@@ -115,6 +115,8 @@ As always if you have any suggestion, bug report or complain feel free to contac
 - [ ] Make commands available with 'Tab' automatically generated based on loaded Plug-ins.
 - [x] ~~Fix logical bug when deleting a client. (Client still shows up on List_Hosts)~~
 - [x] ~~Create comprehensive Plug-in creation guide.~~
+- [ ] Add support for command overridding in server plugins
+- [ ] Add dependency support for server plugins
 
 ## Styleguide
 
