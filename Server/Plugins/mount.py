@@ -1,3 +1,5 @@
+import re
+
 # We use a decorator to mark a function as a command.
 # Then, the PluginMount metaclass is called and it
 # creates an actual object from each plugin's class
@@ -17,7 +19,7 @@ class PluginMount(type):
             # without saving from which plugin they come, so we have to mark
             # them and try to load them
             try:
-                f = cls.__server_cmds__[fn] = getattr(tmp, fn)
+                f = getattr(tmp, fn)
                 if f.__is_command__:
                     cls.__server_cmds__[fn] = f
             except AttributeError:
@@ -34,16 +36,24 @@ class Plugin(object):
     __loaded_plugins__ = {}
     __server_cmds__ = {}
     __cmd_states__ = {}
-    __help__ = {}
 
+
+# Prepare the regex to parse help
+regex = re.compile("(.+)\n\n\s*Help: (.+)", re.M)
 
 def command(*states):
     def decorator(fn):
-        # Mark function for loading
-        fn.__is_command__ = True
         Plugin.__cmd_states__[fn.__name__] = states
 
-        def wrapper(*args, **kwargs):
-            return fn(*args, **kwargs)
-        return wrapper
+        rmatch = regex.search(fn.__doc__)
+        fn.__is_command__ = True # Mark function for loading
+        fn.__help__ = fn.__doc__
+
+        if rmatch is not None:
+            fn.__help__ = rmatch.groups()[0]
+            fn.__syntax__ = rmatch.groups()[1]
+
+        # def wrapper(*args, **kwargs):
+            # return fn(*args, **kwargs)
+        return fn
     return decorator
