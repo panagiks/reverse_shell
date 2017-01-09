@@ -62,8 +62,12 @@ class API(object):
 
         for cmd in Plugin.__server_cmds__:
             help_dct[cmd] = {'help':Plugin.__server_cmds__[cmd].__help__,
-                             'syntax':Plugin.__server_cmds__[cmd].__syntax__,
+                             'syntax':None,
                              'states':Plugin.__cmd_states__[cmd]}
+            try:
+                help_dct[cmd]["syntax"] = Plugin.__server_cmds__[cmd].__syntax__
+            except AttributeError:
+                pass
 
         return help_dct
 
