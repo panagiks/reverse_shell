@@ -393,35 +393,41 @@ class Client(object):
 
 
 class PluginMount(type):
-    """
-    A plugin mount point derived from:
-    http://martyalchin.com/2008/jan/10/simple-plugin-framework/
-    Acts as a metaclass which creates anything inheriting from Plugin
-    """
-
     def __init__(cls, name, base, attr):
         """Called when a Plugin derived class is imported
 
-        Gathers all __client_commands__ to __client_cmds__
-        and all __cmd_help__ to __help__
-        Generate __cmd_states__"""
-        if not hasattr(cls, "__client_cmds__"):
-            cls.__client_cmds__ = {}
+        Gathers all methods needed from __cmd_states__ to __server_cmds__"""
 
         tmp = cls()
-        if hasattr(cls, "__client_commands__"):
-            for cmd in tmp.__client_commands__:
-                cls.__client_cmds__[cmd] = tmp.__client_commands__[cmd][0]
-                try:
-                    cls.__cmd_states__[cmd] = tmp.__client_commands__[cmd][1:]
-                except:
-                    print("Command %s is not callable from any state" %cmd)
-                    cls.__cmd_states__[cmd] = []
-        print("%s was loaded" % name)
+        for fn in cls.__client_cmds__:
+            # Load the function (if its from the current plugin) and see if
+            # it's marked. All plugins' commands are saved as function names
+            # without saving from which plugin they come, so we have to mark
+            # them and try to load them
+
+            if cls.__client_cmds__ is not None:
+                continue
+
+            try:
+                f = getattr(tmp, fn)
+                if f.__is_command__:
+                    cls.__server_cmds__[fn] = f
+            except AttributeError:
+                pass
 
 class Plugin(object):
     """Plugin class (to be extended by plugins)"""
     __metaclass__ = PluginMount
+
+    __client_cmds__ = {}
+
+
+def command(*states):
+    def decorator(fn):
+        Plugin.__client_cmds__[fn.__name__] = None
+
+        return fn
+    return decorator
 
 
 def main():

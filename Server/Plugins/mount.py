@@ -33,7 +33,6 @@ class Plugin(object):
     """Plugin class (to be extended by plugins)"""
     __metaclass__ = PluginMount
 
-    __loaded_plugins__ = {}
     __server_cmds__ = {}
     __cmd_states__ = {}
 
@@ -53,7 +52,5 @@ def command(*states):
             fn.__help__ = rmatch.groups()[0]
             fn.__syntax__ = rmatch.groups()[1]
 
-        # def wrapper(*args, **kwargs):
-            # return fn(*args, **kwargs)
         return fn
     return decorator
