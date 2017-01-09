@@ -422,12 +422,11 @@ class Plugin(object):
     __client_cmds__ = {}
 
 
-def command(*states):
-    def decorator(fn):
-        Plugin.__client_cmds__[fn.__name__] = None
+# Plugin decorator
+def command(fn):
+    Plugin.__client_cmds__[fn.__name__] = None
 
-        return fn
-    return decorator
+    return fn
 
 
 def main():
