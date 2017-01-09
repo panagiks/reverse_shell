@@ -120,11 +120,13 @@ class Console(object):
     def loop(self):
         """Main CLI loop"""
         self._logo()
+        tab.readline_completer(c.title()
+                for c in Plugin.__cmd_states__.keys())
 
         while not self.server.quit_signal:
             try:
-                cmd = raw_input(Console.prompt)
-            except KeyboardInterrupt:
+                cmd = raw_input(Console.prompt).lower()
+            except (KeyboardInterrupt, EOFError):
                 raise KeyboardInterrupt
 
             cmdargs = cmd.split(" ")
@@ -136,7 +138,6 @@ class Console(object):
             del cmdargs[0]
             #Execute command.
             try:
-                # print(Plugin.__cmd_states__[cmd])
                 if Console.state in Plugin.__cmd_states__[cmd]:
                     results = self.server.execute(cmd, cmdargs)
                 else:
