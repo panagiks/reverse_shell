@@ -1,7 +1,0 @@
-*.pyc
-*.log
-*.txt
-*.csr
-*.crt
-*.key
-test/
