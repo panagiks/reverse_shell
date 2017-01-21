@@ -1,5 +1,5 @@
 #!/usr/bin/env python2
-# -*- coding: <UTF-8> -*-
+# -*- coding: UTF-8 -*-
 """rspet_client.py: RSPET's Client-side script."""
 from __future__ import print_function
 from sys import exit as sysexit, argv

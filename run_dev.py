@@ -1,5 +1,5 @@
 #!/usr/bin/env python2
-# -*- coding: <UTF-8> -*-
+# -*- coding: UTF-8 -*-
 from __future__ import print_function
 import shutil
 import argparse
