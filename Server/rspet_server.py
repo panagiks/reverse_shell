@@ -408,11 +408,6 @@ class Server(object):
             if Plugin.__server_cmds__ is not None:
                 for cmd in Plugin.__server_cmds__:
                     if Console.state in Plugin.__cmd_states__[cmd]:
-                        # try:
-                            # help_str += ("\n\t%s %s: %s" % (cmd,
-                                # Plugin.__server_cmds__[cmd].__syntax__,
-                                # Plugin.__server_cmds__[cmd].__help__))
-                        # except AttributeError:
                         help_str += ("\n\t%s: %s" % (cmd,
                             Plugin.__server_cmds__[cmd].__help__))
 
@@ -423,6 +418,8 @@ class Server(object):
             except KeyError:
                 help_str += "\nCommand not found! Try help with no arguments for\
                              a list of all commands available in current scope."
+            except AttributeError: # Command has no arguments declared.
+                pass
         return help_str
 
     def clean(self):
