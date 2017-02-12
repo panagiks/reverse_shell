@@ -221,6 +221,10 @@ class Essentials(Plugin):
                     host.send(host.command_dict['loadPlugin'])
                     host.send("%03d" % len(cmd))
                     host.send(cmd)
+                    if hotst.recv(3) == 'pnl':
+                        ret = [4] # RemoteAccessError Code
+                    else:
+                        host.info["plugins"].append(cmd)
                 except sock_error:
                     host.purge()
                     ret[0] = "basic"

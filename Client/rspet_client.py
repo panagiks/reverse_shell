@@ -376,20 +376,19 @@ class Client(object):
 
         try:
             self.plugins[en_data] = __import__(en_data)
-            print("%s: plugin loaded." % en_data)
+            self.send("psl")
         except ImportError:
-            print("%s: plugin failed to load or does not exist." % en_data)
+            self.send("pnl")
 
     def unload_plugin(self):
-        """Asyncronously load a plugin."""
+        """Asyncronously unload a plugin."""
         en_data = self.receive(3) # Max plugin name length 999 chars
         en_data = self.receive(int(en_data))
 
         try:
             del self.loaded_plugins[en_data]
-            print("%s: plugin loaded." % en_data)
         except ImportError:
-            print("%s: plugin failed to load or does not exist." % en_data)
+            pass
 
 
 class PluginMount(type):

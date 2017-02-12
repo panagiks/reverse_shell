@@ -473,6 +473,7 @@ class Host(object):
         self.info["type"] = ""
         self.info["systemtype"] = ""
         self.info["hostname"] = ""
+        self.info["plugins"] = []
         ########################################################################
 
         try:
