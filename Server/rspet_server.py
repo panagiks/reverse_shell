@@ -521,7 +521,7 @@ class Host(object):
             try:
                 self.send(Host.command_dict['killMe'])
             except sock_error:
-                pass
+                raise sock_error
             self.purge()
 
     def purge(self):

@@ -161,7 +161,7 @@ class Client(object):
             en_stdout = self.send(msg_len)
             en_stdout = self.send(sys_hname)
             ###################
-        except sock_error:
+        except sock_error, ValueError:
             raise sock_error
         return 0
 
@@ -433,7 +433,6 @@ def main():
     try:
         rhost = argv[1]
     except IndexError:
-        print ("Must provide hotst")
         sysexit()
     try:
         myself = Client(rhost, argv[2])
@@ -450,4 +449,3 @@ def main():
 if __name__ == '__main__':
     freeze_support()
     Process(target=main).start()
-    print("Process started")
