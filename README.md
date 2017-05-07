@@ -8,7 +8,7 @@
 
 > RSPET (Reverse Shell and Post Exploitation Tool) is a Python based reverse shell equipped with functionalities that assist in a post exploitation scenario.
 
-DISCLAIMER: This software is provided for educational and PenTesting purposes and as a proof of concept. The developer(s) do not endorse, incite or in any other way support unauthorised computer access and networks disruption.
+DISCLAIMER: This software is provided for educational and PenTesting purposes and as a proof of concept. The developer(s) do not endorse, incite or in any other way support unauthorized computer access and networks disruption.
 
 NOTE: `min` folder has been removed. The added overhead of maintaining two versions lead to `min` not receiving bug-fixes and important updates. If there is interest, both in using and maintaining, a more bare-bone and simplistic version, a new branch will be created to host it.
 
@@ -71,9 +71,9 @@ max_connections defaults to 5 if left blank
     ```
 
 * Client:
-```sh
-python rspet_client.py <server_ip> [server_port]
-```
+    ```sh
+    python rspet_client.py <server_ip> [server_port]
+    ```
 
 Many changes can be made to fit individual needs.
 
