@@ -48,22 +48,26 @@ Documentation : [rspet.readthedocs.io](http://rspet.readthedocs.io)
 
 ## Installation
 
-Executing `./setup.py` while on the project's root folder will generate the required certificates and install all needed components through pip.    
-
-Of course you can manually install the pip packages required by executing `pip2 install Flask flask-cors`.
-Also you can generate your own key-cert set (just name them `server.key` & `server.crt` and place them inside the Server folder).
+In order to install RSPET's Server Module:
+```sh
+pip install rspet-server
+```
+This will take care of all the core dependencies. In order install REST API's dependencies:
+```sh
+pip install rspet-server[rest]
+```
 
 ## Execution:
 
 * Server:
-```sh
-python rspet_server.py [-c #clients, --ip ipToBind, -p portToBind]
-```
+    ```sh
+    rspet_server [-c #clients, --ip ipToBind, -p portToBind]
+    ```
 max_connections defaults to 5 if left blank
 
 * RESTful API:
     ```sh
-    python rspet_server_api.py [-c #clients, --ip ipToBind, -p portToBind]
+    rspet-server-rest [-c #clients, --ip ipToBind, -p portToBind]
     ```
 
 * Client:
@@ -181,5 +185,5 @@ MIT
                       UMMMbi                        i8MMMt
                          C@MMMMMbt;;i.......i;XQMMMMMMt
                               ;ZMMMMMMMMMMMMMMM@A;.
-                              
+
                     The Cake is a Lie. But it has been a Year :)
