@@ -3,7 +3,7 @@ Plug-in module for RSPET server. Offer functions related to udp flooding.
 """
 from __future__ import print_function
 from socket import error as sock_error
-from Plugins.mount import Plugin, command
+from rspet.server.Plugins.mount import Plugin, command
 
 class Files(Plugin):
     """

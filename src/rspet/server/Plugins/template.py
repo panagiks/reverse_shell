@@ -1,4 +1,4 @@
-from mount import Plugin, command_basic
+from rspet.server.Plugins.mount import Plugin, command_basic
 
 class MyPlugin(Plugin):
     """Example plugin. You can declare your commands in __server_commands__ or __host_commands__"""

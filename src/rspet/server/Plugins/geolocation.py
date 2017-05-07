@@ -5,7 +5,7 @@ from __future__ import print_function
 from socket import error as sock_error
 from urllib2 import urlopen, HTTPError
 import time
-from Plugins.mount import Plugin, command
+from rspet.server.Plugins.mount import Plugin, command
 
 class Geolocation(Plugin):
     """

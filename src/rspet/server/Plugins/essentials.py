@@ -4,7 +4,7 @@ Plug-in module for RSPET server. Offer functions essential to server.
 from __future__ import print_function
 from socket import error as sock_error
 from urllib2 import urlopen, HTTPError
-from Plugins.mount import Plugin, command
+from rspet.server.Plugins.mount import Plugin, command
 
 class Essentials(Plugin):
     """

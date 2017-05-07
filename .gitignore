@@ -5,3 +5,6 @@
 *.crt
 *.key
 test/
+/dist/
+/src/*.egg-info/
+/build/

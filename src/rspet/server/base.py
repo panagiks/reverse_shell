@@ -2,19 +2,22 @@
 # -*- coding: UTF-8 -*-
 """rspet_server.py: RSPET's Server-side script."""
 from __future__ import print_function
+import os.path
+import ssl
+import argparse
+import json
 from sys import exit as sysexit
 from socket import socket, AF_INET, SOCK_STREAM
 from socket import error as sock_error
 from socket import SHUT_RDWR
-import ssl
 from urllib2 import urlopen, HTTPError
-import argparse
 from datetime import datetime
+from oscrypto import asymmetric
+from certbuilder import CertificateBuilder, pem_armor_certificate
 from thread import start_new_thread
 #from threading import Thread # Will bring back at some point
-import json
-from Plugins.mount import Plugin
-import tab
+from rspet.server.Plugins.mount import Plugin
+import rspet.server.tab as tab
 
 
 __author__ = "Kolokotronis Panagiotis"
@@ -23,7 +26,7 @@ __credits__ = ["Kolokotronis Panagiotis", "Dimitris Zervas"]
 __license__ = "MIT"
 __version__ = "0.4.0"
 __maintainer__ = "Kolokotronis Panagiotis"
-
+__path__ = os.path.dirname(__file__)
 
 class ReturnCodes(object):
     """Enumeration containing the Return Codes of the Server."""
@@ -227,9 +230,34 @@ class Server(object):
         self.plugins["available"] = {} # List of available plugins
         self.plugins["base_url"] = ""
         ########################################################################
-
-        with open("config.json") as json_config:
+        with open(os.path.join(__path__, "config.json")) as json_config:
             self.config = json.load(json_config)
+        ######################### Certificate handling #########################
+        if 'certs' not in self.config:
+            self.config['certs'] = {}
+            crt_fl = os.path.join(__path__, 'server.crt')
+            key_fl = os.path.join(__path__, 'server.key')
+            if not (os.path.isfile(crt_fl) and os.path.isfile(key_fl)):
+                public_key, private_key = asymmetric.generate_pair('rsa', bit_size=4096)
+                with open(key_fl, 'wb') as key:
+                    key.write(asymmetric.dump_private_key(private_key, None))
+                builder = CertificateBuilder(
+                    {
+                        u'country_name': u'RT',
+                        u'state_or_province_name': u'RT',
+                        u'locality_name': u'RT',
+                        u'organization_name': u'RT',
+                        u'common_name': u'RT',
+                    },
+                    public_key
+                )
+                builder.self_signed = True
+                certificate = builder.build(private_key)
+                with open(crt_fl, 'wb') as crt:
+                    crt.write(pem_armor_certificate(certificate))
+            self.config['certs']['crt'] = crt_fl
+            self.config['certs']['key'] = key_fl
+        ########################################################################
         self.log_opt = self.config["log"]
         self.plugins["base_url"] = self.config["plugin_base_url"]
         self._log("L", "Session Start.")
@@ -260,7 +288,7 @@ class Server(object):
         if level not in self.log_opt:
             return
         timestamp = datetime.now()
-        with open("log.txt", 'a') as logfile:
+        with open(os.path.join(__path__, "log.txt"), 'a') as logfile:
             logfile.write("%s : [%s/%s/%s %s:%s:%s] => %s\n" %(level,
                                                                str(timestamp.day),
                                                                str(timestamp.month),
@@ -280,12 +308,14 @@ class Server(object):
             except sock_error:
                 raise sock_error
             try:
-                csock = ssl.wrap_socket(csock, server_side=True, certfile="server.crt",
-                                        keyfile="server.key",
+                csock = ssl.wrap_socket(csock, server_side=True,
+                                        certfile=self.config['certs']['crt'],
+                                        keyfile=self.config['certs']['key'],
                                         ssl_version=ssl.PROTOCOL_TLSv1_2)
             except AttributeError: # All PROTOCOL consts are merged on TLS in Python2.7.13
-                csock = ssl.wrap_socket(csock, server_side=True, certfile="server.crt",
-                                        keyfile="server.key",
+                csock = ssl.wrap_socket(csock, server_side=True,
+                                        certfile=self.config['certs']['crt'],
+                                        keyfile=self.config['certs']['key'],
                                         ssl_version=ssl.PROTOCOL_TLS)
             self.clients["hosts"][str(self.clients["serial"])] = Host(csock, ipaddr, port,
                                                                       self.clients["serial"])
@@ -295,7 +325,7 @@ class Server(object):
         """Asyncronously load a plugin."""
         if plugin in self.plugins["installed"]:
             try:
-                __import__("Plugins.%s" % plugin)
+                __import__("rspet.server.Plugins.%s" % plugin)
                 self._log("L", "%s: plugin loaded." % plugin)
                 self.plugins["loaded"][plugin] = self.plugins["installed"][plugin]
             except ImportError:
@@ -318,7 +348,7 @@ class Server(object):
             except HTTPError: # Plugin repo 404ed (most probably).
                 self._log("E", "%s: plugin not available on server." % plugin)
             else:
-                with open(("Plugins/%s.py" %plugin), 'w') as plugin_file:
+                with open(os.path.join(__path__, ("Plugins/%s.py" %plugin)), 'w') as plugin_file:
                     plugin_file.write(plugin_cont)
                 self._log("L", "%s: plugin installed" % plugin)
 
@@ -351,7 +381,7 @@ class Server(object):
         from fnmatch import fnmatch
         import compiler
         import inspect
-        files = listdir('Plugins')
+        files = listdir(os.path.join(__path__, 'Plugins'))
         try:
             files.remove('mount.py')
             files.remove('template.py')
@@ -360,7 +390,7 @@ class Server(object):
         plugins = {}
         for element in files:
             if fnmatch(element, '*.py') and not fnmatch(element, '_*'):
-                plug_doc = compiler.parseFile('Plugins/' + element).doc
+                plug_doc = compiler.parseFile(os.path.join(__path__, 'Plugins/' + element)).doc
                 plug_doc = inspect.cleandoc(plug_doc)
                 plugins[element[:-3]] = plug_doc # Remove .py)
         return plugins

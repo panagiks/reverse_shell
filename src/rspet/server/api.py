@@ -4,7 +4,7 @@
 import argparse
 from flask_cors import CORS, cross_origin
 from flask import Flask, jsonify, abort, make_response, request, url_for, redirect
-import rspet_server
+import rspet.server.base
 
 __author__ = "Kolokotronis Panagiotis"
 __copyright__ = "Copyright 2016, Kolokotronis Panagiotis"
@@ -22,17 +22,18 @@ CORS(APP)
 # so in lack of a better solution (that will come in following versions) lets' do this.
 EXCLUDED_FUNCTIONS = ["help", "List_Sel_Hosts", "List_Hosts", "Choose_Host", "Select",\
                         "ALL", "Exit", "Quit"]
-PARSER = argparse.ArgumentParser(description='RSPET Server module.')
-PARSER.add_argument("-c", "--clients", nargs=1, type=int, metavar='N',
-                    help="Number of clients to accept.", default=[5])
-PARSER.add_argument("--ip", nargs=1, type=str, metavar='IP',
-                    help="IP to listen for incoming connections.",
-                    default=["0.0.0.0"])
-PARSER.add_argument("-p", "--port", nargs=1, type=int, metavar='PORT',
-                    help="Port number to listen for incoming connections.",
-                    default=[9000])
-ARGS = PARSER.parse_args()
-RSPET_API = rspet_server.API(ARGS.clients[0], ARGS.ip[0], ARGS.port[0])
+# PARSER = argparse.ArgumentParser(description='RSPET Server module.')
+# PARSER.add_argument("-c", "--clients", nargs=1, type=int, metavar='N',
+#                     help="Number of clients to accept.", default=[5])
+# PARSER.add_argument("--ip", nargs=1, type=str, metavar='IP',
+#                     help="IP to listen for incoming connections.",
+#                     default=["0.0.0.0"])
+# PARSER.add_argument("-p", "--port", nargs=1, type=int, metavar='PORT',
+#                     help="Port number to listen for incoming connections.",
+#                     default=[9000])
+# ARGS = PARSER.parse_args()
+# RSPET_API = rspet_server.API(ARGS.clients[0], ARGS.ip[0], ARGS.port[0])
+RSPET_API = None
 
 
 def make_public_host(host, h_id):
@@ -107,7 +108,7 @@ def run_cmd_host(host_id):
     #Select host on the server.
     res = RSPET_API.select([host_id])
     #Check if host selected correctly (if not probably host_id is invalid).
-    if res["code"] != rspet_server.ReturnCodes.OK:
+    if res["code"] != rspet.server.base.ReturnCodes.OK:
         abort(404)
     #Read 'command' argument from query string.
     comm = request.args.get('command')
@@ -139,7 +140,7 @@ def mul_cmd():
     #Select hosts on the server.
     res = RSPET_API.select(hosts)
     #Check if host selected correctly (if not probably host_id is invalid).
-    if res["code"] != rspet_server.ReturnCodes.OK:
+    if res["code"] != rspet.server.base.ReturnCodes.OK:
         abort(404)
     #Read 'command' argument from query string.
     comm = request.args.get('command')
@@ -177,7 +178,7 @@ def run_cmd():
         args = []
     #Execute command.
     ret = RSPET_API.call_plugin(comm, args)
-    if ret['code'] == rspet_server.ReturnCodes.OK:
+    if ret['code'] == rspet.server.base.ReturnCodes.OK:
         http_code = 200
     else:
         http_code = 404
@@ -288,6 +289,22 @@ def shutdown():
     print 'Server shutting down...'
     return make_response('', 204)
 
+def main():
+    global RSPET_API
+    PARSER = argparse.ArgumentParser(description='RSPET Server module.')
+    PARSER.add_argument("-c", "--clients", nargs=1, type=int, metavar='N',
+                        help="Number of clients to accept.", default=[5])
+    PARSER.add_argument("--ip", nargs=1, type=str, metavar='IP',
+                        help="IP to listen for incoming connections.",
+                        default=["0.0.0.0"])
+    PARSER.add_argument("-p", "--port", nargs=1, type=int, metavar='PORT',
+                        help="Port number to listen for incoming connections.",
+                        default=[9000])
+    ARGS = PARSER.parse_args()
+    RSPET_API = rspet.server.base.API(ARGS.clients[0], ARGS.ip[0], ARGS.port[0])
+    APP.run(debug=False, threaded=True)
+
 
 if __name__ == '__main__':
-    APP.run(debug=False, threaded=True)
+    main()
+    # APP.run(debug=False, threaded=True)
