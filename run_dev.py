@@ -11,15 +11,15 @@ from subprocess import Popen, PIPE
 
 def serverCall(api, num_of_clients, ip, port):
     if api:
-        os.system(("cd test/Server/ && ./rspet_server_api.py -c %d --ip %s -p %d" %
+        os.system(("cd test/server/ && ./api.py -c %d --ip %s -p %d" %
                     (num_of_clients, ip, port)))
     else:
-        os.system(("cd test/Server/ && ./rspet_server.py -c %d --ip %s -p %d" %
+        os.system(("cd test/server/ && ./base.py -c %d --ip %s -p %d" %
                     (num_of_clients, ip, port)))
 
 
 def clientCall(clientNo):
-    comm = Popen(("cd test/Client/cl%d && ./rspet_client.py 127.0.0.1" % clientNo), shell=True, stdout=PIPE, stderr=PIPE, stdin=PIPE)
+    comm = Popen(("cd test/client/cl%d && ./rspet_client.py 127.0.0.1" % clientNo), shell=True, stdout=PIPE, stderr=PIPE, stdin=PIPE)
     stdout, stderr = comm.communicate()
     if stderr:
         decode = stderr.decode('UTF-8')
@@ -46,13 +46,13 @@ def main():
     num_of_clients = int(args.clients[0])
 
     try:
-        shutil.copytree("Server", "test/Server")
+        shutil.copytree("src/rspet/server", "test/server")
     except OSError:
         pass
 
     for i in range(0, num_of_clients):
         try:
-            shutil.copytree("Client", ("test/Client/cl%d" %i))
+            shutil.copytree("src/rspet/client", ("test/client/cl%d" %i))
         except OSError:
             pass
 
