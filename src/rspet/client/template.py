@@ -1,7 +1,11 @@
 from rspet_client import Plugin, command
 
+
 class MyPlugin(Plugin):
-    """Example plugin. You can declare your commands in __server_commands__ or __host_commands__"""
+    """
+    Example plugin. You can declare your commands in __server_commands__ or
+    __host_commands__
+    """
 
     def __init__(self):
         """This function is called when the plugin is loaded"""

@@ -15,7 +15,7 @@ from datetime import datetime
 from oscrypto import asymmetric
 from certbuilder import CertificateBuilder, pem_armor_certificate
 from thread import start_new_thread
-#from threading import Thread # Will bring back at some point
+# from threading import Thread # Will bring back at some point
 from rspet.server.Plugins.mount import Plugin
 import rspet.server.tab as tab
 
@@ -27,6 +27,7 @@ __license__ = "MIT"
 __version__ = "0.4.0"
 __maintainer__ = "Kolokotronis Panagiotis"
 __path__ = os.path.dirname(__file__)
+
 
 class ReturnCodes(object):
     """Enumeration containing the Return Codes of the Server."""
@@ -45,28 +46,31 @@ class API(object):
         try:
             ret = self.server.execute(command, args)
         except KeyError:
-            ret = [None, 6, ("%s : No such command." %command)]
-        return {"transition":ret[0],
-                "code":ret[1],
-                "string":ret[2]}
+            ret = [None, 6, ("%s : No such command." % command)]
+        return {"transition": ret[0],
+                "code": ret[1],
+                "string": ret[2]}
 
     def select(self, args=[]):
         """Manage host selection."""
         ret = self.server.select(args)
-        return {"transition":None,
-                "code":ret[0],
-                "string":ret[1]}
+        return {"transition": None,
+                "code": ret[0],
+                "string": ret[1]}
 
     def help(self):
         """
-        Temporary. Should interface Server's help when Circular references are removed.
+        Temporary. Should interface Server's help when Circular references are
+        removed.
         """
         help_dct = {}
 
         for cmd in Plugin.__server_cmds__:
-            help_dct[cmd] = {'help':Plugin.__server_cmds__[cmd].__help__,
-                             'syntax':None,
-                             'states':Plugin.__cmd_states__[cmd]}
+            help_dct[cmd] = {
+                'help': Plugin.__server_cmds__[cmd].__help__,
+                'syntax': None,
+                'states': Plugin.__cmd_states__[cmd]
+            }
             try:
                 help_dct[cmd]["syntax"] = Plugin.__server_cmds__[cmd].__syntax__
             except AttributeError:
@@ -88,12 +92,14 @@ class API(object):
         ret = {}
         for h_id in hosts:
             host = hosts[h_id]
-            ret[h_id] = {"ip":host.get_ip(),
-                         "port":host.get_port(),
-                         "version":str(host.get_version()),
-                         "type":str(host.get_type()),
-                         "system":str(host.get_systemtype()),
-                         "hostname":str(host.get_hostsname())}
+            ret[h_id] = {
+                "ip": host.get_ip(),
+                "port": host.get_port(),
+                "version": str(host.get_version()),
+                "type": str(host.get_type()),
+                "system": str(host.get_systemtype()),
+                "hostname": str(host.get_hostsname())
+            }
         return ret
 
     def quit(self):
@@ -103,14 +109,14 @@ class API(object):
 
 class Console(object):
     """Provide command line interface for the server."""
-    prompt = "~$ " # Current command prompt.
-    states = {} # Dictionary that defines available states.
-    state = "basic" #CLI "entry" state.
+    prompt = "~$ "  # Current command prompt.
+    states = {}  # Dictionary that defines available states.
+    state = "basic"  # CLI "entry" state.
 
     def __init__(self, max_conns, ip, port):
         """Start server and initialize states."""
         self.server = Server(max_conns, ip, port)
-        #If done directly @ Class attributes, Class funcs are not recognised.
+        # If done directly @ Class attributes, Class funcs are not recognised.
         Console.states['basic'] = Console._basic
         Console.states['connected'] = Console._connected
         Console.states['multiple'] = Console._multiple
@@ -123,8 +129,10 @@ class Console(object):
     def loop(self):
         """Main CLI loop"""
         self._logo()
-        tab.readline_completer(c.title()
-                for c in Plugin.__cmd_states__.keys())
+        tab.readline_completer(
+            c.title()
+            for c in Plugin.__cmd_states__.keys()
+        )
 
         while not self.server.quit_signal:
             try:
@@ -133,28 +141,31 @@ class Console(object):
                 raise KeyboardInterrupt
 
             cmdargs = cmd.split(" ")
-            #"Sanitize" user input by stripping spaces.
+            # "Sanitize" user input by stripping spaces.
             cmdargs = [x for x in cmdargs if x != ""]
-            if cmdargs == []: #Check if command was empty.
+            if cmdargs == []:  # Check if command was empty.
                 continue
             cmd = cmdargs[0]
             del cmdargs[0]
-            #Execute command.
+            # Execute command.
             try:
                 if Console.state in Plugin.__cmd_states__[cmd]:
                     results = self.server.execute(cmd, cmdargs)
                 else:
                     results = [None, 5, "Command used out of scope."]
             except KeyError:
-                results = [None, 6, "Command not found. Try help for a list of all commands!"]
+                results = [
+                    None, 6,
+                    "Command not found. Try help for a list of all commands!"
+                ]
             tmp_state = results[0]
-            #return_code = results[1] # Future use ? Also API.
+            # return_code = results[1] # Future use ? Also API.
             return_string = results[2]
             if return_string != "":
                 print(return_string)
             try:
-                Console.states[tmp_state](self) #State transition.
-            except KeyError: #If none is returned make no state change.
+                Console.states[tmp_state](self)  # State transition.
+            except KeyError:  # If none is returned make no state change.
                 continue
         self.server.trash()
 
@@ -200,11 +211,13 @@ class Console(object):
 
 
 class Server(object):
-    """Main class of the server. Manage server socket, selections and call plugins."""
-    #hosts = [] # List of hosts
-    #selected = [] # List of selected hosts
-    #plugins = [] # List of active plugins
-    #config = {} # Reserved for future use (dynamic plug-in loading).
+    """
+    Main class of the server. Manage server socket, selections and call plugins
+    """
+    # hosts = [] # List of hosts
+    # selected = [] # List of selected hosts
+    # plugins = [] # List of active plugins
+    # config = {} # Reserved for future use (dynamic plug-in loading).
 
     def __init__(self, max_conns=5, ip="0.0.0.0", port="9000"):
         """Start listening on socket."""
@@ -218,16 +231,16 @@ class Server(object):
         self.quit_signal = False
         ################### Replaced with dict named clients. ##################
         self.clients = {}
-        self.clients["hosts"] = {} # Dictionary of hosts
-        self.clients["selected"] = [] # List of selected hosts
+        self.clients["hosts"] = {}  # Dictionary of hosts
+        self.clients["selected"] = []  # List of selected hosts
         self.clients["serial"] = 0
         ########################################################################
-        self.log_opt = [] # List of Letters. Indicates logging level
+        self.log_opt = []  # List of Letters. Indicates logging level
         ################### Replaced with dict named plugins. ##################
         self.plugins = {}
-        self.plugins["loaded"] = {} # List of loaded plugins
-        self.plugins["installed"] = self.installed_plugins() # List of installed plugins
-        self.plugins["available"] = {} # List of available plugins
+        self.plugins["loaded"] = {}  # List of loaded plugins
+        self.plugins["installed"] = self.installed_plugins()  # List of installed plugins
+        self.plugins["available"] = {}  # List of available plugins
         self.plugins["base_url"] = ""
         ########################################################################
         with open(os.path.join(__path__, "config.json")) as json_config:
@@ -267,12 +280,12 @@ class Server(object):
             self.connection["sock"].bind((self.connection["ip"],
                                           int(self.connection["port"])))
             self.connection["sock"].listen(self.connection["max_conns"])
-            self._log("L", "Socket bound @ %s:%s." %(self.connection["ip"],
-                                                     self.connection["port"]))
+            self._log("L", "Socket bound @ %s:%s." % (self.connection["ip"],
+                                                      self.connection["port"]))
         except sock_error:
             print("Something went wrong during binding & listening")
-            self._log("E", "Error binding socket @ %s:%s." %(self.connection["ip"],
-                                                             self.connection["port"]))
+            self._log("E", "Error binding socket @ %s:%s." % (self.connection["ip"],
+                                                              self.connection["port"]))
             sysexit()
         start_new_thread(self.loop, ())
 
@@ -289,14 +302,14 @@ class Server(object):
             return
         timestamp = datetime.now()
         with open(os.path.join(__path__, "log.txt"), 'a') as logfile:
-            logfile.write("%s : [%s/%s/%s %s:%s:%s] => %s\n" %(level,
-                                                               str(timestamp.day),
-                                                               str(timestamp.month),
-                                                               str(timestamp.year),
-                                                               str(timestamp.hour),
-                                                               str(timestamp.minute),
-                                                               str(timestamp.second),
-                                                               action))
+            logfile.write("%s : [%s/%s/%s %s:%s:%s] => %s\n" % (level,
+                                                                str(timestamp.day),
+                                                                str(timestamp.month),
+                                                                str(timestamp.year),
+                                                                str(timestamp.hour),
+                                                                str(timestamp.minute),
+                                                                str(timestamp.second),
+                                                                action))
 
     def loop(self):
         """Main server loop for accepting connections. Better call it on its own thread"""
@@ -312,7 +325,7 @@ class Server(object):
                                         certfile=self.config['certs']['crt'],
                                         keyfile=self.config['certs']['key'],
                                         ssl_version=ssl.PROTOCOL_TLSv1_2)
-            except AttributeError: # All PROTOCOL consts are merged on TLS in Python2.7.13
+            except AttributeError:  # All PROTOCOL consts are merged on TLS in Python2.7.13
                 csock = ssl.wrap_socket(csock, server_side=True,
                                         certfile=self.config['certs']['crt'],
                                         keyfile=self.config['certs']['key'],
@@ -345,7 +358,7 @@ class Server(object):
             try:
                 plugin_obj = urlopen(plugin_url)
                 plugin_cont = plugin_obj.read()
-            except HTTPError: # Plugin repo 404ed (most probably).
+            except HTTPError:  # Plugin repo 404ed (most probably).
                 self._log("E", "%s: plugin not available on server." % plugin)
             else:
                 with open(os.path.join(__path__, ("Plugins/%s.py" %plugin)), 'w') as plugin_file:
@@ -361,7 +374,7 @@ class Server(object):
             # Get info file from repo, in case of error, log and continue.
             try:
                 json_file = urlopen(base_url + '/plugins.json')
-            except HTTPError: # Plugin repo 404ed (most probably).
+            except HTTPError:  # Plugin repo 404ed (most probably).
                 self._log("E", "Error connecting to plugin repo %s" % base_url)
                 continue
             json_dct = json.load(json_file)
@@ -372,7 +385,7 @@ class Server(object):
                     self.plugins["available"][plugin] = json_dct[plugin]
                     # Trasform relative uri from json file to absolute.
                     self.plugins["available"][plugin]["uri"] = base_url + \
-                                    self.plugins["available"][plugin]["uri"]
+                        self.plugins["available"][plugin]["uri"]
         return self.plugins["available"]
 
     def installed_plugins(self):
@@ -392,7 +405,7 @@ class Server(object):
             if fnmatch(element, '*.py') and not fnmatch(element, '_*'):
                 plug_doc = compiler.parseFile(os.path.join(__path__, 'Plugins/' + element)).doc
                 plug_doc = inspect.cleandoc(plug_doc)
-                plugins[element[:-3]] = plug_doc # Remove .py)
+                plugins[element[:-3]] = plug_doc  # Remove .py
         return plugins
 
     def loaded_plugins(self):
@@ -413,7 +426,7 @@ class Server(object):
             for h_id in self.clients["hosts"]:
                 self.clients["selected"].append(self.clients["hosts"][h_id])
         else:
-            #self.clients["selected"] = []
+            # self.clients["selected"] = []
             for i in ids:
                 i = str(i)
                 try:
@@ -461,7 +474,7 @@ class Server(object):
                 for cmd in Plugin.__server_cmds__:
                     if Console.state in Plugin.__cmd_states__[cmd]:
                         help_str += ("\n\t%s: %s" % (cmd,
-                            Plugin.__server_cmds__[cmd].__help__))
+                                     Plugin.__server_cmds__[cmd].__help__))
 
         else:
             help_str += ("Command : %s" % args[0])
@@ -470,7 +483,7 @@ class Server(object):
             except KeyError:
                 help_str += "\nCommand not found! Try help with no arguments for\
                              a list of all commands available in current scope."
-            except AttributeError: # Command has no arguments declared.
+            except AttributeError:  # Command has no arguments declared.
                 pass
         return help_str
 
@@ -491,18 +504,18 @@ class Server(object):
 class Host(object):
     """Class for hosts. Each Host object represent one host"""
     command_dict = {
-        'killMe'            : '00000',
-        'getFile'           : '00001',
-        'getBinary'         : '00002',
-        'sendFile'          : '00003',
-        'sendBinary'        : '00004',
-        'udpFlood'          : '00005',
-        'udpSpoof'          : '00006',
-        'command'           : '00007',
-        'KILL'              : '00008',
-        'loadPlugin'        : '00009',
-        'unloadPlugin'      : '00010',
-        'runPluginCommand'  : '00011'
+        'killMe': '00000',
+        'getFile': '00001',
+        'getBinary': '00002',
+        'sendFile': '00003',
+        'sendBinary': '00004',
+        'udpFlood': '00005',
+        'udpSpoof': '00006',
+        'command': '00007',
+        'KILL': '00008',
+        'loadPlugin': '00009',
+        'unloadPlugin': '00010',
+        'runPluginCommand': '00011'
     }
 
     def __init__(self, sock, ip, port, h_id):
@@ -527,17 +540,17 @@ class Host(object):
 
         try:
             ###Get Version###
-            msg_len = self.recv(2) # len is 2-digit (i.e. up to 99 chars)
+            msg_len = self.recv(2)  # len is 2-digit (i.e. up to 99 chars)
             tmp = self.recv(int(msg_len)).split("-")
             self.info["version"] = tmp[0]
             self.info["type"] = tmp[1]
             #################
             ###Get System Type###
-            msg_len = self.recv(2) # len is 2-digit (i.e. up to 99 chars)
+            msg_len = self.recv(2)  # len is 2-digit (i.e. up to 99 chars)
             self.info["systemtype"] = self.recv(int(msg_len))
             #####################
             ###Get Hostname###
-            msg_len = self.recv(2) # len is 2-digit (i.e. up to 99 chars)
+            msg_len = self.recv(2)  # len is 2-digit (i.e. up to 99 chars)
             self.info["hostname"] = self.recv(int(msg_len))
             ##################
         except sock_error:
@@ -584,7 +597,7 @@ class Host(object):
 
     def __eq__(self, other):
         """Check weather two sockets are the same socket."""
-        #Why is this here ?
+        # Why is this here ?
         return self.connection["sock"] == other.connection["sock"]
 
     def send(self, msg):

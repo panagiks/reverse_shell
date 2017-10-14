@@ -18,10 +18,13 @@ APP = Flask(__name__)
 CORS(APP)
 
 # TODO:
-# There's a handful of commands there is no point whatsoever in executing through here
-# so in lack of a better solution (that will come in following versions) lets' do this.
-EXCLUDED_FUNCTIONS = ["help", "List_Sel_Hosts", "List_Hosts", "Choose_Host", "Select",\
-                        "ALL", "Exit", "Quit"]
+# There's a handful of commands there is no point whatsoever in executing
+# through here so in lack of a better solution (that will come in following
+# versions) lets' do this.
+
+EXCLUDED_FUNCTIONS = ["help", "List_Sel_Hosts", "List_Hosts", "Choose_Host",
+                      "Select", "ALL", "Exit", "Quit"]
+
 # PARSER = argparse.ArgumentParser(description='RSPET Server module.')
 # PARSER.add_argument("-c", "--clients", nargs=1, type=int, metavar='N',
 #                     help="Number of clients to accept.", default=[5])
@@ -47,7 +50,9 @@ def make_public_host(host, h_id):
 def make_public_help(command, hlp_sntx):
     """Add full URI to help Dictionary"""
     new_command = hlp_sntx
-    new_command['uri'] = url_for('command_help', command=command, _external=True)
+    new_command['uri'] = url_for(
+        'command_help', command=command, _external=True
+    )
     new_command['command'] = command
     return new_command
 
@@ -81,7 +86,7 @@ def bad_request(error):
 @APP.route('/rspet/api/v1.1/hosts', methods=['GET'])
 def get_hosts():
     """Return all hosts."""
-    #Check for query string, redirect to endpoint with trailling '/'.
+    # Check for query string, redirect to endpoint with trailling '/'.
     if request.query_string:
         return redirect(url_for('run_cmd') + '?' + request.query_string)
     hosts = RSPET_API.get_hosts()
@@ -91,7 +96,7 @@ def get_hosts():
 @APP.route('/rspet/api/v1.1/hosts/<string:host_id>', methods=['GET'])
 def get_host(host_id):
     """Return specific host."""
-    #Check for query string, redirect to endpoint with trailling '/'.
+    # Check for query string, redirect to endpoint with trailling '/'.
     if request.query_string:
         return redirect(url_for('run_cmd_host', host_id=host_id) + '?' + request.query_string)
     hosts = RSPET_API.get_hosts()
@@ -105,26 +110,26 @@ def get_host(host_id):
 @APP.route('/rspet/api/v1.1/hosts/<string:host_id>/', methods=['GET'])
 def run_cmd_host(host_id):
     """Execute host specific command."""
-    #Select host on the server.
+    # Select host on the server.
     res = RSPET_API.select([host_id])
-    #Check if host selected correctly (if not probably host_id is invalid).
+    # Check if host selected correctly (if not probably host_id is invalid).
     if res["code"] != rspet.server.base.ReturnCodes.OK:
         abort(404)
-    #Read 'command' argument from query string.
+    # Read 'command' argument from query string.
     comm = request.args.get('command')
     if not comm or comm in EXCLUDED_FUNCTIONS:
         abort(400)
     try:
-        #Read 'args' argument from query string.
+        # Read 'args' argument from query string.
         args = request.args.getlist('args')
-        #Cast arguments to string.
+        # Cast arguments to string.
         for i, val in enumerate(args):
             args[i] = str(val)
     except KeyError:
         args = []
-    #Execute command.
+    # Execute command.
     res = RSPET_API.call_plugin(comm, args)
-    #Unselect host. Maintain statelessness of RESTful.
+    # Unselect host. Maintain statelessness of RESTful.
     RSPET_API.select()
     return jsonify(res)
 
@@ -132,31 +137,31 @@ def run_cmd_host(host_id):
 @APP.route('/rspet/api/v1.1/hosts/', methods=['GET'])
 def mul_cmd():
     """Execute command on multiple hosts."""
-    #Read 'hosts' argument from query string.
+    # Read 'hosts' argument from query string.
     hosts = request.args.getlist('hosts')
-    #If no host specified abort with error code 400.
+    # If no host specified abort with error code 400.
     if not hosts:
         abort(400)
-    #Select hosts on the server.
+    # Select hosts on the server.
     res = RSPET_API.select(hosts)
-    #Check if host selected correctly (if not probably host_id is invalid).
+    # Check if host selected correctly (if not probably host_id is invalid).
     if res["code"] != rspet.server.base.ReturnCodes.OK:
         abort(404)
-    #Read 'command' argument from query string.
+    # Read 'command' argument from query string.
     comm = request.args.get('command')
     if not comm or comm in EXCLUDED_FUNCTIONS:
         abort(400)
     try:
-        #Read 'args' argument from query string.
+        # Read 'args' argument from query string.
         args = request.args.getlist('args')
-        #Cast arguments to string.
+        # Cast arguments to string.
         for i, val in enumerate(args):
             args[i] = str(val)
     except KeyError:
         args = []
-    #Execute command.
+    # Execute command.
     res = RSPET_API.call_plugin(comm, args)
-    #Unselect host. Maintain statelessness of RESTful.
+    # Unselect host. Maintain statelessness of RESTful.
     RSPET_API.select()
     return jsonify(res)
 
@@ -164,19 +169,19 @@ def mul_cmd():
 @APP.route('/rspet/api/v1.1', methods=['GET'])
 def run_cmd():
     """Execute general (non-host specific) command."""
-    #Read 'command' argument from query string.
+    # Read 'command' argument from query string.
     comm = request.args.get('command')
     if not comm or comm in EXCLUDED_FUNCTIONS:
         abort(400)
     try:
-        #Read 'args' argument from query string.
+        # Read 'args' argument from query string.
         args = request.args.getlist('args')
-        #Cast arguments to string.
+        # Cast arguments to string.
         for i, val in enumerate(args):
             args[i] = str(val)
     except KeyError:
         args = []
-    #Execute command.
+    # Execute command.
     ret = RSPET_API.call_plugin(comm, args)
     if ret['code'] == rspet.server.base.ReturnCodes.OK:
         http_code = 200
@@ -193,8 +198,8 @@ def sitemap():
         uri = str(rule)
         if 'static' in uri:
             continue
-        rat.append({'uri':uri, 'doc':globals()[rule.endpoint].__doc__,\
-                    'methods':list(rule.methods)})
+        rat.append({'uri': uri, 'doc': globals()[rule.endpoint].__doc__,
+                    'methods': list(rule.methods)})
     return jsonify(rat)
 
 
@@ -202,18 +207,18 @@ def sitemap():
 def general_help():
     """Return general help."""
     hlp_sntx = RSPET_API.help()
-    #Read 'state' argument from query string.
+    # Read 'state' argument from query string.
     cur_state = request.args.get('state')
-    #Remove excluded functions.
+    # Remove excluded functions.
     for hlp in EXCLUDED_FUNCTIONS:
         if hlp in hlp_sntx:
             hlp_sntx.pop(hlp)
-    #Remove out of scope functions.
+    # Remove out of scope functions.
     tmp = {}
     for hlp in hlp_sntx:
         if cur_state in hlp_sntx[hlp]['states']:
             tmp[hlp] = hlp_sntx[hlp]
-    return jsonify({'commands': [make_public_help(command, hlp_sntx[command])\
+    return jsonify({'commands': [make_public_help(command, hlp_sntx[command])
                     for command in tmp]})
 
 
@@ -289,6 +294,7 @@ def shutdown():
     print 'Server shutting down...'
     return make_response('', 204)
 
+
 def main():
     global RSPET_API
     PARSER = argparse.ArgumentParser(description='RSPET Server module.')
@@ -307,4 +313,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-    # APP.run(debug=False, threaded=True)
