@@ -314,7 +314,7 @@ def available_client_plugins(server, args):
         try:
             json_dct = requests.get(base_url + '/client_plugins.json').json()
         except json.decoder.JSONDecodeError:  # Plugin repo 404ed (probably)
-            server._log("E", "Error connecting to plugin repo %s" % base_url)
+            server._log("ERROR", "Error connecting to plugin repo %s" % base_url)
             ret[1] = 8  # PluginRepoUnreachable Error code
             continue
         for plugin in json_dct:
@@ -353,7 +353,7 @@ def get_client_plugins(server, args):
                 # FIXME: Find the right way to test for failure to get plugin
                 except json.decoder.JSONDecodeError:  # Plugin repo 404ed (most probably).
                     ret[2] += ("%s: plugin not available on server." % plugin)
-                    server._log("E", "%s: plugin not available on server." % plugin)
+                    server._log("ERROR", "%s: plugin not available on server." % plugin)
                 else:
                     # Create the file for local handler.
                     with open(("/etc/rspet/plugins/%s.py" % plugin), 'w') as plugin_file:
@@ -362,7 +362,7 @@ def get_client_plugins(server, args):
                     with open(("/etc/rspet/plugins/Clinet/%s.client" % plugin), 'w') as plugin_file:
                         plugin_file.write(plugin_cont_cl)
                     ret[2] += ("%s: Clinet plugin installed." % plugin)
-                    self._log("L", "%s: Clinet plugin installed" % plugin)
+                    self._log("DEBUG", "%s: Clinet plugin installed" % plugin)
     return ret
 
 
