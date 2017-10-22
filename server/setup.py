@@ -39,7 +39,9 @@ setup(
     install_requires=[
         'certbuilder',
         'oscrypto',
-        'asn1crypto'
+        'asn1crypto',
+        'pluginbase',
+        'requests'
     ],
     entry_points={
         'console_scripts': [
