@@ -6,6 +6,7 @@ import re
 import ssl
 import argparse
 import json
+import requests
 from sys import exit as sysexit
 from socket import socket, AF_INET, SOCK_STREAM
 from socket import error as sock_error
@@ -370,15 +371,11 @@ class Server(object):
             self._log("E", "%s: plugin does not exist" % plugin)
         else:
             # Download the plugin and write it to a file.
-            try:
-                plugin_obj = urlopen(plugin_url)
-                plugin_cont = plugin_obj.read()
-            except HTTPError:  # Plugin repo 404ed (most probably).
-                self._log("E", "%s: plugin not available on server." % plugin)
-            else:
-                with open(("/etc/rspet/plugins/%s.py" % plugin), 'w') as pfile:
-                    pfile.write(plugin_cont)
-                self._log("L", "%s: plugin installed" % plugin)
+            plugin_obj = requests.get(plugin_url)
+            plugin_cont = plugin_obj.text
+            with open(("/etc/rspet/plugins/%s.py" % plugin), 'w') as pfile:
+                pfile.write(plugin_cont)
+            self._log("L", "%s: plugin installed" % plugin)
 
     def available_plugins(self):
         """Get a list of all available plugins."""
@@ -387,12 +384,11 @@ class Server(object):
         # Iterate through all enabled repos.
         for base_url in self.plugins["base_url"]:
             # Get info file from repo, in case of error, log and continue.
-            try:
-                json_file = urlopen(base_url + '/plugins.json')
-            except HTTPError:  # Plugin repo 404ed (most probably).
+            json_file = requests.get(base_url + '/plugins.json')
+            if json_file.status_code != 200 :
                 self._log("E", "Error connecting to plugin repo %s" % base_url)
                 continue
-            json_dct = json.load(json_file)
+            json_dct = json_file.json()
             # Iterate through plugins available in current repo.
             for plugin in json_dct:
                 # Make sure plugin is not already listed from prev repo.
