@@ -1,8 +1,8 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 # -*- coding: UTF-8 -*-
 """rspet_server.py: RSPET's Server-side script."""
-from __future__ import print_function
 import os.path
+import re
 import ssl
 import argparse
 import json
@@ -10,13 +10,12 @@ from sys import exit as sysexit
 from socket import socket, AF_INET, SOCK_STREAM
 from socket import error as sock_error
 from socket import SHUT_RDWR
-from urllib2 import urlopen, HTTPError
 from datetime import datetime
 from oscrypto import asymmetric
 from certbuilder import CertificateBuilder, pem_armor_certificate
-from thread import start_new_thread
+from _thread import start_new_thread
 # from threading import Thread # Will bring back at some point
-from rspet.server.Plugins.mount import Plugin
+from pluginbase import PluginBase
 import rspet.server.tab as tab
 
 
@@ -65,14 +64,14 @@ class API(object):
         """
         help_dct = {}
 
-        for cmd in Plugin.__server_cmds__:
+        for cmd in self.server.commands:
             help_dct[cmd] = {
-                'help': Plugin.__server_cmds__[cmd].__help__,
+                'help': self.server.commands[cmd].__help__,
                 'syntax': None,
-                'states': Plugin.__cmd_states__[cmd]
+                'states': self.server.commands[cmd].__states__
             }
             try:
-                help_dct[cmd]["syntax"] = Plugin.__server_cmds__[cmd].__syntax__
+                help_dct[cmd]["syntax"] = self.server.commands[cmd].__syntax__
             except AttributeError:
                 pass
 
@@ -131,12 +130,13 @@ class Console(object):
         self._logo()
         tab.readline_completer(
             c.title()
-            for c in Plugin.__cmd_states__.keys()
+            for c in self.server.commands.keys()
         )
 
         while not self.server.quit_signal:
             try:
-                cmd = raw_input(Console.prompt).lower()
+                # cmd = raw_input(Console.prompt).lower()
+                cmd = input(Console.prompt).lower()
             except (KeyboardInterrupt, EOFError):
                 raise KeyboardInterrupt
 
@@ -149,7 +149,7 @@ class Console(object):
             del cmdargs[0]
             # Execute command.
             try:
-                if Console.state in Plugin.__cmd_states__[cmd]:
+                if Console.state in self.server.commands[cmd].__states__:
                     results = self.server.execute(cmd, cmdargs)
                 else:
                     results = [None, 5, "Command used out of scope."]
@@ -229,6 +229,15 @@ class Server(object):
         self.connection["sock"] = socket(AF_INET, SOCK_STREAM)
         ########################################################################
         self.quit_signal = False
+        plugin_base = PluginBase(
+            package='rspet.server.plugins',
+            searchpath=['/etc/rspet/plugins']
+        )
+        self.source = plugin_base.make_plugin_source(
+            searchpath=['/etc/rspet/plugins'],
+            identifier='rspet'
+        )
+        self.commands = {}
         ################### Replaced with dict named clients. ##################
         self.clients = {}
         self.clients["hosts"] = {}  # Dictionary of hosts
@@ -243,7 +252,7 @@ class Server(object):
         self.plugins["available"] = {}  # List of available plugins
         self.plugins["base_url"] = ""
         ########################################################################
-        with open(os.path.join(__path__, "config.json")) as json_config:
+        with open("/etc/rspet/config.json") as json_config:
             self.config = json.load(json_config)
         ######################### Certificate handling #########################
         if 'certs' not in self.config:
@@ -334,17 +343,23 @@ class Server(object):
                                                                       self.clients["serial"])
             self.clients["serial"] += 1
 
-    def load_plugin(self, plugin):
+    def setup_command(self, name, command):
+        """Hook function called by plugins to register their commands."""
+        self.commands[name] = command
+
+    def load_plugin(self, plugin_name):
         """Asyncronously load a plugin."""
-        if plugin in self.plugins["installed"]:
+        if plugin_name in self.plugins["installed"]:
             try:
-                __import__("rspet.server.Plugins.%s" % plugin)
+                plugin = self.source.load_plugin(plugin_name)
+                plugin.setup(self)
                 self._log("L", "%s: plugin loaded." % plugin)
-                self.plugins["loaded"][plugin] = self.plugins["installed"][plugin]
+                name = plugin.__name__.split('.')[-1]
+                self.plugins["loaded"][name] = self.plugins["installed"][name]
             except ImportError:
-                self._log("E", "%s: plugin failed to load." % plugin)
+                self._log("E", "%s: plugin failed to load." % plugin_name)
         else:
-            self._log("E", "%s: plugin not installed" % plugin)
+            self._log("E", "%s: plugin not installed" % plugin_name)
 
     def install_plugin(self, plugin):
         """Install a plugin from a loaded repo."""
@@ -361,8 +376,8 @@ class Server(object):
             except HTTPError:  # Plugin repo 404ed (most probably).
                 self._log("E", "%s: plugin not available on server." % plugin)
             else:
-                with open(os.path.join(__path__, ("Plugins/%s.py" %plugin)), 'w') as plugin_file:
-                    plugin_file.write(plugin_cont)
+                with open(("/etc/rspet/plugins/%s.py" % plugin), 'w') as pfile:
+                    pfile.write(plugin_cont)
                 self._log("L", "%s: plugin installed" % plugin)
 
     def available_plugins(self):
@@ -390,22 +405,12 @@ class Server(object):
 
     def installed_plugins(self):
         """List all plugins installed."""
-        from os import listdir
-        from fnmatch import fnmatch
-        import compiler
-        import inspect
-        files = listdir(os.path.join(__path__, 'Plugins'))
-        try:
-            files.remove('mount.py')
-            files.remove('template.py')
-        except ValueError:
-            pass
+        from ast import parse, get_docstring
         plugins = {}
-        for element in files:
-            if fnmatch(element, '*.py') and not fnmatch(element, '_*'):
-                plug_doc = compiler.parseFile(os.path.join(__path__, 'Plugins/' + element)).doc
-                plug_doc = inspect.cleandoc(plug_doc)
-                plugins[element[:-3]] = plug_doc  # Remove .py
+        installed = self.source.list_plugins()
+        for plugin in installed:
+            plug_doc = parse(open('/etc/rspet/plugins/%s.py' % plugin).read())
+            plugins[plugin] = get_docstring(plug_doc)
         return plugins
 
     def loaded_plugins(self):
@@ -458,7 +463,7 @@ class Server(object):
 
         ret = [None, 0, ""]
         try:
-            ret = Plugin.__server_cmds__[cmd](self, args)
+            ret = self.commands[cmd](self, args)
         except KeyError:
             raise KeyError
         return ret
@@ -469,17 +474,17 @@ class Server(object):
         help_str = ""
 
         if len(args) == 0:
-            help_str += "Server commands:"
-            if Plugin.__server_cmds__ is not None:
-                for cmd in Plugin.__server_cmds__:
-                    if Console.state in Plugin.__cmd_states__[cmd]:
+            if self.commands:
+                help_str += "Server commands:"
+                for cmd in self.commands:
+                    if Console.state in self.commands[cmd].__states__:
                         help_str += ("\n\t%s: %s" % (cmd,
-                                     Plugin.__server_cmds__[cmd].__help__))
+                                     self.commands[cmd].__help__))
 
         else:
             help_str += ("Command : %s" % args[0])
             try:
-                help_str += ("\nSyntax : %s" % Plugin.__server_cmds__[args[0]].__syntax__)
+                help_str += ("\nSyntax : %s" % self.commands[args[0]].__syntax__)
             except KeyError:
                 help_str += "\nCommand not found! Try help with no arguments for\
                              a list of all commands available in current scope."
