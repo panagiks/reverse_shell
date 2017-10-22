@@ -366,6 +366,40 @@ def get_client_plugins(server, args):
     return ret
 
 
+@command("basic","connected","multiple")
+def create_client_profile(server,args):
+    """"Creates a client profile.
+
+    Help: <profile_name> <plugin> [plugin]"""
+    ret = [None,0,""]
+    if not hasattr(server, "client_profile"):
+        server.client_profile={}
+    server.client_profile.update({args[0]: args[1:]})
+    return ret
+
+
+@command("basic","connected","multiple")
+def list_client_profiles(server,args):
+    """Lists client profiles"""
+    ret = [None,0,""]
+    if  hasattr(server, "client_profile"):
+        for profile in server.client_profile:
+            ret[2]+='\n%s:' % profile
+            for plugin in server.client_profile[profile]:
+                ret[2]+= '\n\t%s' % plugin
+    else:
+        ret[2]="No client profiles registered"
+    return ret
+
+
+@command("connected","multiple")
+def apply_client_profile(server,args):
+    ret=[None,0,""]
+    for plugin in server.client_profile:
+        client_install_plugin(server,[plugin])
+    return ret
+
+
 @installer(__name__)
 def setup(app, commands):
     pass
