@@ -7,6 +7,7 @@ import ssl
 import argparse
 import json
 import requests
+import logging
 from sys import exit as sysexit
 from socket import socket, AF_INET, SOCK_STREAM
 from socket import error as sock_error
@@ -281,20 +282,20 @@ class Server(object):
             self.config['certs']['crt'] = crt_fl
             self.config['certs']['key'] = key_fl
         ########################################################################
-        self.log_opt = self.config["log"]
+        logging.basicConfig(filename='log.txt', filemode='w', level=self.config["log"][0])
         self.plugins["base_url"] = self.config["plugin_base_url"]
-        self._log("L", "Session Start.")
+        self._log("DEBUG", "Session Start.")
         for plugin in self.config["plugins"]:
             self.load_plugin(plugin)
         try:
             self.connection["sock"].bind((self.connection["ip"],
                                           int(self.connection["port"])))
             self.connection["sock"].listen(self.connection["max_conns"])
-            self._log("L", "Socket bound @ %s:%s." % (self.connection["ip"],
+            self._log("DEBUG", "Socket bound @ %s:%s." % (self.connection["ip"],
                                                       self.connection["port"]))
         except sock_error:
             print("Something went wrong during binding & listening")
-            self._log("E", "Error binding socket @ %s:%s." % (self.connection["ip"],
+            self._log("ERROR", "Error binding socket @ %s:%s." % (self.connection["ip"],
                                                               self.connection["port"]))
             sysexit()
         start_new_thread(self.loop, ())
@@ -308,25 +309,34 @@ class Server(object):
         self.connection["sock"].close()
 
     def _log(self, level, action):
-        if level not in self.log_opt:
-            return
+
+        logging_method  = {
+            "DEBUG" : logging.debug,
+            "INFO"  : logging.info,
+            "WARNING": logging.warning,
+            "ERROR" : logging.error
+        }
+
         timestamp = datetime.now()
-        with open(os.path.join(__path__, "log.txt"), 'a') as logfile:
-            logfile.write("%s : [%s/%s/%s %s:%s:%s] => %s\n" % (level,
-                                                                str(timestamp.day),
-                                                                str(timestamp.month),
-                                                                str(timestamp.year),
-                                                                str(timestamp.hour),
-                                                                str(timestamp.minute),
-                                                                str(timestamp.second),
-                                                                action))
+        log_message = "%s : [%s/%s/%s %s:%s:%s] => %s\n" % (level,
+                                                            str(timestamp.day),
+                                                            str(timestamp.month),
+                                                            str(timestamp.year),
+                                                            str(timestamp.hour),
+                                                            str(timestamp.minute),
+                                                            str(timestamp.second),
+                                                            action)
+        try:
+            logging_method[level](log_message)
+        except:
+            logging_method["INFO"](log_message)
 
     def loop(self):
         """Main server loop for accepting connections. Better call it on its own thread"""
         while True:
             try:
                 (csock, (ipaddr, port)) = self.connection["sock"].accept()
-                self._log("L", "New connection from %s:%s" % (str(ipaddr),
+                self._log("DEBUG", "New connection from %s:%s" % (str(ipaddr),
                                                               str(port)))
             except sock_error:
                 raise sock_error
@@ -354,13 +364,13 @@ class Server(object):
             try:
                 plugin = self.source.load_plugin(plugin_name)
                 plugin.setup(self)
-                self._log("L", "%s: plugin loaded." % plugin)
+                self._log("DEBUG", "%s: plugin loaded." % plugin)
                 name = plugin.__name__.split('.')[-1]
                 self.plugins["loaded"][name] = self.plugins["installed"][name]
             except ImportError:
-                self._log("E", "%s: plugin failed to load." % plugin_name)
+                self._log("ERROR", "%s: plugin failed to load." % plugin_name)
         else:
-            self._log("E", "%s: plugin not installed" % plugin_name)
+            self._log("ERROR", "%s: plugin not installed" % plugin_name)
 
     def install_plugin(self, plugin):
         """Install a plugin from a loaded repo."""
@@ -368,14 +378,14 @@ class Server(object):
         try:
             plugin_url = self.available_plugins()[plugin]['uri']
         except KeyError:
-            self._log("E", "%s: plugin does not exist" % plugin)
+            self._log("ERROR", "%s: plugin does not exist" % plugin)
         else:
             # Download the plugin and write it to a file.
             plugin_obj = requests.get(plugin_url)
             plugin_cont = plugin_obj.text
             with open(("/etc/rspet/plugins/%s.py" % plugin), 'w') as pfile:
                 pfile.write(plugin_cont)
-            self._log("L", "%s: plugin installed" % plugin)
+            self._log("DEBUG", "%s: plugin installed" % plugin)
 
     def available_plugins(self):
         """Get a list of all available plugins."""
@@ -386,7 +396,7 @@ class Server(object):
             # Get info file from repo, in case of error, log and continue.
             json_file = requests.get(base_url + '/plugins.json')
             if json_file.status_code != 200 :
-                self._log("E", "Error connecting to plugin repo %s" % base_url)
+                self._log("ERROR", "Error connecting to plugin repo %s" % base_url)
                 continue
             json_dct = json_file.json()
             # Iterate through plugins available in current repo.
