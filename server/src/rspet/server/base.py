@@ -328,7 +328,7 @@ class Server(object):
                                                             action)
         try:
             logging_method[level](log_message)
-        except:
+        except KeyError:
             logging_method["INFO"](log_message)
 
     def loop(self):
