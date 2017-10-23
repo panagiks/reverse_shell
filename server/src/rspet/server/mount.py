@@ -1,11 +1,11 @@
 import re
 import sys
 
-# We use a decorator to mark a function as a command.
 # Prepare the regex to parse help
 regex = re.compile("(.+)\n\n\s*Help: (.+)", re.M)
 
 
+# We use this decorator to mark a function as a command.
 def command(*states):
     def decorator(fn):
         # Setup function states
@@ -28,6 +28,8 @@ def command(*states):
     return decorator
 
 
+# We use this decorator to mark a dummy function as the plugin's installer
+# Function name MUST be setup and its contents WILL be ignored
 def installer(module):
     def decorator(fn):
         def decorated(*args, **kwargs):
