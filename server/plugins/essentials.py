@@ -366,37 +366,48 @@ def get_client_plugins(server, args):
     return ret
 
 
-@command("basic","connected","multiple")
-def create_client_profile(server,args):
+@command("basic", "connected", "multiple")
+def create_client_profile(server, args):
     """"Creates a client profile.
 
     Help: <profile_name> <plugin> [plugin]"""
-    ret = [None,0,""]
+    ret = [None, 0, ""]
     if not hasattr(server, "client_profile"):
-        server.client_profile={}
+        server.client_profile = {}
     server.client_profile.update({args[0]: args[1:]})
     return ret
 
 
-@command("basic","connected","multiple")
-def list_client_profiles(server,args):
-    """Lists client profiles"""
-    ret = [None,0,""]
-    if  hasattr(server, "client_profile"):
+@command("basic", "connected", "multiple")
+def list_client_profiles(server, args):
+    """Lists client profiles."""
+    ret = [None, 0, ""]
+    if hasattr(server, "client_profile"):
         for profile in server.client_profile:
-            ret[2]+='\n%s:' % profile
+            ret[2] += '\n%s:' % profile
             for plugin in server.client_profile[profile]:
-                ret[2]+= '\n\t%s' % plugin
+                ret[2] += '\n\t%s' % plugin
     else:
-        ret[2]="No client profiles registered"
+        ret[2] = "No client profiles registered"
     return ret
 
 
-@command("connected","multiple")
-def apply_client_profile(server,args):
-    ret=[None,0,""]
-    for plugin in server.client_profile:
-        client_install_plugin(server,[plugin])
+@command("connected", "multiple")
+def apply_client_profile(server, args):
+    """Apply client profile to selected client(s).
+
+    Help: <profile_name>"""
+    ret = [None, 0, ""]
+    if len(args) < 1:
+        ret[2] = ("Syntax : %s" % server.commands["apply_client_profile"].__syntax__)
+        ret[1] = 1  # Invalid Syntax Error Code
+    else:
+        try:
+            for plugin in server.client_profile[args[0]]:
+                client_install_plugin(server, [plugin])
+        except KeyError:
+            ret[2] = "Client profile not found"
+            ret[1] = 1  # FIXME: Add correct error number
     return ret
 
 
