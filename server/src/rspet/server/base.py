@@ -131,13 +131,14 @@ class Console(object):
         """Main CLI loop"""
         self._logo()
         tab.readline_completer(
-            c.title()
-            for c in self.server.commands.keys()
+            [
+                s for s, o in self.server.commands.items()
+                if self.state in o.__states__
+            ]
         )
 
         while not self.server.quit_signal:
             try:
-                # cmd = raw_input(Console.prompt).lower()
                 cmd = input(Console.prompt).lower()
             except (KeyboardInterrupt, EOFError):
                 raise KeyboardInterrupt

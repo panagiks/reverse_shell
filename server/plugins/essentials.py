@@ -368,7 +368,7 @@ def get_client_plugins(server, args):
 
 @command("basic", "connected", "multiple")
 def create_client_profile(server, args):
-    """"Creates a client profile.
+    """Creates a client profile.
 
     Help: <profile_name> <plugin> [plugin]"""
     ret = [None, 0, ""]
