@@ -4,15 +4,17 @@ import requests
 import time
 import json
 
+
 def geo_init(client, args):
     # Ensure dependecy pywifi
     import pip
     try:
-        pip.main(['install','pywifi','-q'])
+        pip.main(['install', 'pywifi', '-q'])
         ret = 'psi'
     except ImportError:
         ret = 'pif'
     client.send(ret)
+
 
 def get_location(client, args):
     import pywifi
@@ -25,12 +27,12 @@ def get_location(client, args):
     time.sleep(2)
     results = iface.scan_results()
     data = {
-        "wifiAccessPoints" : []
+        "wifiAccessPoints": []
     }
     for result in results:
         ap = {
-            "macAddress" : result.bssid,
-            "signalStrength" : result.signal
+            "macAddress": result.bssid,
+            "signalStrength": result.signal
         }
         data["wifiAccessPoints"].append(ap)
     url = "https://www.googleapis.com/geolocation/v1/geolocate?key=" + key
@@ -42,4 +44,4 @@ def get_location(client, args):
 # TODO: Remove before merging to master (At the end of evaluation period).
 
 if __name__ == '__main__':
-    get_location(1,32)
+    get_location(1, 32)

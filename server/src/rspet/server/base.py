@@ -310,11 +310,11 @@ class Server(object):
 
     def _log(self, level, action):
 
-        logging_method  = {
-            "DEBUG" : logging.debug,
-            "INFO"  : logging.info,
+        logging_method = {
+            "DEBUG": logging.debug,
+            "INFO": logging.info,
             "WARNING": logging.warning,
-            "ERROR" : logging.error
+            "ERROR": logging.error
         }
 
         timestamp = datetime.now()
@@ -337,7 +337,7 @@ class Server(object):
             try:
                 (csock, (ipaddr, port)) = self.connection["sock"].accept()
                 self._log("DEBUG", "New connection from %s:%s" % (str(ipaddr),
-                                                              str(port)))
+                                                                  str(port)))
             except sock_error:
                 raise sock_error
             try:
@@ -350,7 +350,9 @@ class Server(object):
                                         certfile=self.config['certs']['crt'],
                                         keyfile=self.config['certs']['key'],
                                         ssl_version=ssl.PROTOCOL_TLS)
-            self.clients["hosts"][str(self.clients["serial"])] = Host(csock, ipaddr, port,
+            self.clients["hosts"][str(self.clients["serial"])] = Host(csock,
+                                                                      ipaddr,
+                                                                      port,
                                                                       self.clients["serial"])
             self.clients["serial"] += 1
 
@@ -395,7 +397,7 @@ class Server(object):
         for base_url in self.plugins["base_url"]:
             # Get info file from repo, in case of error, log and continue.
             json_file = requests.get(base_url + '/plugins.json')
-            if json_file.status_code != 200 :
+            if json_file.status_code != 200:
                 self._log("ERROR", "Error connecting to plugin repo %s" % base_url)
                 continue
             json_dct = json_file.json()
@@ -511,6 +513,7 @@ class Server(object):
     def quit(self):
         """Interface function. Raise a Quit signal."""
         self.quit_signal = True
+
 
 class Host(object):
     """Class for hosts. Each Host object represent one host"""
