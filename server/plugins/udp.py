@@ -6,7 +6,7 @@ from rspet.server.Plugins.mount import Plugin, command
 
 
 @command("connected", "multiple")
-def udp_flood(self, server, args):
+def udp_flood(server, args):
     """Flood target machine with UDP packets.
 
     Help: <target_ip> <target_port> [payload]"""
@@ -14,7 +14,7 @@ def udp_flood(self, server, args):
     ret = [None, 0, ""]
     hosts = server.get_selected()
     if len(args) < 2:
-        ret[2] = ("Syntax : %s" % self.__cmd_help__["UDP_Flood"])
+        ret[2] = ("Syntax : %s" % server.commands["UDP_Flood"].__syntax__)
         ret[1] = 1  # Invalid Syntax Error Code
     else:
         try:
@@ -35,7 +35,7 @@ def udp_flood(self, server, args):
 
 
 @command("connected", "multiple")
-def udp_spoof(self, server, args):
+def udp_spoof(server, args):
     """Flood target machine with UDP packets via spoofed ip & port.
 
     Help: <target_ip> <target_port> <spoofed_ip> <spoofed_port> [payload]"""
@@ -43,7 +43,7 @@ def udp_spoof(self, server, args):
     ret = [None, 0, ""]
     hosts = server.get_selected()
     if len(args) < 4:
-        ret[2] = ("Syntax : %s" % self.__cmd_help__["UDP_Spoof"])
+        ret[2] = ("Syntax : %s" % server.commands["UDP_Spoof"].__syntax__)
         ret[1] = 1  # Invalid Syntax Error Code
     else:
         try:

@@ -6,14 +6,14 @@ from rspet.server.Plugins.mount import Plugin, command
 
 
 @command("connected")
-def pull_file(self, server, args):
+def pull_file(server, args):
     """Pull a regular text file from the host.
 
     Help: <remote_file> [local_file]"""
     ret = [None, 0, ""]
     host = server.get_selected()[0]
     if len(args) == 0:
-        ret[2] = ("Syntax : %s" % self.__cmd_help__["Pull_File"])
+        ret[2] = ("Syntax : %s" % server.commands["Pull_File"].__syntax__)
         ret[1] = 1  # Invalid Syntax Error Code
     else:
         remote_file = args[0]
@@ -44,14 +44,14 @@ def pull_file(self, server, args):
 
 
 @command("connected")
-def pull_binary(self, server, args):
+def pull_binary(server, args):
     """Pull a binary file from the host.
 
     Help: <remote_bin> [local_bin]"""
     ret = [None, 0, ""]
     host = server.get_selected()[0]
     if len(args) == 0:
-        ret[2] = ("Syntax : %s" % self.__cmd_help__["Pull_Binary"])
+        ret[2] = ("Syntax : %s" % server.commands["Pull_Binary"].__syntax__)
         ret[1] = 1  # Invalid Syntax Error Code
     else:
         remote_file = args[0]
@@ -82,14 +82,14 @@ def pull_binary(self, server, args):
 
 
 @command("connected", "multiple")
-def make_file(self, server, args):
+def make_file(server, args):
     """Send a regular text file to the host(s).
 
     Help: <local_file> [remote_file]"""
     ret = [None, 0, ""]
     hosts = server.get_selected()
     if len(args) == 0:
-        ret[2] = ("Syntax : %s" % self.__cmd_help__["Make_File"])
+        ret[2] = ("Syntax : %s" % server.commands["Make_File"].__syntax__)
         ret[1] = 1  # Invalid Syntax Error Code
     else:
         local_file = args[0]
@@ -122,14 +122,14 @@ def make_file(self, server, args):
 
 
 @command("connected", "multiple")
-def make_binary(self, server, args):
+def make_binary(server, args):
     """Send a binary file to the host(s).
 
     Help: <local_bin> [remote_bin]"""
     ret = [None, 0, ""]
     hosts = server.get_selected()
     if len(args) == 0:
-        ret[2] = ("Syntax : %s" % self.__cmd_help__["Make_Binary"])
+        ret[2] = ("Syntax : %s" % server.commands["Make_Binary"].__syntax__)
         ret[1] = 1  # Invalid Syntax Error Code
     else:
         local_file = args[0]

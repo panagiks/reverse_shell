@@ -7,13 +7,13 @@ from rspet.server.Plugins.mount import Plugin, command
 
 
 @command("basic", "connected", "multiple")
-def geolocation_config(self, server, args):
+def geolocation_config(server, args):
     """ Provide Google API key for the Geolocation service.
 
     Help: <API-Key>"""
     ret = [None, 0, ""]
     if len(args) < 1:
-        ret[2] = ("Syntax : %s" % self.__server_cmds__["geolocation_config"].__syntax__)
+        ret[2] = ("Syntax : %s" % server.commands["geolocation_config"].__syntax__)
         ret[1] = 1  # Invalid Syntax Error Code
     else:
         server.config["geo-api"] = args[0]
@@ -21,7 +21,7 @@ def geolocation_config(self, server, args):
 
 
 @command("connected", "multiple")
-def geo_init(self, server, host, args):
+def geo_init(server, host, args):
     """Initialize the Geolocation plugin on the selected client(s).
 
     Help: """
@@ -38,7 +38,7 @@ def geo_init(self, server, host, args):
 
 
 @command("connected", "multiple")
-def get_location(self, server, host, args):
+def get_location(server, host, args):
     """ Request Geolocation information from selected host(s).
 
     Help: """
