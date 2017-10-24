@@ -411,6 +411,19 @@ def apply_client_profile(server, args):
     return ret
 
 
+@command("connected", "multiple")
+def update_client(server, args):
+    """Update selected client(s)."""
+    ret = [None, 0, ""]
+    hosts = server.get_selected()
+    for host in hosts:
+        host.send(host.command_dict['update'])
+        # respsize = int(host.recv(2))
+        # resp = host.recv(respsize)
+        # host.info['version'] = resp
+    return ret
+
+
 @installer(__name__)
 def setup(app, commands):
     pass

@@ -530,7 +530,8 @@ class Host(object):
         'KILL': '00008',
         'loadPlugin': '00009',
         'unloadPlugin': '00010',
-        'runPluginCommand': '00011'
+        'runPluginCommand': '00011',
+        'update': '00012'
     }
 
     def __init__(self, sock, ip, port, h_id):
