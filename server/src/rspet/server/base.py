@@ -130,14 +130,14 @@ class Console(object):
     def loop(self):
         """Main CLI loop"""
         self._logo()
-        tab.readline_completer(
-            [
-                s for s, o in self.server.commands.items()
-                if self.state in o.__states__
-            ]
-        )
 
         while not self.server.quit_signal:
+            tab.readline_completer(
+                [
+                    s for s, o in self.server.commands.items()
+                    if self.state in o.__states__
+                ]
+            )
             try:
                 cmd = input(Console.prompt).lower()
             except (KeyboardInterrupt, EOFError):
