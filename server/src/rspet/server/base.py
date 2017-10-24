@@ -602,6 +602,7 @@ class Host(object):
             try:
                 self.send(Host.command_dict['killMe'])
             except sock_error:
+                self.purge()
                 raise sock_error
             self.purge()
 
@@ -620,7 +621,7 @@ class Host(object):
         """Send message to host"""
         if msg is not None and len(msg) > 0:
             try:
-                self.connection["sock"].send(msg)
+                self.connection["sock"].send(msg.encode('UTF-8'))
             except sock_error:
                 raise sock_error
 
@@ -630,7 +631,7 @@ class Host(object):
             data = self.connection["sock"].recv(size)
             if data == '':
                 raise sock_error
-            return data
+            return data.decode('UTF-8')
 
 
 def main():
