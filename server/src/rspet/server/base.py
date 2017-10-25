@@ -224,13 +224,13 @@ class Server(object):
 
     def __init__(self, max_conns=5, ip="0.0.0.0", port="9000"):
         """Start listening on socket."""
-        ################# Replaced with dict named connection. #################
+        ################# Replaced with dict named connection. ################
         self.connection = {}
         self.connection["ip"] = ip
         self.connection["port"] = port
         self.connection["max_conns"] = max_conns
         self.connection["sock"] = socket(AF_INET, SOCK_STREAM)
-        ########################################################################
+        #######################################################################
         self.quit_signal = False
         plugin_base = PluginBase(
             package='rspet.server.plugins',
@@ -241,29 +241,32 @@ class Server(object):
             identifier='rspet'
         )
         self.commands = {}
-        ################### Replaced with dict named clients. ##################
+        ################### Replaced with dict named clients. #################
         self.clients = {}
         self.clients["hosts"] = {}  # Dictionary of hosts
         self.clients["selected"] = []  # List of selected hosts
         self.clients["serial"] = 0
-        ########################################################################
+        #######################################################################
         self.log_opt = []  # List of Letters. Indicates logging level
-        ################### Replaced with dict named plugins. ##################
+        ################### Replaced with dict named plugins. #################
         self.plugins = {}
         self.plugins["loaded"] = {}  # List of loaded plugins
         self.plugins["installed"] = self.installed_plugins()  # List of installed plugins
         self.plugins["available"] = {}  # List of available plugins
         self.plugins["base_url"] = ""
-        ########################################################################
+        #######################################################################
         with open("/etc/rspet/config.json") as json_config:
             self.config = json.load(json_config)
-        ######################### Certificate handling #########################
+        ######################### Certificate handling ########################
         if 'certs' not in self.config:
             self.config['certs'] = {}
             crt_fl = os.path.join(__path__, 'server.crt')
             key_fl = os.path.join(__path__, 'server.key')
             if not (os.path.isfile(crt_fl) and os.path.isfile(key_fl)):
-                public_key, private_key = asymmetric.generate_pair('rsa', bit_size=4096)
+                public_key, private_key = asymmetric.generate_pair(
+                    'rsa',
+                    bit_size=4096
+                )
                 with open(key_fl, 'wb') as key:
                     key.write(asymmetric.dump_private_key(private_key, None))
                 builder = CertificateBuilder(
@@ -282,8 +285,12 @@ class Server(object):
                     crt.write(pem_armor_certificate(certificate))
             self.config['certs']['crt'] = crt_fl
             self.config['certs']['key'] = key_fl
-        ########################################################################
-        logging.basicConfig(filename='log.txt', filemode='w', level=self.config["log"][0])
+        #######################################################################
+        logging.basicConfig(
+            filename='log.txt',
+            filemode='w',
+            level=self.config["log"][0]
+        )
         self.plugins["base_url"] = self.config["plugin_base_url"]
         self._log("DEBUG", "Session Start.")
         for plugin in self.config["plugins"]:
@@ -292,12 +299,16 @@ class Server(object):
             self.connection["sock"].bind((self.connection["ip"],
                                           int(self.connection["port"])))
             self.connection["sock"].listen(self.connection["max_conns"])
-            self._log("DEBUG", "Socket bound @ %s:%s." % (self.connection["ip"],
-                                                      self.connection["port"]))
+            self._log("DEBUG", "Socket bound @ %s:%s." % (
+                self.connection["ip"],
+                self.connection["port"]
+            ))
         except sock_error:
             print("Something went wrong during binding & listening")
-            self._log("ERROR", "Error binding socket @ %s:%s." % (self.connection["ip"],
-                                                              self.connection["port"]))
+            self._log("ERROR", "Error binding socket @ %s:%s." % (
+                self.connection["ip"],
+                self.connection["port"]
+            ))
             sysexit()
         start_new_thread(self.loop, ())
 
@@ -319,21 +330,26 @@ class Server(object):
         }
 
         timestamp = datetime.now()
-        log_message = "%s : [%s/%s/%s %s:%s:%s] => %s\n" % (level,
-                                                            str(timestamp.day),
-                                                            str(timestamp.month),
-                                                            str(timestamp.year),
-                                                            str(timestamp.hour),
-                                                            str(timestamp.minute),
-                                                            str(timestamp.second),
-                                                            action)
+        log_message = "%s : [%s/%s/%s %s:%s:%s] => %s\n" % (
+            level,
+            str(timestamp.day),
+            str(timestamp.month),
+            str(timestamp.year),
+            str(timestamp.hour),
+            str(timestamp.minute),
+            str(timestamp.second),
+            action
+        )
         try:
             logging_method[level](log_message)
         except KeyError:
             logging_method["INFO"](log_message)
 
     def loop(self):
-        """Main server loop for accepting connections. Better call it on its own thread"""
+        """
+        Main server loop for accepting connections. Better call it on its
+        own thread
+        """
         while True:
             try:
                 (csock, (ipaddr, port)) = self.connection["sock"].accept()
@@ -351,10 +367,12 @@ class Server(object):
                                         certfile=self.config['certs']['crt'],
                                         keyfile=self.config['certs']['key'],
                                         ssl_version=ssl.PROTOCOL_TLS)
-            self.clients["hosts"][str(self.clients["serial"])] = Host(csock,
-                                                                      ipaddr,
-                                                                      port,
-                                                                      self.clients["serial"])
+            self.clients["hosts"][str(self.clients["serial"])] = Host(
+                csock,
+                ipaddr,
+                port,
+                self.clients["serial"]
+            )
             self.clients["serial"] += 1
 
     def setup_command(self, name, command):
@@ -399,7 +417,8 @@ class Server(object):
             # Get info file from repo, in case of error, log and continue.
             json_file = requests.get(base_url + '/plugins.json')
             if json_file.status_code != 200:
-                self._log("ERROR", "Error connecting to plugin repo %s" % base_url)
+                self._log("ERROR", "Error connecting to plugin repo %s" %
+                          base_url)
                 continue
             json_dct = json_file.json()
             # Iterate through plugins available in current repo.
@@ -493,10 +512,10 @@ class Server(object):
         else:
             help_str += ("Command : %s" % args[0])
             try:
-                help_str += ("\nSyntax : %s" % self.commands[args[0]].__syntax__)
+                help_str += "\nSyntax : %s" % self.commands[args[0]].__syntax__
             except KeyError:
-                help_str += "\nCommand not found! Try help with no arguments for\
-                             a list of all commands available in current scope."
+                help_str += """\nCommand not found! Try help with no arguments
+                for a list of all commands available in current scope."""
             except AttributeError:  # Command has no arguments declared.
                 pass
         return help_str
@@ -537,14 +556,14 @@ class Host(object):
     def __init__(self, sock, ip, port, h_id):
         """Accept the connection and initialize variables."""
         self.deleteme = False
-        ################# Replaced with dict named connection. #################
+        ################# Replaced with dict named connection. ################
         self.connection = {}
         self.connection["sock"] = sock
         self.connection["ip"] = ip
         self.connection["port"] = port
-        ########################################################################
+        #######################################################################
         self.id = h_id
-        #################### Replaced with dict named info. ####################
+        #################### Replaced with dict named info. ###################
         self.info = {}
         self.info["version"] = ""
         self.info["type"] = ""
@@ -552,20 +571,20 @@ class Host(object):
         self.info["hostname"] = ""
         self.info["plugins"] = []
         self.info["commands"] = []
-        ########################################################################
+        #######################################################################
 
         try:
-            ###Get Version###
+            ### Get Version ###
             msg_len = self.recv(2)  # len is 2-digit (i.e. up to 99 chars)
             tmp = self.recv(int(msg_len)).split("-")
             self.info["version"] = tmp[0]
             self.info["type"] = tmp[1]
             #################
-            ###Get System Type###
+            ### Get System Type ###
             msg_len = self.recv(2)  # len is 2-digit (i.e. up to 99 chars)
             self.info["systemtype"] = self.recv(int(msg_len))
             #####################
-            ###Get Hostname###
+            ### Get Hostname ###
             msg_len = self.recv(2)  # len is 2-digit (i.e. up to 99 chars)
             self.info["hostname"] = self.recv(int(msg_len))
             ##################
@@ -608,9 +627,9 @@ class Host(object):
 
     def purge(self):
         """Delete host not so gracefully."""
+        self.deleteme = True
         self.connection["sock"].shutdown(SHUT_RDWR)
         self.connection["sock"].close()
-        self.deleteme = True
 
     def __eq__(self, other):
         """Check weather two sockets are the same socket."""
