@@ -484,24 +484,7 @@ def main():
         rhost = argv[1]
     except IndexError:
         sysexit()
-    update = False
-    while not modules[__name__].Client.quit_signal:
-        # Persist client's current socket
-        sock = modules[__name__].Client.sock
-        # Create dummy namespace to load new version under
-        module = imp.new_module('dummy')
-        # Read the file that replaced the current file
-        with open(__file__) as fl:
-            # Execute the contents of the file in the dummy module's namespace
-            exec fl.read() in module.__dict__
-        # Replace currect Client class with the one from the dummy module
-        Client = module.Client
-        # Replace currect version with the one from the dummy module
-        __version__ = module.__version__
-        # Persist client's current socket
-        Client.sock = sock
-        # Mark Client as updated
-        Client.updated = update
+    while not Client.quit_signal:
         try:
             myself = Client(rhost, argv[2])
         except IndexError:
@@ -511,7 +494,21 @@ def main():
         except sock_error:
             myself.reconnect()
         myself.loop()
-        update = True
+        if myself.update_avail:
+            # Persist client's current socket
+            sock = Client.sock
+            # Create dummy namespace to load new version under
+            module = imp.new_module('dummy')
+            # Read the file that replaced the current file
+            with open(__file__) as fl:
+                # Execute the contents of the file in the dummy namespace
+                exec fl.read() in module.__dict__
+            # Replace currect Client class with the one from the dummy module
+            modules[__name__].Client = module.Client
+            # Persist client's current socket
+            Client.sock = sock
+            # Mark Client as updated
+            Client.updated = True
 
 
 # Start Here!
