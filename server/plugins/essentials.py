@@ -159,8 +159,15 @@ def execute(server, args):
             host.send(host.command_dict['command'])
             host.send("%013d" % len(command))
             host.send(command)
-            respsize = int(host.recv(13))
-            ret[2] += str(host.recv(respsize))
+            resp = ''
+            try:
+                resp = str(host.recv(4))
+            except KeyboardInterrupt:
+                kill(server, [])
+            finally:
+                respsize = int(host.recv(13))
+                resp = str(host.recv(respsize))
+                ret[2] += resp
         except sock_error:
             host.purge()
             ret[0] = "basic"
