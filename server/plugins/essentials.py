@@ -4,7 +4,7 @@ Plug-in module for RSPET server. Offer functions essential to server.
 import json
 import requests
 from socket import error as sock_error
-from rspet.server.mount import command, installer
+from rspet.server.mount import command, installer, depends
 
 
 @command("basic", "connected", "multiple")
@@ -413,6 +413,7 @@ def apply_client_profile(server, args):
     return ret
 
 
+@depends('files:make_file')
 @command("connected", "multiple")
 def update_client(server, args):
     """Update selected client(s).

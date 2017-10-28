@@ -13,7 +13,7 @@ def pull_file(server, args):
     ret = [None, 0, ""]
     host = server.get_selected()[0]
     if len(args) == 0:
-        ret[2] = ("Syntax : %s" % server.commands["Pull_File"].__syntax__)
+        ret[2] = ("Syntax : %s" % server.commands["pull_file"].__syntax__)
         ret[1] = 1  # Invalid Syntax Error Code
     else:
         remote_file = args[0]
@@ -49,7 +49,7 @@ def pull_binary(server, args):
     ret = [None, 0, ""]
     host = server.get_selected()[0]
     if len(args) == 0:
-        ret[2] = ("Syntax : %s" % server.commands["Pull_Binary"].__syntax__)
+        ret[2] = ("Syntax : %s" % server.commands["pull_binary"].__syntax__)
         ret[1] = 1  # Invalid Syntax Error Code
     else:
         remote_file = args[0]

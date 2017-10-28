@@ -1,5 +1,6 @@
 import re
 import sys
+from functools import wraps
 
 # Prepare the regex to parse help
 regex = re.compile("(.+)\n\n\s*Help: (.+)", re.M)
@@ -25,6 +26,44 @@ def command(*states):
             fn.__syntax__ = ""
 
         return fn
+    return decorator
+
+
+def depends(*deps):
+    def decorator(fn):
+        if not hasattr(fn, '__is_command__'):
+            raise RuntimeError("@depends decorator can only be used on commands")
+        fn.__depends__ = [
+            {
+                'plugin': dep.split(':')[0],
+                'command': dep.split(':')[1]
+            }
+            for dep in deps
+        ]
+
+        @wraps(fn)
+        def decorated(*args, **kwargs):
+            srv = args[0]
+            errors = [
+                dep for dep in fn.__depends__
+                if dep['plugin'] not in srv.loaded_plugins() or dep['command'] not in srv.commands
+            ]
+            dp = fn.__depends__[0]
+            errors = list(errors)
+            if errors:
+                ret = [None, 0, ""]
+                ret[1] = 8  # UnmetDependencies
+                ret[2] = "Some dependencies of command %s " % fn.__name__
+                ret[2] += "were not found:"
+                for error in errors:
+                    ret[2] += "\n * command '{}' of plugin '{}'".format(
+                        error['command'],
+                        error['plugin']
+                    )
+                return ret
+            else:
+                return fn(*args, **kwargs)
+        return decorated
     return decorator
 
 
