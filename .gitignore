@@ -9,3 +9,6 @@ test/
 /src/*.egg-info/
 /build/
 /**/__pycache__/
+/**/dist/
+/**/build/
+/**/*.egg-info
