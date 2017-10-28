@@ -67,6 +67,40 @@ def depends(*deps):
     return decorator
 
 
+def route(method, endpoint, name=None):
+    def decorator(fn):
+        fn.__is_route__ = True
+        fn.http_method = method.upper()
+        fn.endpoint = endpoint
+        if name:
+            fn.name = name
+        return fn
+    return decorator
+
+
+def router(module):
+    def decorator(fn):
+        def decorated(*args, **kwargs):
+            commands = [
+                cmd for cmd in map(
+                    lambda el: getattr(sys.modules[module], el),
+                    dir(sys.modules[module])
+                )
+                if hasattr(cmd, '__is_route__')
+            ]
+            for cmd in commands:
+                descriptor = {
+                    'method': cmd.http_method,
+                    'path': '/plugin/{}/'.format(args[1]) + cmd.endpoint,
+                    'handler': cmd
+                }
+                if hasattr(cmd, 'name'):
+                    descriptor['name'] = cmd.name
+                args[0]['setup_route'](args[0], descriptor)
+        return decorated
+    return decorator
+
+
 # We use this decorator to mark a dummy function as the plugin's installer
 # Function name MUST be setup and its contents WILL be ignored
 def installer(module):

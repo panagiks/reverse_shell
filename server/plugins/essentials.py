@@ -3,8 +3,9 @@ Plug-in module for RSPET server. Offer functions essential to server.
 """
 import json
 import requests
+from aiohttp import web
 from socket import error as sock_error
-from rspet.server.decorators import command, installer, depends
+from rspet.server.decorators import command, installer, depends, route, router
 
 
 @command("basic", "connected", "multiple")
@@ -433,6 +434,135 @@ def update_client(server, args):
     return ret
 
 
+# REST API VEIWS
+
+def extract_client(request, hid, host):
+    return {
+        'id': hid,
+        'ip': host.connection['ip'],
+        'port': host.connection['port'],
+        'version': host.info['version'],
+        'type': host.info['type'],
+        'system': host.info['systemtype'],
+        'hostname': host.info['hostname'],
+        'uri': str(request.app.router['client_detail'].url_for(hid=hid))
+    }
+
+
+@route('GET', 'client/', 'client_list')
+async def api_client_list(request):
+    hosts = request.app['server'].get_hosts()
+    if not hosts:
+        return web.json_response({'error': 'No hosts found'}, status=404)
+    else:
+        clients = [
+            extract_client(request, int(host), hosts[host])
+            for host in hosts
+        ]
+        return web.json_response({'clients': clients})
+
+
+@route('GET', 'client/{hid}/', 'client_detail')
+async def api_client_detail(request):
+    hid = request.match_info['hid']
+    try:
+        clients = [
+            extract_client(
+                request,
+                str(hid),
+                request.app['server'].clients['hosts'][str(hid)]
+            )
+        ]
+    except KeyError:
+        return web.json_response(
+            {'error': 'Host %s not found' % hid},
+            status=404
+        )
+    return web.json_response({'clients': clients})
+
+
+@route('POST', 'client/{hid}/close/', 'close_connection')
+async def api_close_connection(request):
+    hid = request.match_info['hid']
+    server = request.app['server']
+    res = server.select([hid])
+    if res[0] != 0:
+        server.select([])
+        return web.json_response(
+            {'error': 'Host %s not found' % hid},
+            status=404
+        )
+    server.commands['close_connection'](server, [])
+    server.select([])
+    return web.Response(status=204)
+
+
+@route('POST', 'client/{hid}/shell/', 'execute_shell')
+async def api_execute_shell(request):
+    try:
+        body = await request.json()
+        command = body['command']
+        args = body['args']
+        args = [command, *args]
+    except:
+        pass  # Return an error ...
+    hid = request.match_info['hid']
+    server = request.app['server']
+    res = server.select([hid])
+    if res[0] != 0:
+        server.select([])
+        return web.json_response(
+            {'error': 'Host %s not found' % hid},
+            status=404
+        )
+    server.commands['execute'](server, args)
+    server.select([])
+    return web.Response('', status=204)
+
+
+def extract_help(request, cmd, command):
+    return {
+        'help': command.__help__,
+        'states': command.__states__,
+        'syntax': (
+            command.__syntax__
+            if hasattr(command, '__syntax__') else
+            None
+        ),
+        'uri': str(request.app.router['help_detail'].url_for(cmd=cmd))
+    }
+
+
+@route('GET', 'help/', 'help_list')
+async def api_help_list(request):
+    commands = request.app['server'].commands
+    help_dict = [
+        extract_help(request, cmd, commands[cmd])
+        for cmd in commands
+    ]
+    return web.json_response({'help': help_dict})
+
+
+@route('GET', 'help/{cmd}/', 'help_detail')
+async def api_help_detail(request):
+    cmd = request.match_info['cmd']
+    try:
+        help_dict = [
+            extract_help(request, cmd, request.app['server'].commands[cmd])
+        ]
+    except KeyError:
+        return web.json_response(
+            {'error': 'Command %s not found' % cmd},
+            status=404
+        )
+    return web.json_response({'help': help_dict})
+
+
 @installer(__name__)
 def setup(app, commands):
+    pass
+
+
+@router(__name__)
+def make_routes(app, name):
     pass
