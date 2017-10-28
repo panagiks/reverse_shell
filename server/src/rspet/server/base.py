@@ -8,6 +8,7 @@ import argparse
 import json
 import requests
 import logging
+import struct
 from sys import exit as sysexit
 from socket import socket, AF_INET, SOCK_STREAM
 from socket import error as sock_error
@@ -574,18 +575,15 @@ class Host(object):
 
         try:
             ### Get Version ###
-            msg_len = self.recv(2)  # len is 2-digit (i.e. up to 99 chars)
-            tmp = self.recv(int(msg_len)).split("-")
+            tmp = self.recv().split("-")
             self.info["version"] = tmp[0]
             self.info["type"] = tmp[1]
             #################
             ### Get System Type ###
-            msg_len = self.recv(2)  # len is 2-digit (i.e. up to 99 chars)
-            self.info["systemtype"] = self.recv(int(msg_len))
+            self.info["systemtype"] = self.recv()
             #####################
             ### Get Hostname ###
-            msg_len = self.recv(2)  # len is 2-digit (i.e. up to 99 chars)
-            self.info["hostname"] = self.recv(int(msg_len))
+            self.info["hostname"] = self.recv()
             ##################
         except sock_error:
             self.trash()
@@ -639,17 +637,38 @@ class Host(object):
         """Send message to host"""
         if msg is not None and len(msg) > 0:
             try:
-                self.connection["sock"].send(msg.encode('UTF-8'))
+                msg = msg.encode('UTF-8')
+            except AttributeError:
+                pass
+            msg = struct.pack('>I', len(msg)) + msg
+            try:
+                self.connection["sock"].send(msg)
             except sock_error:
                 raise sock_error
 
-    def recv(self, size=1024):
+    def recv(self):
         """Receive from host"""
-        if size > 0:
-            data = self.connection["sock"].recv(size)
-            if data == '':
-                raise sock_error
-            return data.decode('UTF-8')
+        raw_msglen = self.recv_helper(4)
+        if not raw_msglen:
+            return None
+        msglen = struct.unpack('>I', raw_msglen)[0]
+        data = self.recv_helper(msglen)
+        if not data:
+            raise sock_error
+        try:
+            data = data.decode('UTF-8')
+        except UnicodeDecodeError:
+            pass
+        return data
+
+    def recv_helper(self, n):
+        data = b''
+        while len(data) < n:
+            packet = self.connection["sock"].recv(n - len(data))
+            if not packet:
+                return None
+            data += packet
+        return data
 
 
 def main():

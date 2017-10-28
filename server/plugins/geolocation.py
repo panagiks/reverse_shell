@@ -27,7 +27,7 @@ def geo_init(server, host, args):
     Help: """
     ret = [None, 0, ""]
     try:
-        en_data = host.recv(3)
+        en_data = host.recv()
     except sock_error:
         raise sock_error
     if en_data == 'psi':
@@ -49,11 +49,9 @@ def get_location(server, host, args):
         ret[2] = "Plugin configuration missing. See Plugin documentation."
         ret[1] = 1  # Invalid Syntax Error Code
     else:
-        host.send("%02d" % len(key))
         host.send(key)
         time.sleep(2)
-        en_data = host.recv(13)  # Reply json up to 9999999999999 chars
-        reply = host.recv(int(en_data))
+        reply = host.recv()
         ret[2] = reply
     return ret
 

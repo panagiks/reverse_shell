@@ -19,8 +19,7 @@ def geo_init(client, args):
 def get_location(client, args):
     import pywifi
     # Receive API-Key.
-    en_data = client.receive(2)
-    key = client.receive(len(en_data))
+    key = client.receive()
     wifi = pywifi.PyWiFi()
     iface = wifi.interfaces()[0]
     iface.scan()
@@ -37,7 +36,6 @@ def get_location(client, args):
         data["wifiAccessPoints"].append(ap)
     url = "https://www.googleapis.com/geolocation/v1/geolocate?key=" + key
     r = requests.post(url, json=data)
-    client.send(len(r.text))
     client.send(r.text)
 
 

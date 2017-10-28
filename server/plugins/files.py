@@ -23,16 +23,14 @@ def pull_file(server, args):
             local_file = remote_file
         try:
             host.send(host.command_dict['sendFile'])
-            host.send("%03d" % len(remote_file))
             host.send(remote_file)
-            if host.recv(3) == "fna":
+            if host.recv() == "fna":
                 ret[2] += "File does not exist or Access Denied"
                 ret[1] = 4  # Remote Access Denied Error Code
             else:
                 try:
                     with open(local_file, "w") as file_obj:
-                        filesize = int(host.recv(13))
-                        file_obj.write(host.recv(filesize))
+                        file_obj.write(host.recv())
                 except IOError:
                     ret[2] += "Cannot create local file"
                     ret[1] = 3  # Local Access Denied Error Code
@@ -61,16 +59,14 @@ def pull_binary(server, args):
             local_file = remote_file
         try:
             host.send(host.command_dict['sendBinary'])
-            host.send("%03d" % len(remote_file))
             host.send(remote_file)
-            if host.recv(3) == "fna":
+            if host.recv() == "fna":
                 ret[2] += "File does not exist or Access Denied"
                 ret[1] = 4  # Remote Access Denied Error Code
             else:
                 try:
                     with open(local_file, "wb") as file_obj:
-                        filesize = int(host.recv(13))
-                        file_obj.write(host.recv(filesize))
+                        file_obj.write(host.recv())
                 except IOError:
                     ret[2] += "Cannot create local file"
                     ret[1] = 3  # Local Access Denied Error Code
@@ -89,7 +85,7 @@ def make_file(server, args):
     ret = [None, 0, ""]
     hosts = server.get_selected()
     if len(args) == 0:
-        ret[2] = ("Syntax : %s" % server.commands["Make_File"].__syntax__)
+        ret[2] = ("Syntax : %s" % server.commands["make_file"].__syntax__)
         ret[1] = 1  # Invalid Syntax Error Code
     else:
         local_file = args[0]
@@ -100,17 +96,15 @@ def make_file(server, args):
         for host in hosts:
             try:
                 host.send(host.command_dict['getFile'])
-                host.send("%03d" % len(remote_file))
                 host.send(remote_file)
-                if host.recv(3) == "fna":
+                if host.recv() == "fna":
                     ret[2] += "Access Denied"
                     ret[1] = 4  # Remote Access Denied Error Code
                 else:
                     with open(local_file) as file_obj:
                         contents = file_obj.read()
-                        host.send("%013d" % len(contents))
                         host.send(contents)
-                        host.recv(3)  # For future use?
+                        host.recv()  # For future use?
             except sock_error:
                 host.purge()
                 ret[0] = "basic"
@@ -129,7 +123,7 @@ def make_binary(server, args):
     ret = [None, 0, ""]
     hosts = server.get_selected()
     if len(args) == 0:
-        ret[2] = ("Syntax : %s" % server.commands["Make_Binary"].__syntax__)
+        ret[2] = ("Syntax : %s" % server.commands["make_binary"].__syntax__)
         ret[1] = 1  # Invalid Syntax Error Code
     else:
         local_file = args[0]
@@ -140,17 +134,15 @@ def make_binary(server, args):
         for host in hosts:
             try:
                 host.send(host.command_dict['getBinary'])
-                host.send("%03d" % len(remote_file))
                 host.send(remote_file)
-                if host.recv(3) == "fna":
+                if host.recv() == "fna":
                     ret[2] += "Access Denied"
                     ret[1] = 4  # Remote Access Denied Error Code
                 else:
                     with open(local_file, "rb") as file_obj:
                         contents = file_obj.read()
-                        host.send("%013d" % len(contents))
                         host.send(contents)
-                        host.recv(3)  # For future use?
+                        host.recv()  # For future use?
             except sock_error:
                 host.purge()
                 ret[0] = "basic"
