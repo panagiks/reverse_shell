@@ -3,7 +3,7 @@ Plug-in module for RSPET server. Offer Client Geolocation functionalities.
 """
 import time
 from socket import error as sock_error
-from rspet.server.Plugins.mount import command, installer
+from rspet.server.Plugins.decorators import command, installer
 
 
 @command("basic", "connected", "multiple")

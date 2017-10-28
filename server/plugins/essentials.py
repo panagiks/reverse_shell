@@ -4,7 +4,7 @@ Plug-in module for RSPET server. Offer functions essential to server.
 import json
 import requests
 from socket import error as sock_error
-from rspet.server.mount import command, installer, depends
+from rspet.server.decorators import command, installer, depends
 
 
 @command("basic", "connected", "multiple")

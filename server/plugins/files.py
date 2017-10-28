@@ -2,7 +2,7 @@
 Plug-in module for RSPET server. Offer remote file inclusion functions.
 """
 from socket import error as sock_error
-from rspet.server.mount import command, installer
+from rspet.server.decorators import command, installer
 
 
 @command("connected")
