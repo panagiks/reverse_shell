@@ -74,7 +74,11 @@ def route(method, endpoint, name=None):
         fn.endpoint = endpoint
         if name:
             fn.name = name
-        return fn
+
+        @wraps(fn)
+        def decorated(*args, **kwargs):
+            return fn(*args, **kwargs, **args[0].match_info)
+        return decorated
     return decorator
 
 

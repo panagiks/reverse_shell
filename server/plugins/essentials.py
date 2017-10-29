@@ -463,8 +463,7 @@ async def api_client_list(request):
 
 
 @route('GET', 'client/{hid}/', 'client_detail')
-async def api_client_detail(request):
-    hid = request.match_info['hid']
+async def api_client_detail(request, hid):
     try:
         clients = [
             extract_client(
@@ -482,8 +481,7 @@ async def api_client_detail(request):
 
 
 @route('POST', 'client/{hid}/close/', 'close_connection')
-async def api_close_connection(request):
-    hid = request.match_info['hid']
+async def api_close_connection(request, hid):
     server = request.app['server']
     res = server.select([hid])
     if res[0] != 0:
@@ -498,15 +496,38 @@ async def api_close_connection(request):
 
 
 @route('POST', 'client/{hid}/shell/', 'execute_shell')
-async def api_execute_shell(request):
+async def api_execute_shell(request, hid):
     try:
         body = await request.json()
-        command = body['command']
-        args = body['args']
-        args = [command, *args]
+        cmd = body['command']
+        try:
+            args = body['args']
+        except KeyError:
+            args = []
+        args = [cmd, *args]
+        command = ' '.join(args)
     except:
         pass  # Return an error ...
-    hid = request.match_info['hid']
+    try:
+        host = request.app['server'].clients['hosts'][str(hid)]
+    except KeyError:
+        return web.json_response(
+            {'error': 'Host %s not found' % hid},
+            status=404
+        )
+    try:
+        host.send(host.command_dict['command'])
+        host.send(command)
+        resp = ''
+        resp = str(host.recv())
+        resp = str(host.recv())
+    except sock_error:
+        host.purge()
+    return web.json_response({"stdout": resp})
+
+
+@route('POST', 'client/{hid}/kill/', 'kill_execution')
+async def api_kill_execution(request, hid):
     server = request.app['server']
     res = server.select([hid])
     if res[0] != 0:
@@ -515,9 +536,9 @@ async def api_execute_shell(request):
             {'error': 'Host %s not found' % hid},
             status=404
         )
-    server.commands['execute'](server, args)
+    server.commands['kill'](server, [])
     server.select([])
-    return web.Response('', status=204)
+    return web.Response(status=204)
 
 
 def extract_help(request, cmd, command):
@@ -544,8 +565,7 @@ async def api_help_list(request):
 
 
 @route('GET', 'help/{cmd}/', 'help_detail')
-async def api_help_detail(request):
-    cmd = request.match_info['cmd']
+async def api_help_detail(request, cmd):
     try:
         help_dict = [
             extract_help(request, cmd, request.app['server'].commands[cmd])
