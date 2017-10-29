@@ -2,6 +2,7 @@
 # -*- coding: UTF-8 -*-
 """RSPET Server's RESTful API."""
 import argparse
+import aiohttp_cors
 import rspet.server.base
 from aiohttp import web
 from pluginbase import PluginBase
@@ -16,13 +17,15 @@ __maintainer__ = "Kolokotronis Panagiotis"
 
 
 def setup_route(app, descriptor):
-    app.router.add_route(**descriptor)
+    return app.router.add_route(**descriptor)
 
 
 def make_plugin_routes(app, plugin_name):
     try:
         plugin = app['source'].load_plugin(plugin_name)
-        plugin.make_routes(app, plugin_name)
+        routes = plugin.make_routes(app, plugin_name)
+        for rt in routes:
+            app['cors'].add(rt)
     except ImportError:
         pass
     except AttributeError as err:  # There probably was bo make_routes
@@ -30,18 +33,30 @@ def make_plugin_routes(app, plugin_name):
 
 
 def make_routes(app):
-    app.router.add_route(
-        method=plugin_list.http_method,
-        path=plugin_list.endpoint,
-        handler=plugin_list,
-        name=plugin_list.name
+    cors = aiohttp_cors.setup(app, defaults={
+        "*": aiohttp_cors.ResourceOptions(
+            allow_credentials=True,
+            expose_headers="*",
+            allow_headers="*",
+        )
+    })
+    cors.add(
+        app.router.add_route(
+            method=plugin_list.http_method,
+            path=plugin_list.endpoint,
+            handler=plugin_list,
+            name=plugin_list.name
+        )
     )
-    app.router.add_route(
-        method=plugin_create.http_method,
-        path=plugin_create.endpoint,
-        handler=plugin_create,
-        name=plugin_create.name
+    cors.add(
+        app.router.add_route(
+            method=plugin_create.http_method,
+            path=plugin_create.endpoint,
+            handler=plugin_create,
+            name=plugin_create.name
+        )
     )
+    app['cors'] = cors
     for plugin in app['server'].loaded_plugins():
         make_plugin_routes(app, plugin)
 

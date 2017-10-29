@@ -31,7 +31,8 @@ setup(
     },
     extras_require={
         'rest': [
-            'aiohttp'
+            'aiohttp',
+            'aiohttp-cors'
         ]
     },
     install_requires=[

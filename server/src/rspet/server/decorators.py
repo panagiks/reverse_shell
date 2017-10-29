@@ -92,6 +92,7 @@ def router(module):
                 )
                 if hasattr(cmd, '__is_route__')
             ]
+            routes = []
             for cmd in commands:
                 if not cmd.endpoint or cmd.endpoint.startswith('/'):
                     raise RuntimeError("Plugin endpoints cannot be blank or start with '/'!")
@@ -102,7 +103,8 @@ def router(module):
                 }
                 if hasattr(cmd, 'name'):
                     descriptor['name'] = cmd.name
-                args[0]['setup_route'](args[0], descriptor)
+                routes.append(args[0]['setup_route'](args[0], descriptor))
+            return routes
         return decorated
     return decorator
 
