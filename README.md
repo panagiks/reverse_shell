@@ -19,10 +19,9 @@ Documentation : [rspet.readthedocs.io](http://rspet.readthedocs.io)
 
 ## Features
 
-* Remote Command Execution
-* ~~Trafic masking (XORed instead of cleartext); for better results use port 443~~[1]
+* Remote Command Execution[1]
 * TLS Encryption of the Server-Client communication
-* Built-in File/Binary transfer (both ways) over the ~~masked~~ Encrypted traffic
+* Built-in File/Binary transfer (both ways) over the Encrypted traffic
 * Built-in UDP Flooding tool
 * Built-in UDP Spoofing tool[2]
 * Multiple/All Hosts management; order File/Binary transfer and UDP Flood from Multiple/All connected Hosts
@@ -33,7 +32,7 @@ Documentation : [rspet.readthedocs.io](http://rspet.readthedocs.io)
 * Plug-in management, including the ability to Install(Download) and Dynamically Load Plug-ins.
 * RESTful API for the Server Module
 
-*[1]The idea for XORing as well as the skeleton for the client came from [primalsecurity.net](http://www.primalsecurity.net) so if you like this pack of scripts you'll probably love what they do
+*[1]The skeleton for the client came from [primalsecurity.net](http://www.primalsecurity.net) so if you like this pack of scripts you'll probably love what they do
 
 *[2]UDP Spoofing uses RAW_SOCKETS so in order to utilize it, the client has to run on an OS that supports RAW_SOCKETS (most Unix-Based) and with root privileges. Finally, most of the ISPs have implementations in place that will either drop or re-structure spoofed packets
 
@@ -50,11 +49,15 @@ Documentation : [rspet.readthedocs.io](http://rspet.readthedocs.io)
 
 In order to install RSPET's Server Module:
 ```sh
-pip install rspet-server
+pip install --user rspet-server
 ```
 This will take care of all the core dependencies. In order install REST API's dependencies:
 ```sh
-pip install rspet-server[rest]
+pip install --user rspet-server[rest]
+```
+Finally to setup the needed directories files and permissions:
+```sh
+sudo env "PATH=$PATH" rspet-server-setup
 ```
 
 ## Execution:

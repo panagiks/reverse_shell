@@ -23,12 +23,6 @@ setup(
     packages=find_packages(where='src'),
     package_dir={'': 'src'},
     namespace_packages=['rspet'],
-    package_data={
-        'rspet': [
-            'server/config.json',
-            'server/Plugins/Client/*'
-        ]
-    },
     extras_require={
         'rest': [
             'aiohttp',
@@ -45,7 +39,8 @@ setup(
     entry_points={
         'console_scripts': [
             'rspet-server=rspet.server.base:main',
-            'rspet-server-rest=rspet.server.rest:main'
+            'rspet-server-rest=rspet.server.rest:main',
+            'rspet-server-setup=rspet.server.prepare:main'
         ]
     }
 )
