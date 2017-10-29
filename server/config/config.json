@@ -5,10 +5,7 @@
 		"udp"
 	],
 	"log": [
-		"ERROR",
-		"INFO",
-		"DEBUG",
-		"WARNING"
+		"INFO"
 	],
 	"plugin_base_url": [
 		"https://rspet.github.io"

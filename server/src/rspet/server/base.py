@@ -295,6 +295,8 @@ class Server(object):
         self.plugins["base_url"] = self.config["plugin_base_url"]
         self._log("DEBUG", "Session Start.")
         for plugin in self.config["plugins"]:
+            if plugin not in self.plugins["installed"]:
+                self.install_plugin(plugin)
             self.load_plugin(plugin)
         try:
             self.connection["sock"].bind((self.connection["ip"],
