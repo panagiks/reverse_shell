@@ -93,6 +93,8 @@ def router(module):
                 if hasattr(cmd, '__is_route__')
             ]
             for cmd in commands:
+                if not cmd.endpoint or cmd.endpoint.startswith('/'):
+                    raise RuntimeError("Plugin endpoints cannot be blank or start with '/'!")
                 descriptor = {
                     'method': cmd.http_method,
                     'path': '/plugin/{}/'.format(args[1]) + cmd.endpoint,

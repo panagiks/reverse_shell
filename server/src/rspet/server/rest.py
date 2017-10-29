@@ -5,6 +5,7 @@ import argparse
 import rspet.server.base
 from aiohttp import web
 from pluginbase import PluginBase
+from rspet.server.decorators import route
 
 __author__ = "Kolokotronis Panagiotis"
 __copyright__ = "Copyright 2016, Kolokotronis Panagiotis"
@@ -29,8 +30,58 @@ def make_plugin_routes(app, plugin_name):
 
 
 def make_routes(app):
+    app.router.add_route(
+        method=plugin_list.http_method,
+        path=plugin_list.endpoint,
+        handler=plugin_list,
+        name=plugin_list.name
+    )
+    app.router.add_route(
+        method=plugin_create.http_method,
+        path=plugin_create.endpoint,
+        handler=plugin_create,
+        name=plugin_create.name
+    )
     for plugin in app['server'].loaded_plugins():
         make_plugin_routes(app, plugin)
+
+
+@route('GET', '/plugin/', 'plugin_list')
+async def plugin_list(request):
+    server = request.app['server']
+    if 'installed' in request.query:
+        plugins = server.installed_plugins()
+    elif 'loaded' in request.query:
+        plugins = server.plugins["loaded"]
+    else:
+        plugins = server.available_plugins()
+        plugins = {
+            plugin: plugins[plugin]['doc']
+            for plugin in plugins
+        }
+    plugins = [
+        {
+            "name": plugin,
+            "doc": plugins[plugin]
+        }
+        for plugin in plugins
+    ]
+    return web.json_response({'plugins': plugins})
+
+
+@route('POST', '/plugin/{plugin}/', 'plugin_create')
+async def plugin_create(request, plugin):
+    server = request.app['server']
+    if 'install' in request.query:
+        server.install_plugin(plugin)
+    elif 'load' in request.query:
+        server.load_plugin(plugin)
+    else:
+        return web.json_response(
+            {'error': "You must specify an action in the request's query"},
+            status=400
+        )
+    return web.Response(status=201)
 
 
 def main():
