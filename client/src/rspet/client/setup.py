@@ -13,6 +13,6 @@ from cx_Freeze import setup, Executable
 
 setup(
     name = "RSPET Test",            #Change these values to your liking
-    version = "0.1",
+    version = "1.0.0",
     description = "A Test Executable",
     executables = [Executable("rspet_client.py", base = "Win32GUI")])

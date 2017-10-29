@@ -26,7 +26,7 @@ __author__ = "Kolokotronis Panagiotis"
 __copyright__ = "Copyright 2016, Kolokotronis Panagiotis"
 __credits__ = ["Kolokotronis Panagiotis", "Dimitris Zervas"]
 __license__ = "MIT"
-__version__ = "0.4.0"
+__version__ = "1.0.0"
 __maintainer__ = "Kolokotronis Panagiotis"
 __path__ = os.path.dirname(__file__)
 

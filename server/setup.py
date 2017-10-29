@@ -5,16 +5,15 @@ from setuptools import setup, find_packages
 
 setup(
     name='rspet-server',
-    version='0.4.0',
+    version='1.0.0',
     description='Server module of the RSPET Post-Exploitation Toolset.',
     classifiers=[
         'Development Status :: 4 - Beta',
         'License :: OSI Approved :: MIT License',
-        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.5',
         'Topic :: Security',
         'Operating System :: POSIX',
         'Operating System :: Unix',
-        'Operating System :: Microsoft :: Windows',
         'Operating System :: MacOS'
     ],
     keywords='rspet post exploitation security reverse shell',
@@ -32,8 +31,7 @@ setup(
     },
     extras_require={
         'rest': [
-            'Flask',
-            'flask-cors'
+            'aiohttp'
         ]
     },
     install_requires=[
@@ -46,7 +44,7 @@ setup(
     entry_points={
         'console_scripts': [
             'rspet-server=rspet.server.base:main',
-            'rspet-server-rest=rspet.server.api:main'
+            'rspet-server-rest=rspet.server.rest:main'
         ]
     }
 )

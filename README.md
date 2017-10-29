@@ -2,7 +2,8 @@
 
 ![MIT Licence](https://img.shields.io/badge/Licence-MIT_Licence-red.svg?style=plastic)
 [![Python 2.7](https://img.shields.io/badge/Python-2.7-yellow.svg?style=plastic)](https://www.python.org/)
-![v0.4.0](https://img.shields.io/badge/Release-v0.4.0-orange.svg?style=plastic)
+[![Python 3.5](https://img.shields.io/badge/Python-3.5-yellow.svg?style=plastic)](https://www.python.org/)
+![v1.0.0](https://img.shields.io/badge/Release-v0.4.0-orange.svg?style=plastic)
 ![Maintained](https://img.shields.io/badge/Maintained-Yes-green.svg?style=plastic)
 [![Twitter](https://img.shields.io/badge/Twitter-@TheRSPET-blue.svg?style=plastic)](https://twitter.com/theRSPET)
 
@@ -10,9 +11,7 @@
 
 DISCLAIMER: This software is provided for educational and PenTesting purposes and as a proof of concept. The developer(s) do not endorse, incite or in any other way support unauthorized computer access and networks disruption.
 
-NOTE: `min` folder has been removed. The added overhead of maintaining two versions lead to `min` not receiving bug-fixes and important updates. If there is interest, both in using and maintaining, a more bare-bone and simplistic version, a new branch will be created to host it.
-
-Current Version: `v0.4.0`
+Current Version: `v1.0.0`
 
 Follow: [@TheRSPET](https://twitter.com/TheRSPET) on Twitter for updates.
 
@@ -28,6 +27,7 @@ Documentation : [rspet.readthedocs.io](http://rspet.readthedocs.io)
 * Built-in UDP Spoofing tool[2]
 * Multiple/All Hosts management; order File/Binary transfer and UDP Flood from Multiple/All connected Hosts
 * Modular Code Design to allow easy customization
+* Client update mechanism
 * Client script is tested and is compatible with PyInstaller (can be made into .exe)[3]
 * Full server side Plug-in support[4]
 * Plug-in management, including the ability to Install(Download) and Dynamically Load Plug-ins.
@@ -100,16 +100,11 @@ As always if you have any suggestion, bug report or complain feel free to contac
 
 ## Todo
 
-- [x] ~~Fix logic bug where if a direct command to Host OS has no output Server displays command not recognized~~
-- [ ] Fix logic bug where if a direct command's to Host OS execution is perpetual the Server deadlocks
-  - [ ] Investigate weather the issue resides in the Server logic or the linearity of the CLI.
-- [x] ~~Add client version and type (min or full) as a property when client connects and at `List_Hosts`~~
 - [x] Add TLS encryption in order to:
   - [x] Replace XORing (and subsequently obfuscation with encryption)
   - [ ] Verify the "authenticity" of clients
     - [ ] A mechanism to issue and verify client certificates
     - [ ] A mechanism to recognize compromised client certs
-- [ ] Add client update mechanism (initial thought was the use of execv but it acts up)
 - [x] Add a Plug-in system to client (a more compact one)
  - [x] Add remote installation of Plug-ins to client
  - [ ] Add installed Plug-ins report from client to server
@@ -117,15 +112,11 @@ As always if you have any suggestion, bug report or complain feel free to contac
 - [ ] Add UDP Reflection functionality
 - [ ] Provide more settings via config file
 - [ ] Re-introduce multythreading when handling multiple hosts.
-- [x] ~~Make commands available with 'Tab' automatically generated based on loaded Plug-ins.~~
-- [x] ~~Fix logical bug when deleting a client. (Client still shows up on List_Hosts)~~
-- [x] ~~Create comprehensive Plug-in creation guide.~~
 - [ ] Add support for command overridding in server plugins
-- [ ] Add dependency support for server plugins
 
 ## Styleguide
 
-This project is following [Google's Python Styleguide](https://google.github.io/styleguide/pyguide.html) with a minor variation on the use of whitespaces to align ":" tokens.
+This project is following [Google's Python Styleguide](https://google.github.io/styleguide/pyguide.html).
 
 ## Contribution Opportunities
 
