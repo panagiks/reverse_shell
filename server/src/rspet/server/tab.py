@@ -1,5 +1,6 @@
 import readline
 
+
 class autocomplete(object):
     def __init__(self, options):
         self.options = sorted(options)
@@ -9,8 +10,8 @@ class autocomplete(object):
         response = None
         if state == 0:
             if text:
-                self.matches = [s
-                    for s in self.options
+                self.matches = [
+                    s + ' ' for s in self.options
                     if s and s.startswith(text)
                 ]
             else:
