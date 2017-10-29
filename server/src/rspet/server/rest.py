@@ -10,7 +10,7 @@ __author__ = "Kolokotronis Panagiotis"
 __copyright__ = "Copyright 2016, Kolokotronis Panagiotis"
 __credits__ = ["Kolokotronis Panagiotis"]
 __license__ = "MIT"
-__version__ = "1.1"
+__version__ = "2.0"
 __maintainer__ = "Kolokotronis Panagiotis"
 
 
@@ -59,7 +59,6 @@ def main():
         identifier='rspet.rest'
     )
     make_routes(app)
-    print(app.router.routes()._routes)
     web.run_app(app)
 
 

@@ -1,8 +1,9 @@
 """
 Plug-in module for RSPET server. Offer remote file inclusion functions.
 """
+from aiohttp import web
 from socket import error as sock_error
-from rspet.server.decorators import command, installer
+from rspet.server.decorators import command, installer, route, router
 
 
 @command("connected")
@@ -153,6 +154,56 @@ def make_binary(server, args):
     return ret
 
 
+# REST API VEIWS
+
+async def file_helper(request, func):
+    try:
+        body = await request.json()
+        args = [body['source']]
+        try:
+            args.append(body['destination'])
+        except KeyError:
+            pass
+        clients = body['clients']
+    except:
+        pass  # Return an error ...
+    server = request.app['server']
+    res = server.select(clients)
+    if res[0] != 0:
+        server.select([])
+        return web.json_response(
+            {'error': 'Host %s not found' % hid},
+            status=404
+        )
+    func(server, args)
+    return web.Response(status=201)
+
+
+@route('POST', 'pull_file/', 'pull_file')
+async def api_pull_file(request):
+    return (await file_helper(request, pull_file))
+
+
+@route('POST', 'pull_binary/', 'pull_binary')
+async def api_pull_binary(request):
+    return (await file_helper(request, pull_binary))
+
+
+@route('POST', 'make_file/', 'make_file')
+async def api_make_file(request):
+    return (await file_helper(request, make_file))
+
+
+@route('POST', 'make_binary/', 'make_binary')
+async def api_make_binary(request):
+    return (await file_helper(request, make_binary))
+
+
 @installer(__name__)
 def setup(app, commands):
+    pass
+
+
+@router(__name__)
+def make_routes(app, name):
     pass

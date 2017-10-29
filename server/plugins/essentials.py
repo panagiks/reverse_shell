@@ -578,6 +578,90 @@ async def api_help_detail(request, cmd):
     return web.json_response({'help': help_dict})
 
 
+def extract_profile(request, name, profile):
+    return {
+        "name": name,
+        "plugins": [
+            plugin
+            for plugin in profile
+        ],
+        "uri": str(request.app.router['profile_detail'].url_for(profile=name))
+    }
+
+
+@route('GET', 'profile/', 'profile_list')
+async def api_profile_list(request):
+    server = request.app['server']
+    if hasattr(server, "client_profile"):
+        profiles = [
+            extract_profile(request, profile, server.client_profile[profile])
+            for profile in server.client_profile
+        ]
+    else:
+        return web.json_response(
+            {'error': 'No client profiles registered'},
+            status=404
+        )
+    return web.json_response({'profiles': profiles})
+
+
+@route('GET', 'profile/{profile}/', 'profile_detail')
+async def api_profile_detail(request):
+    server = request.app['server']
+    if hasattr(server, "client_profile"):
+        try:
+            profiles = [
+                extract_profile(
+                    request,
+                    profile,
+                    server.client_profile[profile]
+                )
+            ]
+        except KeyError:
+            return web.json_response(
+                {'error': 'Profile %s not found' % profile},
+                status=404
+            )
+    else:
+        return web.json_response(
+            {'error': 'No client profiles registered'},
+            status=404
+        )
+    return web.json_response({'profiles': profiles})
+
+
+@route('POST', 'profile/{profile}/', 'profile_create')
+async def api_profile_create(request):
+    try:
+        body = await request.json()
+        plugins = body['plugins']
+    except:
+        pass  # Return an error ...
+    server = request.app['server']
+    create_client_profile(server, [profile, *plugins])
+    return web.Response(status=204)
+
+
+@route('POST', 'profile/{profile}/install/', 'profile_install')
+async def api_profile_install(request):
+    try:
+        body = await request.json()
+        clients = body['clients']
+    except:
+        pass  # Return an error ...
+    server = request.app['server']
+    res = server.select([hid])
+    if res[0] != 0:
+        server.select([])
+        return web.json_response(
+            {'error': 'Host %s not found' % hid},
+            status=404
+        )
+    apply_client_profile(server, [profile])
+    server.select([])
+    return web.Response(status=204)
+
+
 @installer(__name__)
 def setup(app, commands):
     pass
