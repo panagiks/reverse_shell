@@ -108,14 +108,11 @@ As always if you have any suggestion, bug report or complain feel free to contac
   - [ ] Verify the "authenticity" of clients
     - [ ] A mechanism to issue and verify client certificates
     - [ ] A mechanism to recognize compromised client certs
-- [x] Add a Plug-in system to client (a more compact one)
- - [x] Add remote installation of Plug-ins to client
- - [ ] Add installed Plug-ins report from client to server
- - [ ] Add check server side that a client plugin is present at the client before execution
+- [ ] Add installed Plug-ins report from client to server
+- [ ] Add check server side that a client plugin is present at the client before execution
 - [ ] Add UDP Reflection functionality
 - [ ] Provide more settings via config file
 - [ ] Re-introduce multythreading when handling multiple hosts.
-- [ ] Add support for command overridding in server plugins
 
 ## Styleguide
 
