@@ -76,8 +76,8 @@ def route(method, endpoint, name=None):
             fn.name = name
 
         @wraps(fn)
-        def decorated(*args, **kwargs):
-            return fn(*args, **kwargs, **args[0].match_info)
+        async def decorated(*args, **kwargs):
+            return (await fn(*args, **kwargs, **args[0].match_info))
         return decorated
     return decorator
 
