@@ -247,8 +247,6 @@ class Server(object):
         self.clients["hosts"] = {}  # Dictionary of hosts
         self.clients["selected"] = []  # List of selected hosts
         self.clients["serial"] = 0
-        #######################################################################
-        self.log_opt = []  # List of Letters. Indicates logging level
         ################### Replaced with dict named plugins. #################
         self.plugins = {}
         self.plugins["loaded"] = {}  # List of loaded plugins
@@ -288,8 +286,8 @@ class Server(object):
             self.config['certs']['key'] = key_fl
         #######################################################################
         logging.basicConfig(
-            filename='log.txt',
-            filemode='w',
+            filename='/var/log/rspet/log.txt',
+            filemode='a',
             level=self.config["log"][0]
         )
         self.plugins["base_url"] = self.config["plugin_base_url"]
